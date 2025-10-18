@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Client {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  companyName    String?
+  firstName      String
+  lastName       String
+  email          String   @unique
+  phone          String?
+  billingAddress String?
+  notes          String?
+
+  quoteRequests QuoteRequest[]
+
+  @@map("clients")
+}
+
+model QuoteRequest {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  clientId        String
+  desiredStart    DateTime
+  desiredEnd      DateTime
+  background      String
+  message         String?
+  status          String   @default("DRAFT") // DRAFT, READY, SENT, SIGNED, PAID, INVOICED, CANCELED
+  reference       String   @unique
+  pdfPath         String?
+  amountTTC       Float?
+  signedAt        DateTime?
+  signedIp        String?
+  sentAt          DateTime?
+  invoiceRef      String?
+  invoiceAmountTTC Float?
+
+  client   Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  booking  Booking?
+
+  @@map("quote_requests")
+}
+
+model Booking {
+  id             String   @id @default(cuid())
+  quoteRequestId String   @unique
+  start          DateTime
+  end            DateTime
+  background     String
+  title          String
+
+  quoteRequest QuoteRequest @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
+
+  @@map("bookings")
+}
+
+model EventLog {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  entityType String   // CLIENT, QUOTE, BOOKING
+  entityId   String
+  action     String
+  payload    String? // JSON string
+
+  @@map("event_logs")
+}
+
+model Settings {
+  id                String @id @default("singleton")
+  quoteCounter      Int    @default(1)
+  invoiceCounter    Int    @default(1)
+  quotePrefix       String @default("DE")
+  invoicePrefix     String @default("FA")
+  studioName        String @default("Studio MAE")
+  studioAddress     String @default("")
+  studioPhone       String @default("")
+  studioEmail       String @default("")
+  resendApiKey      String @default("")
+  senderEmail       String @default("")
+  emailTemplate     String @default("")
+
+  @@map("settings")
+}
