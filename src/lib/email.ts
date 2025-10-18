@@ -2,10 +2,11 @@ import { Resend } from 'resend'
 import { prisma } from './prisma'
 import { generateValidationToken } from './token'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Initialize Resend only if API key is available
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 // Mode développement - log les emails au lieu de les envoyer
-const isDevelopment = process.env.NODE_ENV === 'development' && process.env.RESEND_API_KEY === 'your-resend-api-key'
+const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'your-resend-api-key'
 
 interface QuoteEmailData {
   quote: {
@@ -315,8 +316,8 @@ export async function sendQuoteEmail(quoteId: string, pdfPath?: string) {
 
   let result
   
-  if (isDevelopment) {
-    // Mode développement - afficher l'email dans la console
+  if (isDevelopment || !resend) {
+    // Mode développement ou pas de clé API - afficher l'email dans la console
     console.log('\n=== EMAIL DE DEVIS (MODE DÉVELOPPEMENT) ===')
     console.log('De:', emailOptions.from)
     console.log('À:', emailOptions.to)
