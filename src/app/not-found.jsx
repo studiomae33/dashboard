@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { Button } from '@/components/Button'
+import { Button } from '@/components/ui/button'
 import { Logo } from '@/components/Logo'
 import { SlimLayout } from '@/components/SlimLayout'
 
@@ -8,7 +8,7 @@ export default function NotFound() {
   return (
     <SlimLayout>
       <div className="flex">
-        <Link href="/" aria-label="Home">
+        <Link href="/login" aria-label="Home">
           <Logo className="h-10 w-auto" />
         </Link>
       </div>
@@ -19,9 +19,11 @@ export default function NotFound() {
       <p className="mt-3 text-sm text-gray-700">
         Sorry, we couldn’t find the page you’re looking for.
       </p>
-      <Button href="/" className="mt-10">
-        Go back home
-      </Button>
+      <Link href="/login">
+        <Button className="mt-10">
+          Aller à la connexion
+        </Button>
+      </Link>
     </SlimLayout>
   )
 }

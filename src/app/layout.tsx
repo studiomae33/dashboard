@@ -13,6 +13,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" className={inter.className}>
+      <head>
+        <title>Studio Mae - Dashboard Administratif</title>
+        <meta name="description" content="Dashboard administratif pour la gestion des clients, devis et réservations du Studio Mae." />
+      </head>
       <body className="bg-gray-50">
         <SessionProvider>
           {children}
