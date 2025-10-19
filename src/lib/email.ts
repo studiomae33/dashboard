@@ -379,17 +379,26 @@ export async function sendQuoteEmail(quoteId: string, pdfPath?: string) {
     }
   })
 
-  // Créer automatiquement la réservation dans le calendrier
-  const clientName = quote.client.companyName || `${quote.client.firstName} ${quote.client.lastName}`
-  await prisma.booking.create({
-    data: {
-      quoteRequestId: quoteId,
-      start: quote.desiredStart,
-      end: quote.desiredEnd,
-      background: quote.background,
-      title: `Réservation ${clientName} - ${quote.reference}`,
-    }
+  // Créer automatiquement la réservation dans le calendrier si elle n'existe pas
+  const existingBooking = await prisma.booking.findUnique({
+    where: { quoteRequestId: quoteId }
   })
+  
+  if (!existingBooking) {
+    const clientName = quote.client.companyName || `${quote.client.firstName} ${quote.client.lastName}`
+    await prisma.booking.create({
+      data: {
+        quoteRequestId: quoteId,
+        start: quote.desiredStart,
+        end: quote.desiredEnd,
+        background: quote.background,
+        title: `Réservation ${clientName} - ${quote.reference}`,
+      }
+    })
+    console.log('✅ Réservation créée automatiquement')
+  } else {
+    console.log('ℹ️ Réservation déjà existante, pas de création')
+  }
 
   // Log de l'événement
   await prisma.eventLog.create({
@@ -404,21 +413,24 @@ export async function sendQuoteEmail(quoteId: string, pdfPath?: string) {
     }
   })
 
-  // Log de la création de réservation
-  await prisma.eventLog.create({
-    data: {
-      entityType: 'BOOKING',
-      entityId: quoteId, // On utilise l'ID du devis comme référence
-      action: 'BOOKING_CREATED',
-      payload: JSON.stringify({ 
-        clientName,
-        reference: quote.reference,
-        start: quote.desiredStart,
-        end: quote.desiredEnd,
-        background: quote.background
-      }),
-    }
-  })
+  // Log de la création de réservation (seulement si une nouvelle réservation a été créée)
+  if (!existingBooking) {
+    const clientName = quote.client.companyName || `${quote.client.firstName} ${quote.client.lastName}`
+    await prisma.eventLog.create({
+      data: {
+        entityType: 'BOOKING',
+        entityId: quoteId, // On utilise l'ID du devis comme référence
+        action: 'BOOKING_CREATED',
+        payload: JSON.stringify({ 
+          clientName,
+          reference: quote.reference,
+          start: quote.desiredStart,
+          end: quote.desiredEnd,
+          background: quote.background
+        }),
+      }
+    })
+  }
 
   return result
 }
