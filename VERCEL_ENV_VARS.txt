@@ -1,0 +1,19 @@
+// Variables d'environnement requises pour Vercel
+// Copiez ces variables dans votre dashboard Vercel
+// Settings → Environment Variables
+
+RESEND_API_KEY=re_QqSNs7MN_FeQAN2g1ZY8E4YDCRLyRTC1f
+SENDER_EMAIL=devis@mail.studiomae.fr
+NEXTAUTH_URL=https://dashboard-lime-tau.vercel.app
+NEXTAUTH_SECRET=aJ0qAOYjxHi7A4xnonPeGeE4FMS4bMeFP+xb5i5HD/4=
+DATABASE_URL=postgresql://neondb_owner:npg_mnHERCDgy95Y@ep-lingering-river-adm57nvo-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
+ADMIN_EMAIL=admin@studiomae.fr
+ADMIN_PASSWORD=admin123
+STUDIO_NAME=Studio MAE
+
+// Instructions :
+// 1. Allez sur https://vercel.com/dashboard
+// 2. Sélectionnez votre projet "dashboard"
+// 3. Allez dans Settings → Environment Variables
+// 4. Ajoutez chacune de ces variables avec leurs valeurs exactes
+// 5. Redéployez l'application
