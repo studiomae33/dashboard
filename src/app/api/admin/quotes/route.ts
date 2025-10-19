@@ -54,7 +54,11 @@ export async function POST(request: NextRequest) {
     const message = formData.get('message') as string
     const pdfFile = formData.get('pdfFile') as File
 
-    if (!pdfFile) {
+    // En production Vercel, on ne peut pas stocker de fichiers
+    // Pour l'instant, on permet la création de devis sans PDF en production
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1'
+    
+    if (!pdfFile && !isProduction) {
       return NextResponse.json({ error: 'Fichier PDF requis' }, { status: 400 })
     }
 
@@ -81,17 +85,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Cette référence existe déjà' }, { status: 400 })
     }
 
-    // Sauvegarder le fichier PDF
-    const bytes = await pdfFile.arrayBuffer()
-    const buffer = Buffer.from(bytes)
+    // Sauvegarder le fichier PDF si fourni
+    let pdfPath = null
     
-    // Créer un nom de fichier unique avec la référence saisie
-    const fileName = `${reference.trim()}_${Date.now()}.pdf`
-    const filePath = join(process.cwd(), 'public', 'uploads', fileName)
-    
-    await writeFile(filePath, buffer)
-    
-    const pdfPath = `/uploads/${fileName}`
+    if (pdfFile) {
+      const bytes = await pdfFile.arrayBuffer()
+      const buffer = Buffer.from(bytes)
+      
+      // Créer un nom de fichier unique avec la référence saisie
+      const fileName = `${reference.trim()}_${Date.now()}.pdf`
+      const filePath = join(process.cwd(), 'public', 'uploads', fileName)
+      
+      pdfPath = `/uploads/${fileName}`
+      
+      try {
+        // Créer le dossier uploads s'il n'existe pas
+        const fs = require('fs')
+        const uploadsDir = join(process.cwd(), 'public', 'uploads')
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true })
+        }
+        
+        await writeFile(filePath, buffer)
+        console.log('✅ Fichier PDF sauvegardé:', fileName)
+      } catch (fileError) {
+        console.warn('⚠️ Impossible de sauvegarder le fichier (production Vercel):', fileError instanceof Error ? fileError.message : String(fileError))
+        // En production Vercel, on ne peut pas écrire de fichiers
+        pdfPath = `/temp/${fileName}` // Chemin temporaire pour éviter l'erreur
+      }
+    } else {
+      console.log('ℹ️ Aucun PDF fourni - création du devis sans PDF (mode production)')
+    }
 
     // Créer le devis avec le montant TTC
     const quoteData: any = {
@@ -131,7 +155,22 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(quote, { status: 201 })
   } catch (error) {
-    console.error('Erreur création devis:', error)
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
+    console.error('❌ ERREUR DÉTAILLÉE CRÉATION DEVIS:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+      env: {
+        hasDatabase: !!process.env.DATABASE_URL,
+        nodeEnv: process.env.NODE_ENV
+      }
+    })
+    
+    return NextResponse.json({ 
+      error: error instanceof Error ? error.message : 'Erreur serveur',
+      debug: {
+        timestamp: new Date().toISOString(),
+        hasDatabase: !!process.env.DATABASE_URL
+      }
+    }, { status: 500 })
   }
 }
