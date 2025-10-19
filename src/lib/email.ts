@@ -6,7 +6,8 @@ import { generateValidationToken } from './token'
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 // Mode développement - log les emails au lieu de les envoyer
-const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'your-resend-api-key'
+// En développement, on envoie les emails si on a une vraie clé API
+const isDevelopment = !process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'your-resend-api-key'
 
 interface QuoteEmailData {
   quote: {

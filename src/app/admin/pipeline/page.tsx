@@ -108,128 +108,137 @@ export default function PipelinePage() {
           </Button>
         </div>
 
-        {/* Vue Kanban */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+        {/* Vue Kanban améliorée */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-7 gap-4">
           {statusOrder.map(status => {
             const statusQuotes = getQuotesForStatus(status)
             const config = statusConfig[status as keyof typeof statusConfig]
             
             return (
-              <Card key={status} className="h-fit">
-                <CardHeader className={`${config.color} rounded-t-lg`}>
-                  <CardTitle className={`text-lg ${config.textColor} flex items-center justify-between`}>
-                    <span>{config.label}</span>
-                    <span className={`text-sm font-normal px-2 py-1 rounded-full bg-white ${config.textColor}`}>
+              <Card key={status} className="h-fit min-h-[200px] flex flex-col">
+                <CardHeader className={`${config.color} rounded-t-lg p-3`}>
+                  <CardTitle className={`text-sm ${config.textColor} flex items-center justify-between`}>
+                    <span className="font-medium truncate">{config.label}</span>
+                    <span className={`text-xs font-bold px-2 py-1 rounded-full bg-white/90 ${config.textColor} min-w-[24px] text-center`}>
                       {statusQuotes.length}
                     </span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-4 space-y-3">
+                <CardContent className="p-2 space-y-2 flex-1 max-h-[calc(100vh-300px)] overflow-y-auto">
                   {statusQuotes.length === 0 ? (
-                    <div className="text-center text-gray-500 text-sm py-4">
+                    <div className="text-center text-gray-400 text-xs py-8">
                       Aucun devis
                     </div>
                   ) : (
                     statusQuotes.map(quote => (
-                      <div key={quote.id} className="border rounded-lg p-3 bg-white hover:shadow-md transition-shadow">
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="font-semibold text-sm text-blue-600">
-                              {quote.reference}
-                            </span>
-                            <StatusBadge status={quote.status} />
-                          </div>
-                          
-                          <div className="text-sm font-medium text-gray-900">
-                            {getClientName(quote.client)}
-                          </div>
-                          
-                          <div className="text-xs text-gray-600">
-                            📅 {formatDate(quote.desiredStart)}
-                          </div>
-                          
-                          <div className="text-xs text-gray-600">
-                            🎨 {quote.background}
-                          </div>
-                          
+                      <div 
+                        key={quote.id} 
+                        className="border rounded-md p-2 bg-white hover:shadow-sm transition-all duration-200 hover:border-blue-300 cursor-pointer group"
+                        onClick={() => window.location.href = `/admin/quotes/${quote.id}`}
+                      >
+                        {/* En-tête compact */}
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-semibold text-xs text-blue-600 truncate flex-1 mr-2">
+                            {quote.reference}
+                          </span>
                           {quote.invoiceAmountTTC && (
-                            <div className="text-xs font-semibold text-green-600">
-                              💰 {formatCurrency(quote.invoiceAmountTTC)}
-                            </div>
+                            <span className="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
+                              {formatCurrency(quote.invoiceAmountTTC)}
+                            </span>
                           )}
-                          
-                          {quote.message && (
-                            <div className="text-xs text-gray-500 line-clamp-2">
-                              {quote.message}
-                            </div>
-                          )}
-                          
-                          {/* Actions rapides */}
-                          <div className="flex space-x-1 pt-2">
-                            {status === 'DRAFT' && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => updateQuoteStatus(quote.id, 'READY')}
-                                className="text-xs"
-                              >
-                                → Prêt
-                              </Button>
-                            )}
-                            
-                            {status === 'READY' && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => window.location.href = `/admin/quotes/${quote.id}/email`}
-                                className="text-xs"
-                              >
-                                📧 Envoyer
-                              </Button>
-                            )}
-                            
-                            {status === 'SENT' && (
-                              <div className="text-xs text-center space-y-1">
-                                <div className="text-blue-600 font-medium">
-                                  📬 En attente validation client
-                                </div>
-                                <div className="text-gray-500">
-                                  Le client peut valider en ligne
-                                </div>
-                              </div>
-                            )}
-                            
-                            {status === 'SIGNED' && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => updateQuoteStatus(quote.id, 'PAID')}
-                                className="text-xs"
-                              >
-                                💰 Paiement reçu
-                              </Button>
-                            )}
-                            
-                            {status === 'PAID' && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => updateQuoteStatus(quote.id, 'INVOICED')}
-                                className="text-xs"
-                              >
-                                📄 Facturer
-                              </Button>
-                            )}
-                            
+                        </div>
+                        
+                        {/* Client */}
+                        <div className="text-xs font-medium text-gray-900 mb-1 truncate">
+                          {getClientName(quote.client)}
+                        </div>
+                        
+                        {/* Date et background sur une ligne */}
+                        <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+                          <span className="truncate flex-1">📅 {formatDate(quote.desiredStart)}</span>
+                        </div>
+                        
+                        {/* Background */}
+                        <div className="text-xs text-gray-600 mb-2 truncate">
+                          🎨 {quote.background}
+                        </div>
+                        
+                        {/* Message tronqué */}
+                        {quote.message && (
+                          <div className="text-xs text-gray-400 line-clamp-1 mb-2 italic">
+                            "{quote.message}"
+                          </div>
+                        )}
+                        
+                        {/* Actions compactes */}
+                        <div className="flex justify-center pt-1 border-t border-gray-100">
+                          {status === 'DRAFT' && (
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => window.location.href = `/admin/quotes/${quote.id}`}
-                              className="text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                updateQuoteStatus(quote.id, 'READY')
+                              }}
+                              className="text-xs h-6 px-2 hover:bg-blue-50 hover:text-blue-600"
                             >
-                              👁️
+                              ✓ Finaliser
                             </Button>
-                          </div>
+                          )}
+                          
+                          {status === 'READY' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                window.location.href = `/admin/quotes/${quote.id}/email`
+                              }}
+                              className="text-xs h-6 px-2 hover:bg-blue-50 hover:text-blue-600"
+                            >
+                              📧 Envoyer
+                            </Button>
+                          )}
+                          
+                          {status === 'SENT' && (
+                            <div className="text-xs text-center py-1">
+                              <div className="text-blue-600 font-medium">⏳ En attente</div>
+                            </div>
+                          )}
+                          
+                          {status === 'SIGNED' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                updateQuoteStatus(quote.id, 'PAID')
+                              }}
+                              className="text-xs h-6 px-2 hover:bg-green-50 hover:text-green-600"
+                            >
+                              💰 Encaisser
+                            </Button>
+                          )}
+                          
+                          {status === 'PAID' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                updateQuoteStatus(quote.id, 'INVOICED')
+                              }}
+                              className="text-xs h-6 px-2 hover:bg-purple-50 hover:text-purple-600"
+                            >
+                              📄 Facturer
+                            </Button>
+                          )}
+                          
+                          {(status === 'INVOICED' || status === 'CANCELED') && (
+                            <div className="text-xs text-center py-1">
+                              <div className="text-gray-500">✓ Terminé</div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))
@@ -240,56 +249,49 @@ export default function PipelinePage() {
           })}
         </div>
 
-        {/* Statistiques */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-2xl font-bold text-gray-900">
+        {/* Statistiques compactes */}
+        <div className="bg-white rounded-lg border p-4">
+          <h2 className="text-sm font-medium text-gray-700 mb-3">📊 Résumé</h2>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="text-center">
+              <div className="text-xl font-bold text-gray-900">
                 {quotes.length}
               </div>
-              <div className="text-sm text-gray-600">Total devis</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-2xl font-bold text-yellow-600">
+              <div className="text-xs text-gray-500">Total devis</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-xl font-bold text-yellow-600">
                 {getQuotesForStatus('SENT').length}
               </div>
-              <div className="text-sm text-gray-600">En attente</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-xs text-gray-500">En attente</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-xl font-bold text-green-600">
                 {getQuotesForStatus('SIGNED').length}
               </div>
-              <div className="text-sm text-gray-600">Devis signés</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-2xl font-bold text-emerald-600">
+              <div className="text-xs text-gray-500">Signés</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-xl font-bold text-emerald-600">
                 {getQuotesForStatus('PAID').length}
               </div>
-              <div className="text-sm text-gray-600">Règlements effectués</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-2xl font-bold text-purple-600">
+              <div className="text-xs text-gray-500">Payés</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-lg font-bold text-purple-600">
                 {formatCurrency(
                   quotes
                     .filter(q => q.status === 'INVOICED' && q.invoiceAmountTTC)
                     .reduce((sum, q) => sum + (q.invoiceAmountTTC || 0), 0)
                 )}
               </div>
-              <div className="text-sm text-gray-600">CA facturé</div>
-            </CardContent>
-          </Card>
+              <div className="text-xs text-gray-500">CA facturé</div>
+            </div>
+          </div>
         </div>
       </div>
     </AdminLayout>
