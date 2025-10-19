@@ -341,6 +341,16 @@ export async function sendQuoteEmail(quoteId: string, pdfPath?: string) {
 
   let result
   
+  console.log('📧 Préparation envoi email:', {
+    from: emailOptions.from,
+    to: emailOptions.to,
+    subject: emailOptions.subject,
+    hasAttachments: attachments.length > 0,
+    attachmentCount: attachments.length,
+    isDevelopment,
+    hasResend: !!resend
+  })
+
   if (isDevelopment || !resend) {
     // Mode développement ou pas de clé API - afficher l'email dans la console
     console.log('\n=== EMAIL DE DEVIS (MODE DÉVELOPPEMENT) ===')
@@ -355,7 +365,9 @@ export async function sendQuoteEmail(quoteId: string, pdfPath?: string) {
     // Simuler une réponse réussie
     result = { data: { id: 'dev-' + Date.now() } }
   } else {
+    console.log('🚀 Envoi via Resend API...')
     result = await resend.emails.send(emailOptions)
+    console.log('✅ Réponse Resend:', result)
   }
 
   // Mettre à jour le statut du devis
