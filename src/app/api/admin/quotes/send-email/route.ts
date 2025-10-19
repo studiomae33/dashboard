@@ -5,6 +5,8 @@ import { sendQuoteEmail, renderDevisEmailHTML } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
+  let quoteId: string | null = null
+  
   try {
     const session = await getServerSession(authOptions)
     
@@ -13,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { quoteId } = body
+    quoteId = body.quoteId
 
     if (!quoteId) {
       return NextResponse.json({ error: 'ID du devis manquant' }, { status: 400 })
@@ -42,9 +44,26 @@ export async function POST(request: NextRequest) {
       sentTo: quote.client.email
     })
   } catch (error) {
-    console.error('Erreur envoi email:', error)
+    console.error('❌ ERREUR DÉTAILLÉE ENVOI EMAIL:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      quoteId,
+      timestamp: new Date().toISOString(),
+      env: {
+        hasResendKey: !!process.env.RESEND_API_KEY,
+        hasSenderEmail: !!process.env.SENDER_EMAIL,
+        nodeEnv: process.env.NODE_ENV
+      }
+    })
+    
     return NextResponse.json({ 
-      error: error instanceof Error ? error.message : 'Erreur serveur' 
+      error: error instanceof Error ? error.message : 'Erreur serveur',
+      debug: {
+        timestamp: new Date().toISOString(),
+        quoteId,
+        hasResendKey: !!process.env.RESEND_API_KEY,
+        hasSenderEmail: !!process.env.SENDER_EMAIL
+      }
     }, { status: 500 })
   }
 }
