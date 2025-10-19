@@ -70,7 +70,7 @@ export async function GET() {
         const emailInfo = await resend.emails.get(result.data.id)
         console.log('📊 Statut email:', emailInfo)
       } catch (infoError) {
-        console.log('⚠️ Impossible de récupérer le statut:', infoError.message)
+        console.log('⚠️ Impossible de récupérer le statut:', infoError instanceof Error ? infoError.message : String(infoError))
       }
     }
     
@@ -88,19 +88,24 @@ export async function GET() {
     })
     
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorStack = error instanceof Error ? error.stack : undefined
+    const errorCode = error && typeof error === 'object' && 'code' in error ? error.code : undefined
+    const errorStatusCode = error && typeof error === 'object' && 'statusCode' in error ? error.statusCode : undefined
+    
     console.error('❌ ERREUR COMPLETE:', {
-      message: error.message,
-      stack: error.stack,
-      code: error.code,
-      statusCode: error.statusCode
+      message: errorMessage,
+      stack: errorStack,
+      code: errorCode,
+      statusCode: errorStatusCode
     })
     
     return NextResponse.json({ 
       error: 'Échec envoi email avec diagnostic', 
       details: {
-        message: error.message,
-        code: error.code,
-        statusCode: error.statusCode
+        message: errorMessage,
+        code: errorCode,
+        statusCode: errorStatusCode
       }
     }, { status: 500 })
   }
