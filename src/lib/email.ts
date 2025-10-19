@@ -292,15 +292,39 @@ export async function sendQuoteEmail(quoteId: string, pdfPath?: string) {
 
   const attachments = []
   if (pdfPath) {
-    const fs = require('fs')
-    const path = require('path')
-    const fullPath = path.join(process.cwd(), 'public', pdfPath.replace('/uploads/', 'uploads/'))
-    
-    if (fs.existsSync(fullPath)) {
-      attachments.push({
-        filename: `devis-${quote.reference}.pdf`,
-        content: fs.readFileSync(fullPath),
-      })
+    try {
+      if (pdfPath.startsWith('http')) {
+        // URL Vercel Blob - télécharger le fichier
+        console.log('📎 Téléchargement PDF depuis Vercel Blob:', pdfPath)
+        const response = await fetch(pdfPath)
+        if (response.ok) {
+          const pdfBuffer = await response.arrayBuffer()
+          attachments.push({
+            filename: `devis-${quote.reference}.pdf`,
+            content: Buffer.from(pdfBuffer),
+          })
+          console.log('✅ PDF récupéré depuis Vercel Blob')
+        } else {
+          console.warn('⚠️ Impossible de télécharger le PDF depuis Vercel Blob')
+        }
+      } else {
+        // Fichier local (développement)
+        const fs = require('fs')
+        const path = require('path')
+        const fullPath = path.join(process.cwd(), 'public', pdfPath.replace('/uploads/', 'uploads/'))
+        
+        if (fs.existsSync(fullPath)) {
+          attachments.push({
+            filename: `devis-${quote.reference}.pdf`,
+            content: fs.readFileSync(fullPath),
+          })
+          console.log('✅ PDF récupéré depuis le système de fichiers local')
+        } else {
+          console.warn('⚠️ Fichier PDF local non trouvé:', fullPath)
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la récupération du PDF:', error)
     }
   }
 

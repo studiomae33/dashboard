@@ -4,6 +4,7 @@ import { authOptions } from '@/auth.config'
 import { prisma } from '@/lib/prisma'
 import { writeFile } from 'fs/promises'
 import { join } from 'path'
+import { put } from '@vercel/blob'
 
 export async function GET(request: NextRequest) {
   try {
@@ -89,32 +90,41 @@ export async function POST(request: NextRequest) {
     let pdfPath = null
     
     if (pdfFile) {
-      const bytes = await pdfFile.arrayBuffer()
-      const buffer = Buffer.from(bytes)
-      
       // Créer un nom de fichier unique avec la référence saisie
       const fileName = `${reference.trim()}_${Date.now()}.pdf`
-      const filePath = join(process.cwd(), 'public', 'uploads', fileName)
-      
-      pdfPath = `/uploads/${fileName}`
       
       try {
-        // Créer le dossier uploads s'il n'existe pas
-        const fs = require('fs')
-        const uploadsDir = join(process.cwd(), 'public', 'uploads')
-        if (!fs.existsSync(uploadsDir)) {
-          fs.mkdirSync(uploadsDir, { recursive: true })
+        // En production, utiliser Vercel Blob
+        if (process.env.NODE_ENV === 'production' || process.env.VERCEL === '1') {
+          console.log('🔄 Upload vers Vercel Blob...')
+          const blob = await put(fileName, pdfFile, {
+            access: 'public',
+          })
+          pdfPath = blob.url
+          console.log('✅ PDF uploadé vers Vercel Blob:', blob.url)
+        } else {
+          // En développement, utiliser le système de fichiers local
+          const bytes = await pdfFile.arrayBuffer()
+          const buffer = Buffer.from(bytes)
+          const filePath = join(process.cwd(), 'public', 'uploads', fileName)
+          
+          // Créer le dossier uploads s'il n'existe pas
+          const fs = require('fs')
+          const uploadsDir = join(process.cwd(), 'public', 'uploads')
+          if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true })
+          }
+          
+          await writeFile(filePath, buffer)
+          pdfPath = `/uploads/${fileName}`
+          console.log('✅ PDF sauvegardé localement:', fileName)
         }
-        
-        await writeFile(filePath, buffer)
-        console.log('✅ Fichier PDF sauvegardé:', fileName)
       } catch (fileError) {
-        console.warn('⚠️ Impossible de sauvegarder le fichier (production Vercel):', fileError instanceof Error ? fileError.message : String(fileError))
-        // En production Vercel, on ne peut pas écrire de fichiers
-        pdfPath = `/temp/${fileName}` // Chemin temporaire pour éviter l'erreur
+        console.error('❌ Erreur upload PDF:', fileError)
+        throw new Error(`Impossible de sauvegarder le PDF: ${fileError instanceof Error ? fileError.message : String(fileError)}`)
       }
     } else {
-      console.log('ℹ️ Aucun PDF fourni - création du devis sans PDF (mode production)')
+      console.log('ℹ️ Aucun PDF fourni - création du devis sans PDF')
     }
 
     // Créer le devis avec le montant TTC
