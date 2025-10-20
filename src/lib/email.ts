@@ -5,8 +5,8 @@ import { generateValidationToken } from './token'
 // Initialize Resend only if API key is available
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
-// Mode développement - utiliser NODE_ENV pour détecter l'environnement
-const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'your-resend-api-key'
+// Mode développement - plus simple et fiable
+const isDevelopment = process.env.NODE_ENV === 'development'
 
 interface QuoteEmailData {
   quote: {
