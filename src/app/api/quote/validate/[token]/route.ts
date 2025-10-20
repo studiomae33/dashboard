@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyValidationToken } from '@/lib/token'
 import { prisma } from '@/lib/prisma'
+import { sendQuoteSignedSMS } from '@/lib/sms'
 
 export async function GET(
   request: NextRequest,
@@ -121,6 +122,37 @@ export async function POST(
         }),
       }
     })
+
+    // Envoyer les SMS de notification
+    try {
+      const clientName = quote.client.companyName || `${quote.client.firstName} ${quote.client.lastName}`
+      
+      const smsResults = await sendQuoteSignedSMS({
+        quoteReference: quote.reference,
+        clientName,
+        signedAt: new Date(),
+        signedIp: clientIp
+      })
+      
+      console.log('📱 Résultats envoi SMS:', smsResults)
+      
+      // Log de l'envoi SMS
+      await prisma.eventLog.create({
+        data: {
+          entityType: 'QUOTE',
+          entityId: quote.id,
+          action: 'SMS_SENT',
+          payload: JSON.stringify({ 
+            recipients: smsResults?.map(r => r.to) || [],
+            success: smsResults?.filter(r => r.success).length || 0,
+            total: smsResults?.length || 0
+          }),
+        }
+      })
+    } catch (smsError) {
+      console.error('❌ Erreur envoi SMS:', smsError)
+      // On ne fait pas échouer la validation si le SMS échoue
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {
