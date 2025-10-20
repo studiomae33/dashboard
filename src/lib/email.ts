@@ -5,9 +5,8 @@ import { generateValidationToken } from './token'
 // Initialize Resend only if API key is available
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
-// Mode développement - log les emails au lieu de les envoyer
-// En développement, on envoie les emails si on a une vraie clé API
-const isDevelopment = !process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'your-resend-api-key'
+// Mode développement - utiliser NODE_ENV pour détecter l'environnement
+const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'your-resend-api-key'
 
 interface QuoteEmailData {
   quote: {
@@ -481,7 +480,10 @@ export async function sendQuoteEmail(quoteId: string, pdfPath?: string) {
     hasAttachments: attachments.length > 0,
     attachmentCount: attachments.length,
     isDevelopment,
-    hasResend: !!resend
+    hasResend: !!resend,
+    NODE_ENV: process.env.NODE_ENV,
+    RESEND_API_KEY_EXISTS: !!process.env.RESEND_API_KEY,
+    RESEND_API_KEY_LENGTH: process.env.RESEND_API_KEY?.length
   })
 
   if (isDevelopment || !resend) {
@@ -610,7 +612,10 @@ export async function sendPaymentEmail(quoteId: string, invoiceRef: string, paym
     to: emailOptions.to,
     subject: emailOptions.subject,
     isDevelopment,
-    hasResend: !!resend
+    hasResend: !!resend,
+    NODE_ENV: process.env.NODE_ENV,
+    RESEND_API_KEY_EXISTS: !!process.env.RESEND_API_KEY,
+    RESEND_API_KEY_LENGTH: process.env.RESEND_API_KEY?.length
   })
 
   if (isDevelopment || !resend) {
