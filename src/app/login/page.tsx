@@ -93,11 +93,6 @@ export default function LoginPage() {
               {isLoading ? 'Connexion...' : 'Se connecter'}
             </Button>
           </form>
-          <div className="mt-6 text-center text-sm text-gray-500">
-            <p>Identifiants par défaut :</p>
-            <p>Email: admin@studiomae.fr</p>
-            <p>Mot de passe: admin123</p>
-          </div>
         </CardContent>
       </Card>
     </div>
