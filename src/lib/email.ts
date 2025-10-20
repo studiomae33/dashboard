@@ -37,7 +37,23 @@ export async function renderDevisEmailHTML(data: QuoteEmailData): Promise<string
   const { quote, client, settings } = data
   const clientName = client.companyName || `${client.firstName} ${client.lastName}`
   const validationToken = await generateValidationToken(quote.id)
-  const validationUrl = `${process.env.NEXTAUTH_URL}/quote/validate/${validationToken}`
+  
+  // S'assurer qu'on a une URL de base valide
+  let baseUrl = process.env.NEXTAUTH_URL
+  
+  if (!baseUrl) {
+    // Utiliser l'URL de production Vercel directement
+    baseUrl = 'https://dashboard-gamma-smoky-61.vercel.app'
+  }
+  
+  const validationUrl = `${baseUrl}/quote/validate/${validationToken}`
+  
+  console.log('🔗 Configuration URL:', {
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    VERCEL_URL: process.env.VERCEL_URL,
+    baseUrl,
+    validationUrl
+  })
 
   // Formatage des dates
   const startDate = new Intl.DateTimeFormat('fr-FR', {
