@@ -71,6 +71,7 @@ export default function ValidateQuotePage() {
 
   const handleValidateQuote = async () => {
     setValidating(true)
+    setError(null) // Reset error state
     try {
       const response = await fetch(`/api/quote/validate/${token}`, {
         method: 'POST'
@@ -79,15 +80,16 @@ export default function ValidateQuotePage() {
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || 'Erreur lors de la validation')
+        console.error('Erreur de validation:', data)
+        setError(data.error || `Erreur lors de la validation (${response.status})`)
         return
       }
 
       setValidated(true)
-      setQuote(prev => prev ? { ...prev, status: 'VALIDATED' } : null)
+      setQuote(prev => prev ? { ...prev, status: 'SIGNED' } : null)
     } catch (err) {
-      setError('Erreur de connexion')
-      console.error('Erreur:', err)
+      console.error('Erreur de connexion:', err)
+      setError('Erreur de connexion au serveur')
     } finally {
       setValidating(false)
     }

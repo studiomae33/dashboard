@@ -90,16 +90,23 @@ export async function POST(
       }
     })
 
-    // Créer la réservation
-    await prisma.booking.create({
-      data: {
-        quoteRequestId: quote.id,
-        start: quote.desiredStart,
-        end: quote.desiredEnd,
-        background: quote.background,
-        title: `${quote.client.companyName || `${quote.client.firstName} ${quote.client.lastName}`} - ${quote.background}`,
-      }
+    // Vérifier si une réservation existe déjà
+    const existingBooking = await prisma.booking.findUnique({
+      where: { quoteRequestId: quote.id }
     })
+
+    // Créer la réservation seulement si elle n'existe pas
+    if (!existingBooking) {
+      await prisma.booking.create({
+        data: {
+          quoteRequestId: quote.id,
+          start: quote.desiredStart,
+          end: quote.desiredEnd,
+          background: quote.background,
+          title: `${quote.client.companyName || `${quote.client.firstName} ${quote.client.lastName}`} - ${quote.background}`,
+        }
+      })
+    }
 
     // Log de l'événement
     await prisma.eventLog.create({
@@ -117,7 +124,18 @@ export async function POST(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Erreur validation devis:', error)
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
+    console.error('❌ ERREUR DÉTAILLÉE VALIDATION DEVIS:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      tokenParam: params.token,
+      timestamp: new Date().toISOString()
+    })
+    return NextResponse.json({ 
+      error: error instanceof Error ? error.message : 'Erreur serveur',
+      debug: {
+        timestamp: new Date().toISOString(),
+        token: params.token.substring(0, 20) + '...' // Partie du token pour debug
+      }
+    }, { status: 500 })
   }
 }
