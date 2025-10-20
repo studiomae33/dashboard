@@ -5,7 +5,7 @@ import { generateValidationToken } from './token'
 // Initialize Resend only if API key is available
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
-// Mode développement - plus simple et fiable
+// Mode développement - forcer l'envoi en production même sans clé API (pour debug)
 const isDevelopment = process.env.NODE_ENV === 'development'
 
 interface QuoteEmailData {
@@ -486,8 +486,8 @@ export async function sendQuoteEmail(quoteId: string, pdfPath?: string) {
     RESEND_API_KEY_LENGTH: process.env.RESEND_API_KEY?.length
   })
 
-  if (isDevelopment || !resend) {
-    // Mode développement ou pas de clé API - afficher l'email dans la console
+  if (isDevelopment) {
+    // Mode développement - afficher l'email dans la console
     console.log('\n=== EMAIL DE DEVIS (MODE DÉVELOPPEMENT) ===')
     console.log('De:', emailOptions.from)
     console.log('À:', emailOptions.to)
@@ -499,6 +499,15 @@ export async function sendQuoteEmail(quoteId: string, pdfPath?: string) {
     
     // Simuler une réponse réussie
     result = { data: { id: 'dev-' + Date.now() } }
+  } else if (!resend) {
+    // Production mais pas de clé API Resend
+    console.error('❌ ERREUR: Pas de clé API Resend en production!')
+    console.log('Variables d\'environnement:', {
+      NODE_ENV: process.env.NODE_ENV,
+      RESEND_API_KEY_EXISTS: !!process.env.RESEND_API_KEY,
+      RESEND_API_KEY_LENGTH: process.env.RESEND_API_KEY?.length
+    })
+    throw new Error('Configuration email manquante en production')
   } else {
     console.log('🚀 Envoi via Resend API...')
     result = await resend.emails.send(emailOptions)
@@ -618,8 +627,8 @@ export async function sendPaymentEmail(quoteId: string, invoiceRef: string, paym
     RESEND_API_KEY_LENGTH: process.env.RESEND_API_KEY?.length
   })
 
-  if (isDevelopment || !resend) {
-    // Mode développement ou pas de clé API - afficher l'email dans la console
+  if (isDevelopment) {
+    // Mode développement - afficher l'email dans la console
     console.log('\n=== EMAIL DE PAIEMENT (MODE DÉVELOPPEMENT) ===')
     console.log('De:', emailOptions.from)
     console.log('À:', emailOptions.to)
@@ -630,6 +639,10 @@ export async function sendPaymentEmail(quoteId: string, invoiceRef: string, paym
     
     // Simuler une réponse réussie
     result = { data: { id: 'dev-' + Date.now() } }
+  } else if (!resend) {
+    // Production mais pas de clé API Resend
+    console.error('❌ ERREUR: Pas de clé API Resend pour email de paiement!')
+    throw new Error('Configuration email manquante en production')
   } else {
     console.log('🚀 Envoi email de paiement via Resend API...')
     result = await resend.emails.send(emailOptions)
