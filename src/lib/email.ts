@@ -33,10 +33,10 @@ interface QuoteEmailData {
   }
 }
 
-export function renderDevisEmailHTML(data: QuoteEmailData): string {
+export async function renderDevisEmailHTML(data: QuoteEmailData): Promise<string> {
   const { quote, client, settings } = data
   const clientName = client.companyName || `${client.firstName} ${client.lastName}`
-  const validationToken = generateValidationToken(quote.id)
+  const validationToken = await generateValidationToken(quote.id)
   const validationUrl = `${process.env.NEXTAUTH_URL}/quote/validate/${validationToken}`
 
   // Formatage des dates
@@ -288,7 +288,7 @@ export async function sendQuoteEmail(quoteId: string, pdfPath?: string) {
     settings
   }
 
-  const htmlContent = renderDevisEmailHTML(emailData)
+  const htmlContent = await renderDevisEmailHTML(emailData)
 
   const attachments = []
   if (pdfPath) {

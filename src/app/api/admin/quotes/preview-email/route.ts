@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       settings
     }
 
-    const html = renderDevisEmailHTML(emailData)
+    const html = await renderDevisEmailHTML(emailData)
 
     return NextResponse.json({ html })
   } catch (error) {

@@ -149,6 +149,20 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // Créer automatiquement le booking associé dans le calendrier
+    const clientName = quote.client.companyName || `${quote.client.firstName} ${quote.client.lastName}`
+    const bookingTitle = `${clientName} - ${quote.reference}`
+    
+    await prisma.booking.create({
+      data: {
+        quoteRequestId: quote.id,
+        start: new Date(desiredStart),
+        end: new Date(desiredEnd),
+        background: background,
+        title: bookingTitle
+      }
+    })
+
     // Log de l'événement
     await prisma.eventLog.create({
       data: {
@@ -159,6 +173,21 @@ export async function POST(request: NextRequest) {
           reference: quote.reference, 
           clientId: quote.clientId,
           pdfPath: quote.pdfPath 
+        }),
+      }
+    })
+
+    // Log de la création du booking
+    await prisma.eventLog.create({
+      data: {
+        entityType: 'BOOKING',
+        entityId: quote.id,
+        action: 'CREATED',
+        payload: JSON.stringify({ 
+          quoteReference: quote.reference,
+          start: desiredStart,
+          end: desiredEnd,
+          title: bookingTitle
         }),
       }
     })

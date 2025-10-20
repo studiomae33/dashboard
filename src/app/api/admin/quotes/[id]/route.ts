@@ -84,19 +84,6 @@ export async function PATCH(
       }
     })
 
-    // Si le devis passe à SIGNED, créer une réservation
-    if (newStatus === 'SIGNED' && !quote.booking) {
-      await prisma.booking.create({
-        data: {
-          quoteRequestId: quote.id,
-          start: quote.desiredStart,
-          end: quote.desiredEnd,
-          background: quote.background,
-          title: `${quote.client.companyName || `${quote.client.firstName} ${quote.client.lastName}`} - ${quote.background}`,
-        }
-      })
-    }
-
     // Log de l'événement
     await prisma.eventLog.create({
       data: {
