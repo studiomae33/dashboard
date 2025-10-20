@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/badge'
 import { formatDate, formatCurrency } from '@/lib/utils'
+import { PaymentEmailModal } from '@/components/PaymentEmailModal'
+import { PaymentEmailSentModal } from '@/components/PaymentEmailSentModal'
 import Link from 'next/link'
 
 interface QuoteDetails {
@@ -54,6 +56,14 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
   const [quote, setQuote] = useState<QuoteDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false)
+  const [sendingPaymentEmail, setSendingPaymentEmail] = useState(false)
+  const [paymentEmailData, setPaymentEmailData] = useState<{
+    recipientEmail: string
+    quoteReference: string
+    invoiceRef: string
+  } | null>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -115,6 +125,49 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
     }
   }
 
+  async function sendPaymentEmail(invoiceRef: string, paymentDueDate?: string) {
+    if (!quote) return
+
+    setSendingPaymentEmail(true)
+    try {
+      const response = await fetch('/api/admin/quotes/send-payment-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quoteId: quote.id,
+          invoiceRef,
+          paymentDueDate,
+        }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        
+        // Mettre à jour le statut du devis
+        setQuote(prev => prev ? { ...prev, status: 'PAYMENT_PENDING' } : null)
+        
+        // Préparer les données pour la modal de confirmation
+        setPaymentEmailData({
+          recipientEmail: result.recipientEmail,
+          quoteReference: result.quoteReference,
+          invoiceRef,
+        })
+        
+        // Fermer la modal de saisie et ouvrir la modal de confirmation
+        setShowPaymentModal(false)
+        setShowPaymentSentModal(true)
+      } else {
+        const error = await response.json()
+        alert(`Erreur: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi:', error)
+      alert('Erreur lors de l\'envoi de l\'email de paiement')
+    } finally {
+      setSendingPaymentEmail(false)
+    }
+  }
+
   if (status === 'loading' || loading) {
     return (
       <AdminLayout>
@@ -137,7 +190,8 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
 
   const canSend = quote.status === 'READY'
   const canSign = quote.status === 'SENT'
-  const canMarkPaid = quote.status === 'SIGNED'
+  const canSendPaymentEmail = quote.status === 'SIGNED'
+  const canMarkPaid = quote.status === 'PAYMENT_PENDING'
   const canInvoice = quote.status === 'PAID'
 
   return (
@@ -334,6 +388,16 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                   </Button>
                 )}
 
+                {canSendPaymentEmail && (
+                  <Button
+                    onClick={() => setShowPaymentModal(true)}
+                    disabled={updating}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    💳 Envoyer mail paiement
+                  </Button>
+                )}
+
                 {canMarkPaid && (
                   <Button
                     onClick={() => updateStatus('PAID')}
@@ -421,6 +485,32 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
             )}
           </div>
         </div>
+
+        {/* Modales pour l'email de paiement */}
+        {quote && (
+          <>
+            <PaymentEmailModal
+              isOpen={showPaymentModal}
+              onClose={() => setShowPaymentModal(false)}
+              onSend={sendPaymentEmail}
+              isLoading={sendingPaymentEmail}
+              quoteReference={quote.reference}
+            />
+
+            {paymentEmailData && (
+              <PaymentEmailSentModal
+                isOpen={showPaymentSentModal}
+                onClose={() => {
+                  setShowPaymentSentModal(false)
+                  setPaymentEmailData(null)
+                }}
+                recipientEmail={paymentEmailData.recipientEmail}
+                quoteReference={paymentEmailData.quoteReference}
+                invoiceRef={paymentEmailData.invoiceRef}
+              />
+            )}
+          </>
+        )}
       </div>
     </AdminLayout>
   )

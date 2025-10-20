@@ -17,6 +17,7 @@ interface QuoteEmailData {
     desiredEnd: Date
     background: string
     message?: string | null
+    amountTTC?: number | null
   }
   client: {
     firstName: string
@@ -85,7 +86,7 @@ export async function renderDevisEmailHTML(data: QuoteEmailData): Promise<string
         <tbody>
             <tr>
                 <td style="background-color: #060c20 !important; padding: 20px; text-align: center;">
-                    <img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio">
+                    <img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio" width="100" height="auto">
                 </td>
             </tr>
             <tr>
@@ -280,6 +281,122 @@ export function renderFactureEmailHTML(data: QuoteEmailData & {
 </html>`
 }
 
+export function renderPaymentEmailHTML(data: QuoteEmailData & { 
+  invoiceRef: string
+  paymentDueDate?: string
+}): string {
+  const { quote, client, settings, invoiceRef, paymentDueDate } = data
+  const clientName = client.companyName || `${client.firstName} ${client.lastName}`
+  
+  // Formatage des dates
+  const startDate = new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }).format(quote.desiredStart)
+
+  const startTime = new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(quote.desiredStart)
+
+  const endTime = new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(quote.desiredEnd)
+
+  const amountFormatted = quote.amountTTC 
+    ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(quote.amountTTC)
+    : '450,00 €'
+
+  return `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructions de paiement - ${settings.studioName}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8f9fa;">
+    <table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333;">
+        <tbody>
+            <tr>
+                <td style="background-color: #080e28; padding: 20px; text-align: center;">
+                    <img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio" width="100" height="auto">
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 20px;">
+                    <h2 style="margin-top: 0; color: #080e28;">Bonjour,</h2>
+                    <p>Merci pour la validation de votre devis.<br>Voici les informations de paiement pour finaliser votre réservation au studio :</p>
+                    
+                    <p><strong>💰 Montant à régler :</strong> ${amountFormatted} TTC</p>
+                    
+                    ${paymentDueDate ? `
+                    <div style="background: #fff3cd; padding: 12px; border-left: 4px solid #ffc107; margin: 20px 0;">
+                        <p style="margin: 0;">⚠️ <strong>Merci de procéder au paiement <u>au plus tard le ${paymentDueDate}.</u></strong><br>La facture définitive vous sera transmise après votre passage au studio.</p>
+                    </div>
+                    ` : ''}
+                    
+                    <div style="background: #f1f1f1; padding: 12px; border-left: 4px solid #3853ea; margin: 25px 0;">
+                        <p style="margin: 0;">
+                            <strong>📅 Séance :</strong> ${startDate} – ${startTime} à ${endTime}<br>
+                            <strong>🎨 Fond(s) utilisé(s) :</strong> ${quote.background}<br>
+                            <strong>📄 Réf. devis :</strong> ${quote.reference}
+                        </p>
+                    </div>
+                    
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 25px 0;">
+                    
+                    <h3 style="color: #080e28;">💳 Paiement par virement bancaire</h3>
+                    <table style="border: 1px solid #e0e0e0; padding: 10px; margin: 10px 0; width: 100%;">
+                        <tbody>
+                            <tr>
+                                <td style="padding: 5px;"><strong>Bénéficiaire :</strong></td>
+                                <td style="padding: 5px;">BIPELEC</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px;"><strong>IBAN :</strong></td>
+                                <td style="padding: 5px;">FR76 1870 6000 0097 5066 6969 792</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px;"><strong>BIC :</strong></td>
+                                <td style="padding: 5px;">AGRIFRPP887</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px;"><strong>Objet :</strong></td>
+                                <td style="padding: 5px;">${invoiceRef}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="margin: 10px 0 25px;"><em>Merci d'indiquer la référence en objet du virement pour un traitement rapide.</em></p>
+                    
+                    <div style="background: #e8f4ff; padding: 12px; border-left: 4px solid #3853ea; margin: 20px 0;">
+                        <p style="margin: 0;">📧 Merci de bien vouloir <strong>envoyer la preuve de virement en réponse à cet email</strong> afin de valider définitivement votre réservation.</p>
+                    </div>
+                    
+                    <p style="margin-top: 20px;">✅ Le paiement fait office de confirmation définitive de votre réservation.</p>
+                    
+                    <p style="margin-top: 20px;">❓ Une question ? Écrivez-nous à <a href="mailto:${settings.studioEmail}">${settings.studioEmail}</a> ou appelez-nous au ${settings.studioPhone}.</p>
+                    
+                    <p>Nous restons disponibles si vous avez la moindre question.</p>
+                    <p style="margin-bottom: 0;">À très bientôt,</p>
+                    <p style="margin-top: 5px;">L'équipe Studio MAE</p>
+                </td>
+            </tr>
+            <tr>
+                <td style="background: #f9f9f9; padding: 15px; font-size: 12px; text-align: center; color: #777;">
+                    Studio MAE – 46 rue Promis, 33100 Bordeaux<br>
+                    📞 ${settings.studioPhone} – 📧 ${settings.studioEmail}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>`
+}
+
 export async function sendQuoteEmail(quoteId: string, pdfPath?: string) {
   const quote = await prisma.quoteRequest.findUnique({
     where: { id: quoteId },
@@ -449,4 +566,94 @@ export async function sendQuoteEmail(quoteId: string, pdfPath?: string) {
   }
 
   return result
+}
+
+export async function sendPaymentEmail(quoteId: string, invoiceRef: string, paymentDueDate?: string) {
+  const quote = await prisma.quoteRequest.findUnique({
+    where: { id: quoteId },
+    include: { client: true }
+  })
+
+  if (!quote) {
+    throw new Error('Devis non trouvé')
+  }
+
+  const settings = await prisma.settings.findUnique({
+    where: { id: 'singleton' }
+  })
+
+  if (!settings) {
+    throw new Error('Configuration manquante')
+  }
+
+  const emailData = {
+    quote,
+    client: quote.client,
+    settings,
+    invoiceRef,
+    paymentDueDate
+  }
+
+  const htmlContent = renderPaymentEmailHTML(emailData)
+
+  const emailOptions: any = {
+    from: `${settings.studioName} <${settings.senderEmail}>`,
+    to: quote.client.email,
+    subject: `Instructions de paiement - Devis ${quote.reference} - ${settings.studioName}`,
+    html: htmlContent,
+  }
+
+  let result
+  
+  console.log('📧 Préparation envoi email de paiement:', {
+    from: emailOptions.from,
+    to: emailOptions.to,
+    subject: emailOptions.subject,
+    isDevelopment,
+    hasResend: !!resend
+  })
+
+  if (isDevelopment || !resend) {
+    // Mode développement ou pas de clé API - afficher l'email dans la console
+    console.log('\n=== EMAIL DE PAIEMENT (MODE DÉVELOPPEMENT) ===')
+    console.log('De:', emailOptions.from)
+    console.log('À:', emailOptions.to)
+    console.log('Sujet:', emailOptions.subject)
+    console.log('HTML Content:')
+    console.log(htmlContent.substring(0, 500) + '...')
+    console.log('===========================================\n')
+    
+    // Simuler une réponse réussie
+    result = { data: { id: 'dev-' + Date.now() } }
+  } else {
+    console.log('🚀 Envoi email de paiement via Resend API...')
+    result = await resend.emails.send(emailOptions)
+    console.log('✅ Réponse Resend:', result)
+  }
+
+  // Mettre à jour le statut du devis pour indiquer qu'un email de paiement a été envoyé
+  await prisma.quoteRequest.update({
+    where: { id: quoteId },
+    data: {
+      status: 'PAYMENT_PENDING', // Nouveau statut
+    }
+  })
+
+  // Log de l'événement
+  await prisma.eventLog.create({
+    data: {
+      entityType: 'QUOTE',
+      entityId: quoteId,
+      action: 'PAYMENT_EMAIL_SENT',
+      payload: JSON.stringify({ 
+        invoiceRef,
+        paymentDueDate,
+        sentAt: new Date().toISOString(),
+        recipientEmail: quote.client.email
+      }),
+    }
+  })
+
+  console.log('✅ Email de paiement envoyé avec succès')
+  return result?.data || { id: 'fallback-' + Date.now() }
 }

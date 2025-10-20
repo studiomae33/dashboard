@@ -38,6 +38,7 @@ const statusFilters = [
   { value: 'READY', label: 'Prêt' },
   { value: 'SENT', label: 'Envoyé' },
   { value: 'SIGNED', label: 'Signé' },
+  { value: 'PAYMENT_PENDING', label: 'Paiement demandé' },
   { value: 'INVOICED', label: 'Facturé' },
   { value: 'CANCELED', label: 'Annulé' },
 ]
