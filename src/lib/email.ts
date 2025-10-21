@@ -590,82 +590,388 @@ export function renderPaymentEmailHTML(data: QuoteEmailData & {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instructions de paiement - ${settings.studioName}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            background-color: #f7fafc;
+        }
+        
+        .email-container {
+            max-width: 640px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #48bb78, #38b2ac, #4299e1);
+        }
+        
+        .logo {
+            max-width: 120px;
+            height: auto;
+            filter: brightness(1.1);
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .greeting {
+            font-size: 28px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 24px;
+        }
+        
+        .intro-text {
+            font-size: 16px;
+            color: #4a5568;
+            margin-bottom: 32px;
+            line-height: 1.7;
+        }
+        
+        .payment-amount {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 32px 0;
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
+        }
+        
+        .payment-amount .label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        
+        .payment-amount .amount {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .warning-box {
+            background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+            border: 1px solid #fc8181;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+        
+        .warning-box p {
+            margin: 0;
+            color: #c53030;
+            font-weight: 500;
+        }
+        
+        .rental-details {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+        }
+        
+        .rental-details h3 {
+            color: #2d3748;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            font-weight: 500;
+            color: #4a5568;
+        }
+        
+        .detail-value {
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        .bank-info {
+            background: #ffffff;
+            border: 2px solid #4299e1;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+        }
+        
+        .bank-info h3 {
+            color: #2d3748;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .bank-details {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+        
+        .bank-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+        
+        .bank-label {
+            font-weight: 500;
+            color: #4a5568;
+            min-width: 120px;
+        }
+        
+        .bank-value {
+            font-weight: 600;
+            color: #2d3748;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+            border: 1px solid #38b2ac;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+        }
+        
+        .highlight-box h4 {
+            color: #234e52;
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+        
+        .highlight-box p {
+            color: #2c7a7b;
+            margin: 0;
+            font-weight: 500;
+        }
+        
+        .action-box {
+            background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+            border: 1px solid #4299e1;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+            text-align: center;
+        }
+        
+        .action-box h4 {
+            color: #2b6cb0;
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+        
+        .action-box p {
+            color: #2c5282;
+            margin: 8px 0;
+            font-weight: 500;
+        }
+        
+        .contact-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 24px 0;
+            text-align: center;
+        }
+        
+        .contact-info p {
+            margin: 8px 0;
+            color: #4a5568;
+        }
+        
+        .footer {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .footer p {
+            margin: 4px 0;
+            opacity: 0.9;
+        }
+        
+        a {
+            color: #4299e1;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8f9fa;">
-    <table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333;">
-        <tbody>
-            <tr>
-                <td style="background-color: #080e28; padding: 20px; text-align: center;">
-                    <img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio" width="100" height="auto">
-                </td>
-            </tr>
-            <tr>
-                <td style="padding: 20px;">
-                    <h2 style="margin-top: 0; color: #080e28;">Bonjour,</h2>
-                    <p>Merci pour la validation de votre devis.<br>Voici les informations de paiement pour finaliser votre réservation au studio :</p>
-                    
-                    <p><strong>💰 Montant à régler :</strong> ${amountFormatted} TTC</p>
-                    
-                    ${paymentDueDate ? `
-                    <div style="background: #fff3cd; padding: 12px; border-left: 4px solid #ffc107; margin: 20px 0;">
-                        <p style="margin: 0;">⚠️ <strong>Merci de procéder au paiement <u>au plus tard le ${paymentDueDate}.</u></strong><br>La facture définitive vous sera transmise après votre passage au studio.</p>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <img class="logo" src="https://www.studiomae.fr/images/logo_mail.png" alt="Studio MAE" width="120" height="60" />
+        </div>
+        
+        <div class="content">
+            <h1 class="greeting">Instructions de paiement</h1>
+            
+            <p class="intro-text">
+                Bonjour <strong>${clientName}</strong>,<br><br>
+                Merci d'avoir validé votre devis ! Pour finaliser votre réservation au studio, 
+                voici les informations nécessaires pour effectuer votre paiement.
+            </p>
+            
+            <div class="payment-amount">
+                <div class="label">Montant à régler</div>
+                <div class="amount">${amountFormatted}</div>
+            </div>
+            
+            ${paymentDueDate ? `
+            <div class="warning-box">
+                <p><strong>⚠️ Date limite de paiement : ${paymentDueDate}</strong></p>
+                <p style="margin-top: 8px; font-weight: normal;">
+                    Merci de procéder au paiement avant cette date pour confirmer votre réservation.
+                </p>
+            </div>
+            ` : ''}
+            
+            <div class="rental-details">
+                <h3>📅 Détails de votre réservation</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Date et horaires</span>
+                    <span class="detail-value">${startDate}<br>${startTime} - ${endTime}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Type de fond</span>
+                    <span class="detail-value">${quote.background}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Référence devis</span>
+                    <span class="detail-value">${quote.reference}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Référence facture</span>
+                    <span class="detail-value">${invoiceRef}</span>
+                </div>
+            </div>
+            
+            <div class="bank-info">
+                <h3>💳 Informations bancaires</h3>
+                <p style="color: #4a5568; margin-bottom: 16px;">
+                    Effectuez votre virement bancaire avec les informations suivantes :
+                </p>
+                
+                <div class="bank-details">
+                    <div class="bank-row">
+                        <span class="bank-label">Bénéficiaire</span>
+                        <span class="bank-value">BIPELEC</span>
                     </div>
-                    ` : ''}
-                    
-                    <div style="background: #f1f1f1; padding: 12px; border-left: 4px solid #3853ea; margin: 25px 0;">
-                        <p style="margin: 0;">
-                            <strong>📅 Séance :</strong> ${startDate} – ${startTime} à ${endTime}<br>
-                            <strong>🎨 Fond(s) utilisé(s) :</strong> ${quote.background}<br>
-                            <strong>📄 Réf. devis :</strong> ${quote.reference}
-                        </p>
+                    <div class="bank-row">
+                        <span class="bank-label">IBAN</span>
+                        <span class="bank-value">FR76 1870 6000 0097 5066 6969 792</span>
                     </div>
-                    
-                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 25px 0;">
-                    
-                    <h3 style="color: #080e28;">💳 Paiement par virement bancaire</h3>
-                    <table style="border: 1px solid #e0e0e0; padding: 10px; margin: 10px 0; width: 100%;">
-                        <tbody>
-                            <tr>
-                                <td style="padding: 5px;"><strong>Bénéficiaire :</strong></td>
-                                <td style="padding: 5px;">BIPELEC</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 5px;"><strong>IBAN :</strong></td>
-                                <td style="padding: 5px;">FR76 1870 6000 0097 5066 6969 792</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 5px;"><strong>BIC :</strong></td>
-                                <td style="padding: 5px;">AGRIFRPP887</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 5px;"><strong>Objet :</strong></td>
-                                <td style="padding: 5px;">${invoiceRef}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <p style="margin: 10px 0 25px;"><em>Merci d'indiquer la référence en objet du virement pour un traitement rapide.</em></p>
-                    
-                    <div style="background: #e8f4ff; padding: 12px; border-left: 4px solid #3853ea; margin: 20px 0;">
-                        <p style="margin: 0;">📧 Merci de bien vouloir <strong>envoyer la preuve de virement en réponse à cet email</strong> afin de valider définitivement votre réservation.</p>
+                    <div class="bank-row">
+                        <span class="bank-label">BIC</span>
+                        <span class="bank-value">AGRIFRPP887</span>
                     </div>
-                    
-                    <p style="margin-top: 20px;">✅ Le paiement fait office de confirmation définitive de votre réservation.</p>
-                    
-                    <p style="margin-top: 20px;">❓ Une question ? Écrivez-nous à <a href="mailto:${settings.studioEmail}">${settings.studioEmail}</a> ou appelez-nous au ${settings.studioPhone}.</p>
-                    
-                    <p>Nous restons disponibles si vous avez la moindre question.</p>
-                    <p style="margin-bottom: 0;">À très bientôt,</p>
-                    <p style="margin-top: 5px;">L'équipe Studio MAE</p>
-                </td>
-            </tr>
-            <tr>
-                <td style="background: #f9f9f9; padding: 15px; font-size: 12px; text-align: center; color: #777;">
-                    Studio MAE – 46 rue Promis, 33100 Bordeaux<br>
-                    📞 ${settings.studioPhone} – 📧 ${settings.studioEmail}
-                </td>
-            </tr>
-        </tbody>
-    </table>
+                    <div class="bank-row">
+                        <span class="bank-label"><strong>Objet du virement</strong></span>
+                        <span class="bank-value"><strong>${invoiceRef}</strong></span>
+                    </div>
+                </div>
+                
+                <p style="color: #4a5568; font-style: italic; margin-top: 12px;">
+                    ⚠️ <strong>Important :</strong> Merci d'indiquer exactement la référence "${invoiceRef}" 
+                    en objet du virement pour un traitement rapide de votre paiement.
+                </p>
+            </div>
+            
+            <div class="action-box">
+                <h4>📧 Confirmation de paiement</h4>
+                <p><strong>Merci de nous envoyer une preuve de votre virement</strong></p>
+                <p>Répondez à cet email en joignant :</p>
+                <p>• Une capture d'écran de votre virement<br>
+                • Ou un email de confirmation de votre banque<br>
+                • Ou tout autre justificatif de paiement</p>
+            </div>
+            
+            <div class="highlight-box">
+                <h4>✅ Confirmation de réservation</h4>
+                <p>
+                    Votre réservation sera définitivement confirmée dès réception de votre paiement 
+                    et de votre justificatif. Vous recevrez alors une confirmation finale par email.
+                </p>
+            </div>
+            
+            <div class="contact-info">
+                <p><strong>Une question ?</strong></p>
+                <p>📧 Écrivez-nous : <a href="mailto:${settings.studioEmail}">${settings.studioEmail}</a></p>
+                <p>📞 Appelez-nous : ${settings.studioPhone}</p>
+                <p style="margin-top: 16px;">
+                    Nous restons à votre disposition pour toute information complémentaire.
+                </p>
+            </div>
+            
+            <p style="margin-top: 32px; text-align: center; color: #4a5568;">
+                À très bientôt au studio !<br>
+                <strong>L'équipe ${settings.studioName}</strong>
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>${settings.studioName}</strong></p>
+            <p>${settings.studioAddress}</p>
+            <p>📞 ${settings.studioPhone} • 📧 ${settings.studioEmail}</p>
+        </div>
+    </div>
 </body>
 </html>`
 }
