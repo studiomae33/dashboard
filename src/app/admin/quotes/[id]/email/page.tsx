@@ -19,6 +19,7 @@ interface QuoteDetails {
   background: string
   message?: string
   pdfPath?: string
+  amountTTC?: number
   client: {
     firstName: string
     lastName: string
@@ -35,6 +36,7 @@ export default function QuoteEmailPage({ params }: { params: { id: string } }) {
   const [sending, setSending] = useState(false)
   const [emailPreview, setEmailPreview] = useState('')
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [previewLoading, setPreviewLoading] = useState(false)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -74,6 +76,7 @@ export default function QuoteEmailPage({ params }: { params: { id: string } }) {
   }
 
   async function generateEmailPreview(quoteData: QuoteDetails) {
+    setPreviewLoading(true)
     try {
       const response = await fetch('/api/admin/quotes/preview-email', {
         method: 'POST',
@@ -88,9 +91,13 @@ export default function QuoteEmailPage({ params }: { params: { id: string } }) {
       if (response.ok) {
         const { html } = await response.json()
         setEmailPreview(html)
+      } else {
+        console.error('Erreur lors de la génération de l\'aperçu')
       }
     } catch (error) {
       console.error('Erreur lors de la génération de l\'aperçu:', error)
+    } finally {
+      setPreviewLoading(false)
     }
   }
 
@@ -171,97 +178,186 @@ export default function QuoteEmailPage({ params }: { params: { id: string } }) {
 
   return (
     <AdminLayout>
-      <div className="p-6">
+      <div className="p-6 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
-            <Link href={`/admin/quotes/${quote.id}`} className="text-blue-600 hover:text-blue-800 mr-4">
+            <Link 
+              href={`/admin/quotes/${quote.id}`} 
+              className="text-blue-600 hover:text-blue-800 mr-4 flex items-center"
+            >
               ← Retour au devis
             </Link>
             <div>
               <h1 className="text-2xl font-semibold text-gray-900">
                 Aperçu avant envoi - Devis {quote.reference}
               </h1>
-              <p className="text-gray-600">
-                À : {quote.client.email}
+              <p className="text-gray-600 flex items-center mt-1">
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs mr-2">
+                  📧 {quote.client.email}
+                </span>
+                <span className="text-sm">
+                  {quote.client.companyName || `${quote.client.firstName} ${quote.client.lastName}`}
+                </span>
               </p>
             </div>
           </div>
+          
+          {/* Bouton d'envoi en haut */}
+          <div className="flex gap-3">
+            <Link href={`/admin/quotes/${quote.id}`}>
+              <Button variant="outline">
+                Annuler
+              </Button>
+            </Link>
+            <Button 
+              onClick={handleSendEmail} 
+              disabled={sending || !emailPreview || previewLoading}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {sending ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                  Envoi...
+                </>
+              ) : (
+                <>
+                  ✅ Envoyer l'email
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           {/* Aperçu de l'email */}
-          <div className="lg:col-span-3">
-            <Card>
+          <div className="xl:col-span-3">
+            <Card className="h-fit">
               <CardHeader>
-                <CardTitle>📧 Aperçu de l'email qui sera envoyé</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  <span>📧 Aperçu de l'email</span>
+                  {previewLoading && (
+                    <span className="text-sm text-gray-500 animate-pulse">
+                      Génération en cours...
+                    </span>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {emailPreview ? (
-                  <div className="border rounded-lg p-4 bg-gray-50 max-h-[600px] overflow-y-auto">
-                    <div dangerouslySetInnerHTML={{ __html: emailPreview }} />
+                  <div className="bg-gray-100 p-4 rounded-lg">
+                    {/* Iframe pour isoler les styles de l'email */}
+                    <iframe
+                      srcDoc={emailPreview}
+                      className="w-full h-[700px] border-0 rounded-lg bg-white"
+                      title="Aperçu de l'email"
+                      sandbox="allow-same-origin"
+                      style={{
+                        maxWidth: '100%',
+                        border: '1px solid #e5e7eb'
+                      }}
+                    />
+                  </div>
+                ) : previewLoading ? (
+                  <div className="p-8 text-center">
+                    <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p className="text-gray-500">Génération de l'aperçu en cours...</p>
                   </div>
                 ) : (
-                  <div className="p-8 text-center text-gray-500">
-                    Génération de l'aperçu en cours...
+                  <div className="p-8 text-center text-red-500">
+                    <p>❌ Erreur lors de la génération de l'aperçu</p>
+                    <Button 
+                      onClick={() => generateEmailPreview(quote)} 
+                      variant="outline" 
+                      className="mt-4"
+                    >
+                      🔄 Réessayer
+                    </Button>
                   </div>
                 )}
               </CardContent>
             </Card>
 
             {/* Actions */}
-            <div className="mt-6 flex space-x-4">
+            <div className="mt-6 flex flex-col sm:flex-row gap-4">
               <Button 
                 onClick={handleSendEmail} 
-                disabled={sending || !emailPreview}
-                className="bg-green-600 hover:bg-green-700"
+                disabled={sending || !emailPreview || previewLoading}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 text-lg"
+                size="lg"
               >
-                {sending ? '📤 Envoi en cours...' : '✅ Confirmer et envoyer l\'email'}
+                {sending ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                    Envoi en cours...
+                  </>
+                ) : (
+                  <>
+                    ✅ Confirmer et envoyer l'email
+                  </>
+                )}
               </Button>
               <Link href={`/admin/quotes/${quote.id}`}>
-                <Button variant="outline">
+                <Button variant="outline" size="lg" className="px-6 py-3">
                   ❌ Annuler
                 </Button>
               </Link>
             </div>
           </div>
 
-          {/* Informations du devis et PDF */}
+          {/* Sidebar avec les informations */}
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Informations du devis</CardTitle>
+                <CardTitle>📋 Résumé du devis</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Référence</label>
-                  <p className="text-sm text-gray-900">{quote.reference}</p>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">Référence</span>
+                  <span className="font-mono text-sm font-medium bg-gray-100 px-2 py-1 rounded">
+                    {quote.reference}
+                  </span>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Client</label>
-                  <p className="text-sm text-gray-900">
-                    {quote.client.companyName || `${quote.client.firstName} ${quote.client.lastName}`}
-                  </p>
+                
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">Client</span>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">
+                      {quote.client.companyName || `${quote.client.firstName} ${quote.client.lastName}`}
+                    </p>
+                    <p className="text-xs text-gray-500">{quote.client.email}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Email</label>
-                  <p className="text-sm text-gray-900">{quote.client.email}</p>
+                
+                <div className="flex items-start justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">Séance</span>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">
+                      {formatDateTime(quote.desiredStart)}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Fin prévue à {formatTime(quote.desiredEnd)}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Période demandée</label>
-                  <p className="text-sm text-gray-900">
-                    {formatDateTime(quote.desiredStart)} 
-                    <br />
-                    jusqu'à {formatTime(quote.desiredEnd)}
-                  </p>
+                
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">Configuration</span>
+                  <span className="text-sm font-medium">{quote.background}</span>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Espace(s)</label>
-                  <p className="text-sm text-gray-900">{quote.background}</p>
-                </div>
+
+                {quote.amountTTC && (
+                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span className="text-sm text-gray-600">Tarif</span>
+                    <span className="text-lg font-semibold text-green-600">
+                      {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(quote.amountTTC)}
+                    </span>
+                  </div>
+                )}
+
                 {quote.message && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Besoins spécifiques</label>
-                    <p className="text-sm text-gray-900 mt-1 p-2 bg-gray-50 rounded text-xs">
+                  <div className="pt-3 mt-3 border-t border-gray-100">
+                    <p className="text-xs text-gray-500 mb-2">Besoins spécifiques :</p>
+                    <p className="text-sm text-gray-700 bg-blue-50 p-3 rounded-lg border-l-3 border-blue-300">
                       {quote.message}
                     </p>
                   </div>
@@ -272,12 +368,12 @@ export default function QuoteEmailPage({ params }: { params: { id: string } }) {
             {quote.pdfPath && (
               <Card>
                 <CardHeader>
-                  <CardTitle>📄 PDF du devis</CardTitle>
+                  <CardTitle>📄 Document PDF</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     <p className="text-sm text-gray-600">
-                      Le PDF sera joint à l'email
+                      Le PDF sera automatiquement joint à l'email
                     </p>
                     <a 
                       href={quote.pdfPath} 
@@ -286,28 +382,13 @@ export default function QuoteEmailPage({ params }: { params: { id: string } }) {
                       className="block"
                     >
                       <Button variant="outline" className="w-full">
-                        👁️ Voir le PDF
+                        👁️ Prévisualiser le PDF
                       </Button>
                     </a>
                   </div>
                 </CardContent>
               </Card>
             )}
-
-            <Card>
-              <CardHeader>
-                <CardTitle>⚠️ Ce qui va se passer</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm text-gray-600 space-y-2">
-                  <p>✉️ Email formaté avec le template Studio MAE</p>
-                  <p>📎 PDF du devis joint</p>
-                  <p>🔗 Lien de validation automatique inclus</p>
-                  <p>📤 Statut du devis → "Envoyé"</p>
-                  <p>📧 Email envoyé à : {quote.client.email}</p>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
 
