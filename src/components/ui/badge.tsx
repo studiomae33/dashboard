@@ -29,13 +29,12 @@ interface StatusBadgeProps {
 function StatusBadge({ status }: StatusBadgeProps) {
   const config = {
     DRAFT: { label: 'Brouillon', variant: 'secondary' as const },
-    READY: { label: 'Prêt', variant: 'default' as const },
-    SENT: { label: 'Envoyé', variant: 'default' as const },
-    SIGNED: { label: 'Signé', variant: 'default' as const },
-    PAYMENT_PENDING: { label: 'Paiement demandé', variant: 'default' as const },
-    PAID: { label: 'Réglé', variant: 'default' as const },
-    INVOICED: { label: 'Facturé', variant: 'default' as const },
-    CANCELED: { label: 'Annulé', variant: 'destructive' as const },
+    READY: { label: 'Prêt', variant: 'outline' as const },
+    SENT: { label: 'Envoyé', variant: 'outline' as const },
+    SIGNED: { label: 'Signé', variant: 'secondary' as const },
+    PAYMENT_PENDING: { label: 'Paiement demandé', variant: 'secondary' as const },
+    PAID: { label: 'Réglé', variant: 'secondary' as const },
+    INVOICED: { label: 'Facturé', variant: 'secondary' as const },
   }
 
   const { label, variant } = config[status as keyof typeof config] || { label: status, variant: 'secondary' as const }

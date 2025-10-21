@@ -375,109 +375,118 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
               <CardHeader>
                 <CardTitle>Actions</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {quote.status === 'DRAFT' && (
-                  <Button
-                    onClick={() => updateStatus('READY')}
-                    disabled={updating}
-                    className="w-full"
-                  >
-                    ✅ Marquer comme prêt
-                  </Button>
-                )}
-                
-                {quote.status === 'READY' && quote.pdfPath && (
-                  <Link href={`/admin/quotes/${quote.id}/email`} className="block">
-                    <Button className="w-full">
-                      📧 Envoyer le devis par email
+              <CardContent className="space-y-4">
+                {/* Actions principales */}
+                <div className="space-y-2">
+                  {quote.status === 'DRAFT' && (
+                    <Button
+                      onClick={() => updateStatus('READY')}
+                      disabled={updating}
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <span className="mr-2">✅</span>
+                      Marquer comme prêt
                     </Button>
-                  </Link>
-                )}
+                  )}
+                  
+                  {quote.status === 'READY' && quote.pdfPath && (
+                    <Link href={`/admin/quotes/${quote.id}/email`} className="block">
+                      <Button variant="outline" className="w-full justify-start">
+                        <span className="mr-2">📧</span>
+                        Envoyer le devis par email
+                      </Button>
+                    </Link>
+                  )}
 
-                {quote.pdfPath && (
-                  <a 
-                    href={quote.pdfPath} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="block"
-                  >
-                    <Button variant="outline" className="w-full">
-                      📄 Voir le PDF
+                  {canSign && (
+                    <Button
+                      onClick={() => updateStatus('SIGNED', { signedAt: new Date().toISOString() })}
+                      disabled={updating}
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <span className="mr-2">✍️</span>
+                      Marquer comme signé
                     </Button>
-                  </a>
-                )}
+                  )}
 
-                {canSign && (
-                  <Button
-                    onClick={() => updateStatus('SIGNED', { signedAt: new Date().toISOString() })}
-                    disabled={updating}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    ✍️ Marquer comme signé
-                  </Button>
-                )}
+                  {canSendPaymentEmail && (
+                    <Button
+                      onClick={() => setShowPaymentModal(true)}
+                      disabled={updating}
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <span className="mr-2">💳</span>
+                      Demander le paiement
+                    </Button>
+                  )}
 
-                {canSendPaymentEmail && (
-                  <Button
-                    onClick={() => setShowPaymentModal(true)}
-                    disabled={updating}
-                    className="w-full bg-green-600 hover:bg-green-700"
-                  >
-                    💳 Envoyer mail paiement
-                  </Button>
-                )}
+                  {canMarkPaid && (
+                    <Button
+                      onClick={() => updateStatus('PAID')}
+                      disabled={updating}
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <span className="mr-2">💰</span>
+                      Paiement reçu
+                    </Button>
+                  )}
 
-                {canMarkPaid && (
-                  <Button
-                    onClick={() => updateStatus('PAID')}
-                    disabled={updating}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    💰 Paiement reçu
-                  </Button>
-                )}
+                  {canInvoice && (
+                    <Button
+                      onClick={() => {
+                        const invoiceRef = prompt('Référence de la facture:')
+                        const amount = prompt('Montant TTC (€):')
+                        if (invoiceRef && amount) {
+                          updateStatus('INVOICED', {
+                            invoiceRef,
+                            invoiceAmountTTC: parseFloat(amount)
+                          })
+                        }
+                      }}
+                      disabled={updating}
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <span className="mr-2">📄</span>
+                      Marquer comme facturé
+                    </Button>
+                  )}
+                </div>
 
-                {canInvoice && (
-                  <Button
-                    onClick={() => {
-                      const invoiceRef = prompt('Référence de la facture:')
-                      const amount = prompt('Montant TTC (€):')
-                      if (invoiceRef && amount) {
-                        updateStatus('INVOICED', {
-                          invoiceRef,
-                          invoiceAmountTTC: parseFloat(amount)
-                        })
-                      }
-                    }}
-                    disabled={updating}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    📄 Marquer comme facturé
-                  </Button>
-                )}
+                {/* Actions secondaires */}
+                <div className="space-y-2 pt-2 border-t border-gray-100">
+                  {quote.pdfPath && (
+                    <a 
+                      href={quote.pdfPath} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="block"
+                    >
+                      <Button variant="ghost" className="w-full justify-start text-gray-600">
+                        <span className="mr-2">📄</span>
+                        Voir le PDF
+                      </Button>
+                    </a>
+                  )}
+                </div>
 
-                <Button
-                  onClick={() => updateStatus('CANCELED')}
-                  disabled={updating}
-                  variant="destructive"
-                  className="w-full"
-                >
-                  ❌ Annuler
-                </Button>
-
-                <div className="pt-4 border-t border-gray-200">
+                {/* Zone dangereuse */}
+                <div className="pt-4 border-t border-red-100 bg-red-50 -mx-6 -mb-6 px-6 pb-6 rounded-b-lg">
+                  <p className="text-sm font-medium text-red-800 mb-3">Zone dangereuse</p>
                   <Button
                     onClick={deleteQuote}
                     disabled={updating}
-                    variant="destructive"
-                    className="w-full bg-red-600 hover:bg-red-700"
+                    variant="ghost"
+                    className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-100"
                   >
-                    🗑️ Supprimer définitivement
+                    <span className="mr-2">🗑️</span>
+                    Supprimer définitivement
                   </Button>
-                  <p className="text-xs text-gray-500 mt-2 text-center">
+                  <p className="text-xs text-red-600 mt-2">
                     Cette action supprimera le devis et l'événement du calendrier
                   </p>
                 </div>

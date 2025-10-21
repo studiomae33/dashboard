@@ -40,7 +40,6 @@ const statusFilters = [
   { value: 'SIGNED', label: 'Signé' },
   { value: 'PAYMENT_PENDING', label: 'Paiement demandé' },
   { value: 'INVOICED', label: 'Facturé' },
-  { value: 'CANCELED', label: 'Annulé' },
 ]
 
 export default function QuotesPage() {
@@ -216,7 +215,7 @@ export default function QuotesPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          <span className="text-sm text-gray-600">
                             {quote.background}
                           </span>
                         </td>
@@ -227,16 +226,16 @@ export default function QuotesPage() {
                           {quote.invoiceAmountTTC ? formatCurrency(quote.invoiceAmountTTC) : '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex space-x-2">
+                          <div className="flex items-center space-x-2">
                             <Link href={`/admin/quotes/${quote.id}`}>
-                              <Button variant="outline" size="sm">
-                                Voir
+                              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
+                                👁️ Voir
                               </Button>
                             </Link>
                             {quote.status === 'READY' && (
                               <Link href={`/admin/quotes/${quote.id}/email`}>
-                                <Button size="sm">
-                                  Envoyer
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                                  📧 Envoyer
                                 </Button>
                               </Link>
                             )}
