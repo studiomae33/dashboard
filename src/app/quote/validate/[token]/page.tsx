@@ -225,61 +225,90 @@ export default function ValidateQuotePage() {
 
   if (validated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-2xl shadow-xl border-0">
-          <CardHeader className="text-center bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
-            <div className="flex justify-center mb-4">
-              <CheckCircle className="h-16 w-16" />
-            </div>
-            <CardTitle className="text-3xl">Devis validé avec succès !</CardTitle>
-            <CardDescription className="text-green-100 text-lg">
-              Votre réservation est confirmée
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6 p-8">
-            <div className="text-center mb-6">
-              <Badge variant="secondary" className="text-lg px-4 py-2">
-                Devis {quote.reference}
-              </Badge>
-              <p className="text-gray-600 mt-2">
-                Validé le {new Intl.DateTimeFormat('fr-FR', {
-                  dateStyle: 'full',
-                  timeStyle: 'short'
-                }).format(new Date())}
-              </p>
-            </div>
-
-            <div className="bg-green-50 border border-green-200 rounded-xl p-6">
-              <h3 className="font-bold text-green-800 mb-4 flex items-center">
-                <Info className="h-5 w-5 mr-2" />
-                Prochaines étapes
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold mt-0.5">1</div>
-                  <p className="text-green-700">Vous recevrez un email de confirmation dans les prochaines minutes</p>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold mt-0.5">2</div>
-                  <p className="text-green-700">Les informations de paiement et d'accès vous seront transmises</p>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold mt-0.5">3</div>
-                  <p className="text-green-700">Votre créneau est maintenant réservé dans notre planning</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-lg">
+          <Card className="shadow-sm border">
+            <CardContent className="p-8 text-center space-y-6">
+              {/* Icône de succès */}
+              <div className="flex justify-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-8 w-8 text-green-600" />
                 </div>
               </div>
-            </div>
-            
-            <div className="text-center border-t pt-6">
-              <p className="text-gray-600 text-lg">
-                Merci pour votre confiance !
-              </p>
-              <p className="text-xl font-semibold text-gray-800 mt-2">
-                L'équipe {settings.studioName}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+
+              {/* Titre */}
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                  Devis validé avec succès !
+                </h1>
+                <p className="text-gray-600">
+                  Votre réservation est confirmée
+                </p>
+              </div>
+
+              {/* Référence et date */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="font-medium text-gray-900 mb-1">
+                  Devis {quote.reference}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Validé le {new Intl.DateTimeFormat('fr-FR', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }).format(new Date())}
+                </p>
+              </div>
+
+              {/* Prochaines étapes */}
+              <div className="text-left">
+                <h3 className="font-semibold text-gray-900 mb-4">Prochaines étapes</h3>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center text-white text-sm font-bold mt-0.5 flex-shrink-0">
+                      1
+                    </div>
+                    <p className="text-gray-700 text-sm">
+                      Vous recevrez un email de confirmation dans les prochaines minutes
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center text-white text-sm font-bold mt-0.5 flex-shrink-0">
+                      2
+                    </div>
+                    <p className="text-gray-700 text-sm">
+                      Les informations de paiement et d'accès vous seront transmises
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center text-white text-sm font-bold mt-0.5 flex-shrink-0">
+                      3
+                    </div>
+                    <p className="text-gray-700 text-sm">
+                      Votre créneau est maintenant réservé dans notre planning
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Message de remerciement */}
+              <div className="pt-4 border-t border-gray-200">
+                <p className="text-gray-700 mb-1">
+                  Merci pour votre confiance !
+                </p>
+                <p className="font-semibold text-gray-900">
+                  L'équipe {settings.studioName}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }
