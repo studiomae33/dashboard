@@ -43,7 +43,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
         className="fixed inset-0 bg-black/50" 
         onClick={() => onOpenChange(false)}
       />
-      <div className="relative z-50 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="relative z-50 w-full max-h-[90vh] overflow-y-auto flex items-center justify-center">
         {children}
       </div>
     </div>
