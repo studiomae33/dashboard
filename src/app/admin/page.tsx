@@ -32,6 +32,16 @@ interface DashboardStats {
     start: string
     end: string
     background: string
+    quoteRequest: {
+      desiredStart: string
+      reference: string
+      status: string
+      client: {
+        firstName: string
+        lastName: string
+        companyName?: string
+      }
+    }
   }>
 }
 
@@ -162,12 +172,12 @@ export default function AdminDashboard() {
           {/* Devis récents */}
           <Card>
             <CardHeader>
-              <CardTitle>Devis récents</CardTitle>
-              <CardDescription>Les dernières demandes de devis</CardDescription>
+              <CardTitle>Devis en cours</CardTitle>
+              <CardDescription>Devis nécessitant encore une action</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {stats?.recentQuotes?.slice(0, 5).map((quote) => (
+              <div className="space-y-4 max-h-64 overflow-y-auto">
+                {stats?.recentQuotes?.map((quote) => (
                   <div key={quote.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
                       <p className="font-medium text-gray-900">
@@ -206,15 +216,24 @@ export default function AdminDashboard() {
               <CardDescription>Prochaines sessions planifiées</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {stats?.upcomingBookings?.slice(0, 5).map((booking) => (
+              <div className="space-y-4 max-h-64 overflow-y-auto">
+                {stats?.upcomingBookings?.map((booking) => (
                   <div key={booking.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900">{booking.title}</p>
-                      <p className="text-sm text-gray-500">{booking.background}</p>
-                      <p className="text-xs text-gray-400">
-                        {formatDate(new Date(booking.start))} - {formatDate(new Date(booking.end))}
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">
+                        {booking.quoteRequest?.client?.companyName || 
+                         `${booking.quoteRequest?.client?.firstName} ${booking.quoteRequest?.client?.lastName}` ||
+                         booking.title}
                       </p>
+                      <p className="text-sm text-gray-500">
+                        {booking.quoteRequest?.reference} - {booking.background}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Souhaité: {formatDate(new Date(booking.quoteRequest?.desiredStart || booking.start))} - {formatDate(new Date(booking.end))}
+                      </p>
+                    </div>
+                    <div className="ml-3">
+                      <StatusBadge status={booking.quoteRequest?.status || 'DRAFT'} />
                     </div>
                   </div>
                 )) || (

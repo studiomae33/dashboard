@@ -25,8 +25,22 @@ export async function GET(request: NextRequest) {
       where: { status: 'SIGNED' }
     })
 
-    // Récupérer les devis récents avec les infos client
+    // Récupérer les devis nécessitant encore une action (tâches restantes)
     const recentQuotes = await prisma.quoteRequest.findMany({
+      where: {
+        AND: [
+          {
+            desiredEnd: {
+              gte: new Date()
+            }
+          },
+          {
+            status: {
+              notIn: ['PAYMENT_PENDING', 'PAID', 'INVOICED', 'CANCELED']
+            }
+          }
+        ]
+      },
       take: 10,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -40,15 +54,44 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Récupérer les réservations à venir
+    // Récupérer les réservations à venir, triées par date de devis (desiredStart)
     const upcomingBookings = await prisma.booking.findMany({
       where: {
-        start: {
-          gte: new Date()
-        }
+        AND: [
+          {
+            start: {
+              gte: new Date()
+            }
+          },
+          {
+            end: {
+              gte: new Date()
+            }
+          }
+        ]
       },
       take: 10,
-      orderBy: { start: 'asc' }
+      include: {
+        quoteRequest: {
+          select: {
+            desiredStart: true,
+            reference: true,
+            status: true,
+            client: {
+              select: {
+                firstName: true,
+                lastName: true,
+                companyName: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        quoteRequest: {
+          desiredStart: 'asc'
+        }
+      }
     })
 
     const stats = {
