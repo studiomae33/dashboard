@@ -168,6 +168,36 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
     }
   }
 
+  async function deleteQuote() {
+    if (!quote) return
+
+    const confirmDelete = confirm(
+      `Êtes-vous sûr de vouloir supprimer définitivement le devis ${quote.reference} ?\n\nCette action supprimera également l'événement associé dans le calendrier et ne peut pas être annulée.`
+    )
+
+    if (!confirmDelete) return
+
+    setUpdating(true)
+    try {
+      const response = await fetch(`/api/admin/quotes/${quote.id}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        // Rediriger vers la liste des devis après suppression
+        router.push('/admin/quotes')
+      } else {
+        const error = await response.json()
+        alert(`Erreur lors de la suppression: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error)
+      alert('Erreur lors de la suppression du devis')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
   if (status === 'loading' || loading) {
     return (
       <AdminLayout>
@@ -437,6 +467,20 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                 >
                   ❌ Annuler
                 </Button>
+
+                <div className="pt-4 border-t border-gray-200">
+                  <Button
+                    onClick={deleteQuote}
+                    disabled={updating}
+                    variant="destructive"
+                    className="w-full bg-red-600 hover:bg-red-700"
+                  >
+                    🗑️ Supprimer définitivement
+                  </Button>
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Cette action supprimera le devis et l'événement du calendrier
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
