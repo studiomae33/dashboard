@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle, XCircle, Clock, FileText, Calendar, MapPin, Euro } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, FileText, Calendar, MapPin, Euro, Camera, Lightbulb, Users, HelpCircle, ChevronDown, ChevronUp, Info, Star, Shield, Timer } from 'lucide-react'
 
 interface Quote {
   id: string
@@ -32,6 +32,38 @@ interface Settings {
   studioEmail: string
 }
 
+interface FAQItem {
+  question: string
+  answer: string
+}
+
+const faqData: FAQItem[] = [
+  {
+    question: "Puis-je apporter mon propre matériel de prise de vue ?",
+    answer: "Oui, vous pouvez apporter votre propre matériel. Notre studio est équipé de prises électriques et d'un bon éclairage naturel pour compléter votre équipement."
+  },
+  {
+    question: "Que comprend la location du studio ?",
+    answer: "La location comprend l'accès au studio, l'éclairage de base, les fonds disponibles, et tous les équipements fixes. L'installation et la désinstallation de votre matériel sont incluses dans le créneau."
+  },
+  {
+    question: "Combien de personnes peuvent être présentes pendant la séance ?",
+    answer: "Le studio peut accueillir confortablement une équipe de 4-6 personnes. Pour des équipes plus importantes, contactez-nous pour valider la faisabilité."
+  },
+  {
+    question: "Puis-je prolonger ma séance sur place ?",
+    answer: "Les prolongations sont possibles sous réserve de disponibilité. Le tarif horaire supplémentaire sera facturé selon nos conditions tarifaires."
+  },
+  {
+    question: "Que se passe-t-il en cas d'annulation ?",
+    answer: "Les conditions d'annulation dépendent du délai. Contactez-nous dès que possible si vous devez annuler ou reporter votre créneau."
+  },
+  {
+    question: "Y a-t-il un parking disponible ?",
+    answer: "Oui, nous disposons de places de parking à proximité du studio. Les détails vous seront communiqués avec votre confirmation."
+  }
+]
+
 export default function ValidateQuotePage() {
   const params = useParams()
   const token = params.token as string
@@ -43,6 +75,8 @@ export default function ValidateQuotePage() {
   const [error, setError] = useState<string | null>(null)
   const [validating, setValidating] = useState(false)
   const [validated, setValidated] = useState(false)
+  const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null)
+  const [showConfirmation, setShowConfirmation] = useState(false)
 
   useEffect(() => {
     fetchQuoteData()
@@ -70,6 +104,13 @@ export default function ValidateQuotePage() {
   }
 
   const handleValidateQuote = async () => {
+    // Si on n'a pas encore montré les conditions, les afficher d'abord
+    if (!showConfirmation) {
+      setShowConfirmation(true)
+      return
+    }
+
+    // Procéder à la validation
     setValidating(true)
     setError(null) // Reset error state
     try {
@@ -93,6 +134,10 @@ export default function ValidateQuotePage() {
     } finally {
       setValidating(false)
     }
+  }
+
+  const handleCancelValidation = () => {
+    setShowConfirmation(false)
   }
 
   if (loading) {
@@ -158,35 +203,77 @@ export default function ValidateQuotePage() {
     }).format(new Date(dateString))
   }
 
+  const calculateDuration = () => {
+    if (!quote) return ''
+    const start = new Date(quote.desiredStart)
+    const end = new Date(quote.desiredEnd)
+    const diffInMs = end.getTime() - start.getTime()
+    const diffInHours = diffInMs / (1000 * 60 * 60)
+    
+    if (diffInHours === 1) return '1 heure'
+    if (diffInHours < 1) {
+      const minutes = Math.round(diffInMs / (1000 * 60))
+      return `${minutes} minutes`
+    }
+    return `${diffInHours} heures`
+  }
+
+  const toggleFAQ = (index: number) => {
+    setExpandedFAQ(expandedFAQ === index ? null : index)
+  }
+
   if (validated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-2xl">
-          <CardHeader className="text-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-2xl shadow-xl border-0">
+          <CardHeader className="text-center bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
             <div className="flex justify-center mb-4">
-              <CheckCircle className="h-16 w-16 text-green-500" />
+              <CheckCircle className="h-16 w-16" />
             </div>
-            <CardTitle className="text-2xl text-green-700">Devis validé avec succès !</CardTitle>
-            <CardDescription>
-              Votre devis {quote.reference} a été validé le {new Intl.DateTimeFormat('fr-FR', {
-                dateStyle: 'full',
-                timeStyle: 'short'
-              }).format(new Date())}
+            <CardTitle className="text-3xl">Devis validé avec succès !</CardTitle>
+            <CardDescription className="text-green-100 text-lg">
+              Votre réservation est confirmée
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h3 className="font-semibold text-green-800 mb-2">Prochaines étapes :</h3>
-              <ul className="space-y-2 text-green-700">
-                <li>• Vous recevrez un email de confirmation sous peu</li>
-                <li>• Les informations de paiement vous seront transmises par email</li>
-                <li>• Votre créneau est maintenant réservé dans notre planning</li>
-              </ul>
+          <CardContent className="space-y-6 p-8">
+            <div className="text-center mb-6">
+              <Badge variant="secondary" className="text-lg px-4 py-2">
+                Devis {quote.reference}
+              </Badge>
+              <p className="text-gray-600 mt-2">
+                Validé le {new Intl.DateTimeFormat('fr-FR', {
+                  dateStyle: 'full',
+                  timeStyle: 'short'
+                }).format(new Date())}
+              </p>
+            </div>
+
+            <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+              <h3 className="font-bold text-green-800 mb-4 flex items-center">
+                <Info className="h-5 w-5 mr-2" />
+                Prochaines étapes
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold mt-0.5">1</div>
+                  <p className="text-green-700">Vous recevrez un email de confirmation dans les prochaines minutes</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold mt-0.5">2</div>
+                  <p className="text-green-700">Les informations de paiement et d'accès vous seront transmises</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold mt-0.5">3</div>
+                  <p className="text-green-700">Votre créneau est maintenant réservé dans notre planning</p>
+                </div>
+              </div>
             </div>
             
-            <div className="text-center">
-              <p className="text-gray-600">
-                Merci pour votre confiance !<br />
+            <div className="text-center border-t pt-6">
+              <p className="text-gray-600 text-lg">
+                Merci pour votre confiance !
+              </p>
+              <p className="text-xl font-semibold text-gray-800 mt-2">
                 L'équipe {settings.studioName}
               </p>
             </div>
@@ -197,155 +284,257 @@ export default function ValidateQuotePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        {/* En-tête */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Validation du devis
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* En-tête simple */}
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Validation de devis
           </h1>
-          <p className="text-gray-600">
-            {settings.studioName}
-          </p>
+          <p className="text-gray-600">{settings.studioName}</p>
         </div>
 
-        {/* Informations du devis */}
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center space-x-2">
-                  <FileText className="h-5 w-5" />
-                  <span>Devis {quote.reference}</span>
-                </CardTitle>
-                <CardDescription>
-                  Client : {clientName}
-                </CardDescription>
-              </div>
-              <Badge variant={quote.status === 'SENT' ? 'secondary' : 'default'}>
-                {quote.status === 'SENT' ? 'En attente' : quote.status}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Date et heure */}
-            <div className="flex items-start space-x-3">
-              <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
-              <div>
-                <p className="font-medium">Date et heure de la séance</p>
-                <p className="text-gray-600">
-                  {formatDate(quote.desiredStart)} – {formatTime(quote.desiredEnd)}
-                </p>
-              </div>
-            </div>
-
-            {/* Espace utilisé */}
-            <div className="flex items-start space-x-3">
-              <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
-              <div>
-                <p className="font-medium">Espace(s) utilisé(s)</p>
-                <p className="text-gray-600">{quote.background}</p>
-              </div>
-            </div>
-
-            {/* Montant */}
-            {quote.amountTTC && (
-              <div className="flex items-start space-x-3">
-                <Euro className="h-5 w-5 text-gray-400 mt-0.5" />
-                <div>
-                  <p className="font-medium">Montant TTC</p>
-                  <p className="text-gray-600">
-                    {new Intl.NumberFormat('fr-FR', {
-                      style: 'currency',
-                      currency: 'EUR'
-                    }).format(quote.amountTTC)}
-                  </p>
+        {/* Layout en deux colonnes */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-200px)]">
+          {/* Colonne gauche - Informations du devis */}
+          <div className="space-y-4 overflow-y-auto">
+            {/* Card principale avec tout l'essentiel */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <div className="text-center">
+                  <CardTitle className="text-xl mb-2">Devis {quote.reference}</CardTitle>
+                  <Badge variant={quote.status === 'SENT' ? 'secondary' : 'default'}>
+                    {quote.status === 'SENT' ? 'En attente de validation' : quote.status}
+                  </Badge>
                 </div>
-              </div>
-            )}
-
-            {/* Message */}
-            {quote.message && (
-              <div>
-                <p className="font-medium mb-2">Message</p>
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-gray-600 whitespace-pre-wrap">{quote.message}</p>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Conditions importantes */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-orange-700">⚠️ Conditions importantes</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-              <h4 className="font-semibold text-orange-800 mb-2">Durée de location</h4>
-              <p className="text-orange-700 text-sm">
-                Le créneau intègre l'installation et la désinstallation du matériel, en plus du shooting. 
-                Toute durée supplémentaire fera l'objet d'une facturation additionnelle.
-              </p>
-            </div>
-            
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-              <h4 className="font-semibold text-orange-800 mb-2">Sol du cyclo blanc</h4>
-              <p className="text-orange-700 text-sm">
-                Le sol est protégé par une moquette que vous pouvez retirer si nécessaire. 
-                Il est repeint avant chaque location pour garantir un rendu propre. 
-                En cas de traces ou de dégradations constatées après votre passage, 
-                une remise en peinture de <strong>40 € HT</strong> sera facturée.
-              </p>
-            </div>
-            
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-              <h4 className="font-semibold text-orange-800 mb-2">Sol des fonds photo</h4>
-              <p className="text-orange-700 text-sm">
-                L'utilisation des fonds en arrière-plan est incluse dans la location. 
-                Toute utilisation au sol, générant une usure, est considérée comme consommable 
-                et fera l'objet d'une facturation de <strong>12,5 € HT par mètre linéaire utilisé (hors mur)</strong>.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Bouton de validation */}
-        {quote.status === 'SENT' && (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center space-y-4">
-                <p className="text-gray-600">
-                  En cliquant sur "Valider le devis", vous acceptez les conditions ci-dessus 
-                  et confirmez votre réservation pour le créneau indiqué.
-                </p>
-                <Button 
-                  onClick={handleValidateQuote}
-                  disabled={validating}
-                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
-                >
-                  {validating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Validation en cours...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-5 w-5 mr-2" />
-                      Valider le devis
-                    </>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Infos essentielles en liste simple */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-start">
+                    <span className="text-gray-600">Client :</span>
+                    <span className="font-medium text-right">{clientName}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-start">
+                    <span className="text-gray-600">Date :</span>
+                    <span className="font-medium text-right">
+                      {new Intl.DateTimeFormat('fr-FR', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      }).format(new Date(quote.desiredStart))}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-start">
+                    <span className="text-gray-600">Horaires :</span>
+                    <span className="font-medium text-right">
+                      {formatTime(quote.desiredStart)} - {formatTime(quote.desiredEnd)}
+                      <br />
+                      <span className="text-sm text-gray-500">({calculateDuration()})</span>
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-start">
+                    <span className="text-gray-600">Espace :</span>
+                    <span className="font-medium text-right">{quote.background}</span>
+                  </div>
+                  
+                  {quote.amountTTC && (
+                    <div className="flex justify-between items-start pt-2 border-t">
+                      <span className="text-gray-600">Montant TTC :</span>
+                      <span className="font-bold text-lg text-green-600">
+                        {new Intl.NumberFormat('fr-FR', {
+                          style: 'currency',
+                          currency: 'EUR'
+                        }).format(quote.amountTTC)}
+                      </span>
+                    </div>
                   )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                </div>
 
-        {/* Footer */}
-        <div className="text-center mt-8 text-gray-500 text-sm">
-          <p>{settings.studioName} – {settings.studioAddress}</p>
-          <p>📞 {settings.studioPhone} – 📧 {settings.studioEmail}</p>
+                {/* Message si présent */}
+                {quote.message && (
+                  <div className="bg-blue-50 p-3 rounded border-l-4 border-blue-400">
+                    <p className="text-sm text-gray-700 italic">{quote.message}</p>
+                  </div>
+                )}
+
+                {/* Bouton de validation */}
+                {quote.status === 'SENT' && (
+                  <div className="pt-3 border-t">
+                    {!showConfirmation ? (
+                      // Premier bouton - Afficher les conditions
+                      <>
+                        <Button 
+                          onClick={handleValidateQuote}
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Valider ce devis
+                        </Button>
+                        <p className="text-xs text-gray-500 text-center mt-2">
+                          Cliquez pour voir les conditions et confirmer
+                        </p>
+                      </>
+                    ) : (
+                      // Affichage des conditions et bouton de confirmation
+                      <div className="space-y-4">
+                        <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4">
+                          <h4 className="font-semibold text-orange-800 mb-3 flex items-center">
+                            <Shield className="h-4 w-4 mr-2" />
+                            ⚠️ Conditions importantes à accepter
+                          </h4>
+                          <div className="space-y-3 text-sm">
+                            <div className="flex items-start space-x-2">
+                              <span className="text-orange-600 font-bold">•</span>
+                              <div>
+                                <strong>Durée de location :</strong> Le créneau intègre l'installation et la désinstallation du matériel. Toute durée supplémentaire sera facturée.
+                              </div>
+                            </div>
+                            <div className="flex items-start space-x-2">
+                              <span className="text-orange-600 font-bold">•</span>
+                              <div>
+                                <strong>Sol du cyclo blanc :</strong> Sol protégé par une moquette amovible, repeint avant chaque location. En cas de dégradation = <strong>40€ HT</strong> de remise en peinture.
+                              </div>
+                            </div>
+                            <div className="flex items-start space-x-2">
+                              <span className="text-orange-600 font-bold">•</span>
+                              <div>
+                                <strong>Utilisation des fonds :</strong> Fonds inclus en arrière-plan. Utilisation au sol = <strong>12,5€ HT par mètre linéaire</strong>.
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex space-x-3">
+                          <Button 
+                            onClick={handleCancelValidation}
+                            variant="outline"
+                            className="flex-1"
+                          >
+                            Annuler
+                          </Button>
+                          <Button 
+                            onClick={handleValidateQuote}
+                            disabled={validating}
+                            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            {validating ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                Validation...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                J'accepte et je valide
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-gray-600 text-center">
+                          En cliquant sur "J'accepte et je valide", vous confirmez avoir lu et accepté les conditions ci-dessus.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Conditions simplifiées et repliables */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <button
+                  onClick={() => setExpandedFAQ(expandedFAQ === -1 ? null : -1)}
+                  className="w-full flex items-center justify-between"
+                >
+                  <CardTitle className="text-sm text-orange-800 flex items-center">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Conditions importantes
+                  </CardTitle>
+                  {expandedFAQ === -1 ? (
+                    <ChevronUp className="h-4 w-4 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                  )}
+                </button>
+              </CardHeader>
+              {expandedFAQ === -1 && (
+                <CardContent className="pt-0">
+                  <div className="space-y-2 text-xs">
+                    <div>
+                      <strong>Durée :</strong> Installation et désinstallation comprises. Dépassement facturé.
+                    </div>
+                    <div>
+                      <strong>Cyclo blanc :</strong> Sol protégé, repeint avant chaque séance. Dégradation = 40€ HT.
+                    </div>
+                    <div>
+                      <strong>Fonds :</strong> Utilisation murale incluse. Usage au sol = 12,5€ HT/m linéaire.
+                    </div>
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+
+            {/* FAQ simplifiée et repliable */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <button
+                  onClick={() => setExpandedFAQ(expandedFAQ === -2 ? null : -2)}
+                  className="w-full flex items-center justify-between"
+                >
+                  <CardTitle className="text-sm flex items-center">
+                    <HelpCircle className="h-4 w-4 mr-2" />
+                    Questions fréquentes
+                  </CardTitle>
+                  {expandedFAQ === -2 ? (
+                    <ChevronUp className="h-4 w-4 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                  )}
+                </button>
+              </CardHeader>
+              {expandedFAQ === -2 && (
+                <CardContent className="pt-0">
+                  <div className="space-y-3">
+                    {faqData.slice(0, 3).map((faq, index) => (
+                      <div key={index}>
+                        <p className="font-medium text-xs mb-1">{faq.question}</p>
+                        <p className="text-xs text-gray-600">{faq.answer}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+
+            {/* Contact simple */}
+            <div className="text-center text-xs text-gray-500 py-2">
+              <p>{settings.studioName} • {settings.studioPhone}</p>
+              <p>{settings.studioEmail}</p>
+            </div>
+          </div>
+
+          {/* Colonne droite - Aperçu PDF du devis */}
+          <div className="bg-white rounded-lg shadow-sm border">
+            <div className="p-3 border-b bg-gray-50 rounded-t-lg">
+              <h3 className="font-medium text-gray-900 text-sm flex items-center">
+                <FileText className="h-4 w-4 mr-2" />
+                Aperçu du devis
+              </h3>
+            </div>
+            <div className="h-full p-1">
+              <iframe
+                src={`/api/quote/validate/${token}/pdf`}
+                className="w-full h-full rounded border-0"
+                title="Aperçu du devis PDF"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
