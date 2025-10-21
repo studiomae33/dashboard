@@ -86,7 +86,9 @@ export default function CalendarPage() {
       return (
         bookingDate.getDate() === date.getDate() &&
         bookingDate.getMonth() === date.getMonth() &&
-        bookingDate.getFullYear() === date.getFullYear()
+        bookingDate.getFullYear() === date.getFullYear() &&
+        // Ne pas afficher les devis réglés dans le calendrier
+        booking.quoteRequest.status !== 'PAID'
       )
     })
   }
@@ -170,7 +172,7 @@ export default function CalendarPage() {
                   </div>
                   <div className="flex items-center space-x-1">
                     <div className="w-3 h-3 rounded bg-emerald-100 border"></div>
-                    <span>Réglé</span>
+                    <span>Réglé (masqué)</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <div className="w-3 h-3 rounded bg-purple-100 border"></div>
@@ -287,7 +289,7 @@ export default function CalendarPage() {
           <CardContent>
             <div className="space-y-3">
               {bookings
-                .filter(booking => booking.start >= new Date())
+                .filter(booking => booking.start >= new Date() && booking.quoteRequest.status !== 'PAID')
                 .sort((a, b) => a.start.getTime() - b.start.getTime())
                 .slice(0, 5)
                 .map(booking => {
@@ -336,7 +338,7 @@ export default function CalendarPage() {
                   )
                 })}
               
-              {bookings.filter(booking => booking.start >= new Date()).length === 0 && (
+              {bookings.filter(booking => booking.start >= new Date() && booking.quoteRequest.status !== 'PAID').length === 0 && (
                 <div className="text-center text-gray-500 py-8">
                   Aucune réservation à venir
                 </div>
