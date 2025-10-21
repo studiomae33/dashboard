@@ -539,6 +539,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
               onSend={sendPaymentEmail}
               isLoading={sendingPaymentEmail}
               quoteReference={quote.reference}
+              rentalStartDate={quote.desiredStart}
             />
 
             {paymentEmailData && (

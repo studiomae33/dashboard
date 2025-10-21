@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,6 +11,7 @@ interface PaymentEmailModalProps {
   onSend: (invoiceRef: string, paymentDueDate?: string) => void
   isLoading: boolean
   quoteReference: string
+  rentalStartDate?: string
 }
 
 export function PaymentEmailModal({ 
@@ -18,11 +19,34 @@ export function PaymentEmailModal({
   onClose, 
   onSend, 
   isLoading, 
-  quoteReference 
+  quoteReference,
+  rentalStartDate 
 }: PaymentEmailModalProps) {
   const [invoiceRef, setInvoiceRef] = useState('')
   const [paymentDueDate, setPaymentDueDate] = useState('')
   const [error, setError] = useState('')
+
+  // Fonction pour calculer la date limite de paiement (4 jours avant la date de location)
+  const calculatePaymentDueDate = (rentalDate: string) => {
+    const rental = new Date(rentalDate)
+    const dueDate = new Date(rental)
+    dueDate.setDate(rental.getDate() - 4)
+    
+    const months = [
+      'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+      'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+    ]
+    
+    return `${dueDate.getDate()} ${months[dueDate.getMonth()]} ${dueDate.getFullYear()}`
+  }
+
+  // Pré-remplir la date limite de paiement quand la modal s'ouvre
+  useEffect(() => {
+    if (isOpen && rentalStartDate) {
+      const defaultDueDate = calculatePaymentDueDate(rentalStartDate)
+      setPaymentDueDate(defaultDueDate)
+    }
+  }, [isOpen, rentalStartDate])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
