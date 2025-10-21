@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyValidationToken } from '@/lib/token'
 import { prisma } from '@/lib/prisma'
-import { renderDevisEmailHTML } from '@/lib/email'
+import fs from 'fs'
+import path from 'path'
 
 export async function GET(
   request: NextRequest,
@@ -26,29 +27,48 @@ export async function GET(
       return NextResponse.json({ error: 'Devis non trouvé' }, { status: 404 })
     }
 
-    const settings = await prisma.settings.findUnique({
-      where: { id: 'singleton' }
-    })
-
-    if (!settings) {
-      return NextResponse.json({ error: 'Configuration manquante' }, { status: 500 })
+    if (!quote.pdfPath) {
+      return NextResponse.json({ error: 'Aucun PDF disponible pour ce devis' }, { status: 404 })
     }
 
-    // Générer le HTML du devis
-    const emailData = {
-      quote,
-      client: quote.client,
-      settings
+    // Si le PDF est hébergé sur Vercel Blob (URL externe)
+    if (quote.pdfPath.startsWith('http')) {
+      try {
+        const response = await fetch(quote.pdfPath)
+        if (!response.ok) {
+          throw new Error('Impossible de récupérer le PDF depuis Vercel Blob')
+        }
+        
+        const pdfBuffer = await response.arrayBuffer()
+        
+        return new NextResponse(pdfBuffer, {
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `inline; filename="devis-${quote.reference}.pdf"`,
+          },
+        })
+      } catch (error) {
+        console.error('Erreur téléchargement PDF Vercel Blob:', error)
+        return NextResponse.json({ error: 'Erreur lors du téléchargement du PDF' }, { status: 500 })
+      }
     }
 
-    const html = await renderDevisEmailHTML(emailData)
+    // Si le PDF est stocké localement
+    const fullPath = path.join(process.cwd(), 'public', quote.pdfPath.replace('/uploads/', 'uploads/'))
     
-    // Retourner le HTML qui sera affiché dans l'iframe
-    return new NextResponse(html, {
+    if (!fs.existsSync(fullPath)) {
+      return NextResponse.json({ error: 'Fichier PDF non trouvé' }, { status: 404 })
+    }
+
+    const pdfBuffer = fs.readFileSync(fullPath)
+    
+    return new NextResponse(pdfBuffer, {
       headers: {
-        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `inline; filename="devis-${quote.reference}.pdf"`,
       },
     })
+    
   } catch (error) {
     console.error('Erreur génération PDF:', error)
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })

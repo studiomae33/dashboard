@@ -77,6 +77,7 @@ export default function ValidateQuotePage() {
   const [validated, setValidated] = useState(false)
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null)
   const [showConfirmation, setShowConfirmation] = useState(false)
+  const [pdfError, setPdfError] = useState(false)
 
   useEffect(() => {
     fetchQuoteData()
@@ -524,15 +525,38 @@ export default function ValidateQuotePage() {
             <div className="p-3 border-b bg-gray-50 rounded-t-lg">
               <h3 className="font-medium text-gray-900 text-sm flex items-center">
                 <FileText className="h-4 w-4 mr-2" />
-                Aperçu du devis
+                Aperçu du devis PDF
               </h3>
             </div>
             <div className="h-full p-1">
-              <iframe
-                src={`/api/quote/validate/${token}/pdf`}
-                className="w-full h-full rounded border-0"
-                title="Aperçu du devis PDF"
-              />
+              {!pdfError ? (
+                <iframe
+                  src={`/api/quote/validate/${token}/pdf`}
+                  className="w-full h-full rounded border-0"
+                  title="Aperçu du devis PDF"
+                  onLoad={(e) => {
+                    const iframe = e.target as HTMLIFrameElement
+                    try {
+                      // Vérifier si l'iframe a chargé correctement
+                      if (iframe.contentDocument?.title === 'Error') {
+                        setPdfError(true)
+                      }
+                    } catch (error) {
+                      // Erreur CORS normale avec les PDFs
+                    }
+                  }}
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center bg-gray-50">
+                  <div className="text-center p-6">
+                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-2">PDF non disponible</p>
+                    <p className="text-sm text-gray-500">
+                      Le document PDF sera généré après validation
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
