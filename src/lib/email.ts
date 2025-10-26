@@ -1022,104 +1022,181 @@ export function renderDateChangeEmailHTML(data: QuoteEmailData & {
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
-            color: #2d3748;
-            background-color: #f7fafc;
+            color: #1a202c;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px 0;
         }
         
         .email-container {
-            max-width: 640px;
-            margin: 20px auto;
+            max-width: 680px;
+            margin: 0 auto;
             background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
             overflow: hidden;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
-            padding: 40px 30px;
-            text-align: center;
             position: relative;
         }
         
-        .header::after {
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa726 100%);
+            padding: 50px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
             content: '';
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: linear-gradient(90deg, #ed8936, #dd6b20, #c05621);
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/><circle cx="25" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
         }
         
         .header-content {
+            position: relative;
+            z-index: 2;
             color: white;
         }
         
+        .header-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            display: block;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
         .header-title {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 8px;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
         .header-subtitle {
-            font-size: 16px;
-            opacity: 0.9;
+            font-size: 18px;
+            opacity: 0.95;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
         }
         
         .content {
-            padding: 40px 30px;
+            padding: 50px 40px;
         }
         
         .greeting {
-            font-size: 18px;
-            font-weight: 500;
+            font-size: 22px;
+            font-weight: 600;
             color: #2d3748;
-            margin-bottom: 24px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .greeting::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #ff6b6b, #ffa726);
+            border-radius: 2px;
         }
         
         .intro-text {
-            font-size: 16px;
+            font-size: 18px;
             color: #4a5568;
-            margin-bottom: 32px;
-            line-height: 1.7;
+            margin-bottom: 40px;
+            line-height: 1.8;
+            text-align: center;
+            background: #f8fafc;
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
         }
         
         .date-change-section {
             background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-            border-radius: 12px;
-            padding: 24px;
-            margin: 32px 0;
-            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 40px 0;
+            border: 2px solid #e2e8f0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .date-change-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b6b, #ffa726, #ff6b6b);
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 30px;
         }
         
         .date-comparison {
             display: grid;
-            gap: 20px;
+            gap: 24px;
+            position: relative;
         }
         
         .date-block {
-            padding: 16px;
-            border-radius: 8px;
+            padding: 24px;
+            border-radius: 16px;
             text-align: center;
+            position: relative;
+            transition: transform 0.3s ease;
+            border: 2px solid transparent;
         }
         
         .old-dates {
-            background: #fed7d7;
-            border: 1px solid #feb2b2;
+            background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+            border-color: #fc8181;
+            box-shadow: 0 8px 25px rgba(252, 129, 129, 0.2);
         }
         
         .new-dates {
-            background: #c6f6d5;
-            border: 1px solid #9ae6b4;
+            background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+            border-color: #68d391;
+            box-shadow: 0 8px 25px rgba(104, 211, 145, 0.2);
         }
         
         .date-label {
-            font-weight: 600;
-            font-size: 14px;
+            font-weight: 700;
+            font-size: 16px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         
         .old-dates .date-label {
@@ -1131,35 +1208,100 @@ export function renderDateChangeEmailHTML(data: QuoteEmailData & {
         }
         
         .date-info {
-            font-size: 16px;
-            font-weight: 500;
-            margin-bottom: 4px;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2d3748;
         }
         
         .date-time {
-            font-size: 14px;
+            font-size: 16px;
             color: #4a5568;
+            font-weight: 500;
+        }
+        
+        .arrow-container {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
         }
         
         .arrow-down {
+            font-size: 32px;
+            color: #ff6b6b;
+            animation: pulse 2s ease-in-out infinite;
+            display: inline-block;
+            background: white;
+            padding: 12px;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .confirmation-message {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa726 100%);
+            color: white;
+            padding: 32px;
+            border-radius: 20px;
             text-align: center;
+            margin: 40px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .confirmation-message::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .confirmation-message h3 {
             font-size: 24px;
-            margin: 16px 0;
-            color: #ed8936;
+            font-weight: 700;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .confirmation-message p {
+            font-size: 16px;
+            opacity: 0.95;
+            position: relative;
+            z-index: 2;
         }
         
         .details-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #ed8936;
-            margin: 24px 0;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 32px;
+            border-radius: 20px;
+            border-left: 6px solid #ff6b6b;
+            margin: 40px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
         }
         
         .details-title {
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 20px;
             color: #2d3748;
-            margin-bottom: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .details-title::before {
+            content: '📋';
+            font-size: 20px;
         }
         
         .details-list {
@@ -1168,88 +1310,112 @@ export function renderDateChangeEmailHTML(data: QuoteEmailData & {
         }
         
         .details-list li {
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             color: #4a5568;
             display: flex;
             align-items: center;
+            font-size: 16px;
+            padding: 8px 0;
         }
         
         .details-list li:before {
-            content: '•';
-            color: #ed8936;
-            font-weight: bold;
-            margin-right: 8px;
-        }
-        
-        .confirmation-message {
-            background: linear-gradient(135deg, #d69e2e 0%, #b7791f 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            margin: 32px 0;
-        }
-        
-        .confirmation-message h3 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        
-        .confirmation-message p {
-            font-size: 14px;
-            opacity: 0.9;
+            content: '✨';
+            margin-right: 12px;
+            font-size: 16px;
         }
         
         .contact-section {
-            background: #f8f9fa;
-            padding: 24px;
-            border-radius: 8px;
-            margin: 32px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            margin: 40px 0;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .contact-section::before {
+            content: '';
+            position: absolute;
+            top: -30px;
+            left: -30px;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite reverse;
         }
         
         .contact-title {
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 12px;
+            font-weight: 700;
+            font-size: 22px;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 2;
         }
         
         .contact-info {
-            color: #4a5568;
-            font-size: 14px;
+            font-size: 16px;
+            opacity: 0.95;
+            position: relative;
+            z-index: 2;
+            line-height: 1.7;
         }
         
         .footer {
-            background: #2d3748;
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
             color: #a0aec0;
-            padding: 30px;
+            padding: 40px;
             text-align: center;
-            font-size: 14px;
+            position: relative;
         }
         
         .footer-title {
             color: white;
-            font-weight: 600;
-            margin-bottom: 12px;
+            font-weight: 700;
+            font-size: 20px;
+            margin-bottom: 16px;
         }
         
         .footer-info {
             margin-bottom: 8px;
+            font-size: 15px;
+        }
+        
+        .footer-divider {
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, #ff6b6b, #ffa726);
+            margin: 20px auto;
+            border-radius: 1px;
         }
         
         @media (max-width: 600px) {
             .email-container {
                 margin: 10px;
-                border-radius: 8px;
+                border-radius: 16px;
             }
             
             .content, .header {
-                padding: 24px 20px;
+                padding: 30px 24px;
             }
             
             .date-block {
-                padding: 12px;
+                padding: 20px;
+            }
+            
+            .header-title {
+                font-size: 24px;
+            }
+            
+            .greeting {
+                font-size: 20px;
+            }
+            
+            .intro-text {
+                font-size: 16px;
+                padding: 20px;
             }
         }
     </style>
@@ -1258,45 +1424,55 @@ export function renderDateChangeEmailHTML(data: QuoteEmailData & {
     <div class="email-container">
         <div class="header">
             <div class="header-content">
-                <div class="header-title">📅 Modification de réservation</div>
+                <span class="header-icon">📅</span>
+                <div class="header-title">Modification de réservation</div>
                 <div class="header-subtitle">Référence ${quote.reference}</div>
             </div>
         </div>
         
         <div class="content">
             <div class="greeting">
-                Bonjour ${client.firstName},
+                Bonjour ${client.firstName} 👋
             </div>
             
             <div class="intro-text">
-                Nous vous confirmons que nous avons bien pris en compte votre demande de modification des dates pour votre réservation <strong>${quote.reference}</strong>.
+                <strong>Bonne nouvelle !</strong> Nous avons bien pris en compte votre demande de modification des dates pour votre réservation <strong>${quote.reference}</strong>. Tout est maintenant confirmé dans notre planning ! ✨
             </div>
             
             <div class="date-change-section">
+                <div class="section-title">📊 Récapitulatif des modifications</div>
                 <div class="date-comparison">
                     <div class="date-block old-dates">
-                        <div class="date-label">❌ Anciennes dates</div>
-                        <div class="date-info">Du ${oldStartFormatted}</div>
-                        <div class="date-time">Au ${oldEndFormatted}</div>
+                        <div class="date-label">
+                            <span>❌</span>
+                            <span>Anciennes dates</span>
+                        </div>
+                        <div class="date-info">${oldStartFormatted}</div>
+                        <div class="date-time">au ${oldEndFormatted}</div>
                     </div>
                     
-                    <div class="arrow-down">⬇️</div>
+                    <div class="arrow-container">
+                        <div class="arrow-down">⬇️</div>
+                    </div>
                     
                     <div class="date-block new-dates">
-                        <div class="date-label">✅ Nouvelles dates confirmées</div>
-                        <div class="date-info">Du ${newStartFormatted}</div>
-                        <div class="date-time">Au ${newEndFormatted}</div>
+                        <div class="date-label">
+                            <span>✅</span>
+                            <span>Nouvelles dates confirmées</span>
+                        </div>
+                        <div class="date-info">${newStartFormatted}</div>
+                        <div class="date-time">au ${newEndFormatted}</div>
                     </div>
                 </div>
             </div>
             
             <div class="confirmation-message">
-                <h3>🎉 Modification confirmée !</h3>
-                <p>Vos nouvelles dates sont maintenant réservées et confirmées dans notre planning.</p>
+                <h3>🎉 C'est confirmé !</h3>
+                <p>Vos nouvelles dates sont réservées et sécurisées dans notre planning. Nous avons hâte de vous accueillir !</p>
             </div>
             
             <div class="details-section">
-                <div class="details-title">Détails de votre réservation :</div>
+                <div class="details-title">Détails de votre réservation</div>
                 <ul class="details-list">
                     <li><strong>Référence :</strong> ${quote.reference}</li>
                     <li><strong>Type de fond :</strong> ${quote.background}</li>
@@ -1305,17 +1481,18 @@ export function renderDateChangeEmailHTML(data: QuoteEmailData & {
             </div>
             
             <div class="contact-section">
-                <div class="contact-title">Une question ? Nous sommes là pour vous aider !</div>
+                <div class="contact-title">💬 Une question ? Nous sommes là !</div>
                 <div class="contact-info">
-                    N'hésitez pas à nous contacter si vous avez des questions concernant votre réservation.<br>
-                    Nous avons hâte de vous accueillir dans notre studio !
+                    Notre équipe reste à votre disposition pour toute question concernant votre séance photo.<br>
+                    <strong>Préparez-vous à vivre une expérience extraordinaire ! 📸</strong>
                 </div>
             </div>
         </div>
         
         <div class="footer">
             <div class="footer-title">${settings.studioName}</div>
-            <div class="footer-info">${settings.studioAddress}</div>
+            <div class="footer-divider"></div>
+            <div class="footer-info">📍 ${settings.studioAddress}</div>
             <div class="footer-info">📞 ${settings.studioPhone}</div>
             <div class="footer-info">✉️ ${settings.studioEmail}</div>
         </div>
