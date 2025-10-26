@@ -10,6 +10,7 @@ import { StatusBadge } from '@/components/ui/badge'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { PaymentEmailModal } from '@/components/PaymentEmailModal'
 import { PaymentEmailSentModal } from '@/components/PaymentEmailSentModal'
+import { ModifyDateModal } from '@/components/ModifyDateModal'
 import Link from 'next/link'
 
 interface QuoteDetails {
@@ -59,6 +60,8 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false)
   const [sendingPaymentEmail, setSendingPaymentEmail] = useState(false)
+  const [showModifyDateModal, setShowModifyDateModal] = useState(false)
+  const [modifyingDates, setModifyingDates] = useState(false)
   const [paymentEmailData, setPaymentEmailData] = useState<{
     recipientEmail: string
     quoteReference: string
@@ -195,6 +198,75 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
       alert('Erreur lors de la suppression du devis')
     } finally {
       setUpdating(false)
+    }
+  }
+
+  async function modifyDates(startDate: string, endDate: string, notifyClient: boolean = true) {
+    if (!quote) return
+
+    setModifyingDates(true)
+    try {
+      const oldStartDate = quote.desiredStart
+      const oldEndDate = quote.desiredEnd
+
+      const response = await fetch(`/api/admin/quotes/${quote.id}/modify-dates`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          startDate,
+          endDate,
+        }),
+      })
+
+      if (response.ok) {
+        const updatedQuote = await response.json()
+        setQuote(updatedQuote)
+        
+        // Envoyer l'email de notification si demandé
+        if (notifyClient) {
+          try {
+            const emailResponse = await fetch(`/api/admin/quotes/${quote.id}/notify-date-change`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                oldStartDate,
+                oldEndDate,
+                newStartDate: startDate,
+                newEndDate: endDate,
+              }),
+            })
+
+            if (emailResponse.ok) {
+              alert('Dates modifiées avec succès ! Le client a été notifié par email.')
+            } else {
+              alert('Dates modifiées avec succès, mais erreur lors de l\'envoi de l\'email de notification.')
+            }
+          } catch (emailError) {
+            console.error('Erreur email notification:', emailError)
+            alert('Dates modifiées avec succès, mais erreur lors de l\'envoi de l\'email de notification.')
+          }
+        } else {
+          alert('Dates modifiées avec succès !')
+        }
+      } else {
+        const error = await response.json()
+        if (error.conflicts) {
+          alert(`Conflit de réservation détecté avec :\n${error.conflicts.map((c: any) => 
+            `- ${c.reference} (${formatDate(new Date(c.start))} - ${formatDate(new Date(c.end))})`
+          ).join('\n')}`)
+        } else {
+          alert(`Erreur: ${error.error}`)
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors de la modification:', error)
+      alert('Erreur lors de la modification des dates')
+    } finally {
+      setModifyingDates(false)
     }
   }
 
@@ -455,6 +527,19 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                       Marquer comme facturé
                     </Button>
                   )}
+
+                  {/* Action pour modifier les dates - disponible pour les devis signés */}
+                  {['SIGNED', 'PAYMENT_PENDING', 'PAID'].includes(quote.status) && (
+                    <Button
+                      onClick={() => setShowModifyDateModal(true)}
+                      disabled={updating || modifyingDates}
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <span className="mr-2">📅</span>
+                      Modifier les dates
+                    </Button>
+                  )}
                 </div>
 
                 {/* Actions secondaires */}
@@ -499,14 +584,72 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {quote?.eventLogs?.map((log) => (
-                    <div key={log.id} className="text-xs p-2 bg-gray-50 rounded">
-                      <div className="font-medium">{log.action}</div>
-                      <div className="text-gray-500">
-                        {formatDate(new Date(log.createdAt))}
+                  {quote?.eventLogs?.map((log) => {
+                    let actionDisplay = log.action
+                    let actionIcon = '📋'
+                    let actionColor = 'text-gray-900'
+                    
+                    // Personnaliser l'affichage selon le type d'action
+                    switch (log.action) {
+                      case 'STATUS_CHANGED':
+                        actionIcon = '🔄'
+                        actionDisplay = 'Statut modifié'
+                        actionColor = 'text-blue-700'
+                        break
+                      case 'DATES_MODIFIED':
+                        actionIcon = '📅'
+                        actionDisplay = 'Dates modifiées'
+                        actionColor = 'text-orange-700'
+                        break
+                      case 'DATE_CHANGE_EMAIL_SENT':
+                        actionIcon = '📧'
+                        actionDisplay = 'Client notifié du changement de dates'
+                        actionColor = 'text-green-700'
+                        break
+                      case 'PAYMENT_EMAIL_SENT':
+                        actionIcon = '💳'
+                        actionDisplay = 'Email de paiement envoyé'
+                        actionColor = 'text-purple-700'
+                        break
+                      case 'DELETED':
+                        actionIcon = '🗑️'
+                        actionDisplay = 'Supprimé'
+                        actionColor = 'text-red-700'
+                        break
+                      default:
+                        break
+                    }
+                    
+                    return (
+                      <div key={log.id} className="text-xs p-2 bg-gray-50 rounded">
+                        <div className={`font-medium ${actionColor} flex items-center`}>
+                          <span className="mr-2">{actionIcon}</span>
+                          {actionDisplay}
+                        </div>
+                        <div className="text-gray-500 mt-1">
+                          {formatDate(new Date(log.createdAt))}
+                        </div>
+                        {log.payload && (
+                          <div className="text-gray-600 text-xs mt-1 p-1 bg-gray-100 rounded">
+                            {(() => {
+                              try {
+                                const payload = JSON.parse(log.payload)
+                                if (log.action === 'DATES_MODIFIED') {
+                                  return `${formatDate(new Date(payload.oldStart))} → ${formatDate(new Date(payload.newStart))}`
+                                }
+                                if (log.action === 'STATUS_CHANGED') {
+                                  return `${payload.from} → ${payload.to}`
+                                }
+                                return JSON.stringify(payload, null, 2)
+                              } catch {
+                                return log.payload
+                              }
+                            })()}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  )) || []}
+                    )
+                  }) || []}
                   {(!quote?.eventLogs || quote.eventLogs.length === 0) && (
                     <p className="text-sm text-gray-500">Aucun historique</p>
                   )}
@@ -517,7 +660,20 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
             {quote.booking && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Réservation</CardTitle>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Réservation</span>
+                    {['SIGNED', 'PAYMENT_PENDING', 'PAID'].includes(quote.status) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowModifyDateModal(true)}
+                        disabled={updating || modifyingDates}
+                        className="text-xs"
+                      >
+                        📅 Modifier
+                      </Button>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
@@ -532,6 +688,14 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                         {formatDate(new Date(quote.booking.end))}
                       </p>
                     </div>
+                    {quote.eventLogs?.some(log => log.action === 'DATES_MODIFIED') && (
+                      <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded-md">
+                        <p className="text-xs text-orange-800 flex items-center">
+                          <span className="mr-1">⚠️</span>
+                          Les dates de cette réservation ont été modifiées
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -563,6 +727,17 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                 invoiceRef={paymentEmailData.invoiceRef}
               />
             )}
+
+            <ModifyDateModal
+              isOpen={showModifyDateModal}
+              onClose={() => setShowModifyDateModal(false)}
+              onSave={modifyDates}
+              currentStartDate={quote.desiredStart}
+              currentEndDate={quote.desiredEnd}
+              quoteReference={quote.reference}
+              clientEmail={quote.client.email}
+              isLoading={modifyingDates}
+            />
           </>
         )}
       </div>

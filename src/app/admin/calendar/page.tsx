@@ -36,14 +36,21 @@ export default function CalendarPage() {
   const [view, setView] = useState<'month' | 'week'>('month')
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     fetchBookings()
   }, [])
 
   async function fetchBookings() {
+    setIsLoading(true)
     try {
-      const response = await fetch('/api/admin/bookings')
+      const response = await fetch('/api/admin/bookings', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         setBookings(data.map((booking: any) => ({
@@ -54,6 +61,8 @@ export default function CalendarPage() {
       }
     } catch (error) {
       console.error('Erreur lors du chargement des réservations:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -126,6 +135,28 @@ export default function CalendarPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">Calendrier des locations</h1>
           <div className="flex items-center space-x-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchBookings}
+              disabled={isLoading}
+              className="flex items-center space-x-2"
+            >
+              <svg
+                className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+              <span>{isLoading ? 'Actualisation...' : 'Actualiser'}</span>
+            </Button>
             <div className="flex items-center space-x-2">
               <Button
                 variant={view === 'month' ? 'default' : 'outline'}
