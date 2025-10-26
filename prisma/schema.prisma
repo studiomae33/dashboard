@@ -35,16 +35,16 @@ model Client {
 }
 
 model QuoteRequest {
-  id               String    @id @default(cuid())
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id               String             @id @default(cuid())
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
   clientId         String
   desiredStart     DateTime
   desiredEnd       DateTime
   background       String
   message          String?
-  status           String    @default("DRAFT")
-  reference        String    @unique
+  status           String             @default("DRAFT")
+  reference        String             @unique
   pdfPath          String?
   amountTTC        Float?
   signedAt         DateTime?
@@ -53,7 +53,8 @@ model QuoteRequest {
   invoiceRef       String?
   invoiceAmountTTC Float?
   booking          Booking?
-  client           Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  equipmentRequests EquipmentRequest[]
+  client           Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@map("quote_requests")
 }
@@ -96,4 +97,22 @@ model Settings {
   emailTemplate  String @default("")
 
   @@map("settings")
+}
+
+model EquipmentRequest {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  quoteRequestId String
+  equipment      String   // Liste du matériel demandé (JSON ou texte)
+  status         String   @default("PENDING") // PENDING, CONFIRMED, REJECTED
+  confirmedAt    DateTime?
+  confirmedBy    String?  // Email ou nom de la personne qui a confirmé
+  rejectedAt     DateTime?
+  rejectedBy     String?
+  rejectionReason String?
+  validationToken String? @unique
+  quoteRequest   QuoteRequest @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
+
+  @@map("equipment_requests")
 }

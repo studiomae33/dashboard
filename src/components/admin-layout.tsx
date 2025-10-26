@@ -12,6 +12,7 @@ const navigation = [
   { name: 'Clients', href: '/admin/clients', icon: '👥' },
   { name: 'Calendrier', href: '/admin/calendar', icon: '📅' },
   { name: 'Pipeline', href: '/admin/pipeline', icon: '📈' },
+  { name: 'Loc matériel', href: '/admin/equipment', icon: '📦' },
   { name: 'Paramètres', href: '/admin/settings', icon: '⚙️' },
 ]
 
