@@ -976,6 +976,355 @@ export function renderPaymentEmailHTML(data: QuoteEmailData & {
 </html>`
 }
 
+export function renderDateChangeEmailHTML(data: QuoteEmailData & {
+  oldStartDate: Date
+  oldEndDate: Date
+  newStartDate: Date
+  newEndDate: Date
+}): string {
+  const { quote, client, settings, oldStartDate, oldEndDate, newStartDate, newEndDate } = data
+  const clientName = client.companyName || `${client.firstName} ${client.lastName}`
+
+  // Formatage des dates
+  const formatDateTime = (date: Date) => {
+    return new Intl.DateTimeFormat('fr-FR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Paris'
+    }).format(date)
+  }
+
+  const oldStartFormatted = formatDateTime(oldStartDate)
+  const oldEndFormatted = formatDateTime(oldEndDate)
+  const newStartFormatted = formatDateTime(newStartDate)
+  const newEndFormatted = formatDateTime(newEndDate)
+
+  return `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modification de votre réservation ${quote.reference} - ${settings.studioName}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            background-color: #f7fafc;
+        }
+        
+        .email-container {
+            max-width: 640px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #ed8936, #dd6b20, #c05621);
+        }
+        
+        .header-content {
+            color: white;
+        }
+        
+        .header-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .header-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .greeting {
+            font-size: 18px;
+            font-weight: 500;
+            color: #2d3748;
+            margin-bottom: 24px;
+        }
+        
+        .intro-text {
+            font-size: 16px;
+            color: #4a5568;
+            margin-bottom: 32px;
+            line-height: 1.7;
+        }
+        
+        .date-change-section {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .date-comparison {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .date-block {
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .old-dates {
+            background: #fed7d7;
+            border: 1px solid #feb2b2;
+        }
+        
+        .new-dates {
+            background: #c6f6d5;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .date-label {
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .old-dates .date-label {
+            color: #c53030;
+        }
+        
+        .new-dates .date-label {
+            color: #22543d;
+        }
+        
+        .date-info {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .date-time {
+            font-size: 14px;
+            color: #4a5568;
+        }
+        
+        .arrow-down {
+            text-align: center;
+            font-size: 24px;
+            margin: 16px 0;
+            color: #ed8936;
+        }
+        
+        .details-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #ed8936;
+            margin: 24px 0;
+        }
+        
+        .details-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 12px;
+        }
+        
+        .details-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .details-list li {
+            margin-bottom: 8px;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+        }
+        
+        .details-list li:before {
+            content: '•';
+            color: #ed8936;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .confirmation-message {
+            background: linear-gradient(135deg, #d69e2e 0%, #b7791f 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 32px 0;
+        }
+        
+        .confirmation-message h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .confirmation-message p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .contact-section {
+            background: #f8f9fa;
+            padding: 24px;
+            border-radius: 8px;
+            margin: 32px 0;
+            text-align: center;
+        }
+        
+        .contact-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 12px;
+        }
+        
+        .contact-info {
+            color: #4a5568;
+            font-size: 14px;
+        }
+        
+        .footer {
+            background: #2d3748;
+            color: #a0aec0;
+            padding: 30px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .footer-title {
+            color: white;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .footer-info {
+            margin-bottom: 8px;
+        }
+        
+        @media (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+            
+            .content, .header {
+                padding: 24px 20px;
+            }
+            
+            .date-block {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="header-content">
+                <div class="header-title">📅 Modification de réservation</div>
+                <div class="header-subtitle">Référence ${quote.reference}</div>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="greeting">
+                Bonjour ${client.firstName},
+            </div>
+            
+            <div class="intro-text">
+                Nous vous confirmons que nous avons bien pris en compte votre demande de modification des dates pour votre réservation <strong>${quote.reference}</strong>.
+            </div>
+            
+            <div class="date-change-section">
+                <div class="date-comparison">
+                    <div class="date-block old-dates">
+                        <div class="date-label">❌ Anciennes dates</div>
+                        <div class="date-info">Du ${oldStartFormatted}</div>
+                        <div class="date-time">Au ${oldEndFormatted}</div>
+                    </div>
+                    
+                    <div class="arrow-down">⬇️</div>
+                    
+                    <div class="date-block new-dates">
+                        <div class="date-label">✅ Nouvelles dates confirmées</div>
+                        <div class="date-info">Du ${newStartFormatted}</div>
+                        <div class="date-time">Au ${newEndFormatted}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="confirmation-message">
+                <h3>🎉 Modification confirmée !</h3>
+                <p>Vos nouvelles dates sont maintenant réservées et confirmées dans notre planning.</p>
+            </div>
+            
+            <div class="details-section">
+                <div class="details-title">Détails de votre réservation :</div>
+                <ul class="details-list">
+                    <li><strong>Référence :</strong> ${quote.reference}</li>
+                    <li><strong>Type de fond :</strong> ${quote.background}</li>
+                    <li><strong>Client :</strong> ${clientName}</li>
+                </ul>
+            </div>
+            
+            <div class="contact-section">
+                <div class="contact-title">Une question ? Nous sommes là pour vous aider !</div>
+                <div class="contact-info">
+                    N'hésitez pas à nous contacter si vous avez des questions concernant votre réservation.<br>
+                    Nous avons hâte de vous accueillir dans notre studio !
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div class="footer-title">${settings.studioName}</div>
+            <div class="footer-info">${settings.studioAddress}</div>
+            <div class="footer-info">📞 ${settings.studioPhone}</div>
+            <div class="footer-info">✉️ ${settings.studioEmail}</div>
+        </div>
+    </div>
+</body>
+</html>
+  `
+}
+
 export async function sendQuoteEmail(quoteId: string, pdfPath?: string) {
   const quote = await prisma.quoteRequest.findUnique({
     where: { id: quoteId },
@@ -1253,5 +1602,118 @@ export async function sendPaymentEmail(quoteId: string, invoiceRef: string, paym
   })
 
   console.log('✅ Email de paiement envoyé avec succès')
+  return result?.data || { id: 'fallback-' + Date.now() }
+}
+
+export async function sendDateChangeNotification(quoteId: string, oldStartDate: Date, oldEndDate: Date, newStartDate: Date, newEndDate: Date) {
+  console.log('🔄 Début envoi notification changement de dates...')
+  
+  // Récupérer les informations du devis
+  const quote = await prisma.quoteRequest.findUnique({
+    where: { id: quoteId },
+    include: {
+      client: true,
+    }
+  })
+
+  if (!quote) {
+    throw new Error('Devis non trouvé')
+  }
+
+  // Récupérer les paramètres
+  const settings = await prisma.settings.findUnique({
+    where: { id: 'singleton' }
+  })
+
+  if (!settings) {
+    throw new Error('Paramètres non trouvés')
+  }
+
+  if (!settings.resendApiKey || !settings.senderEmail) {
+    throw new Error('Configuration email manquante')
+  }
+
+  // Générer le contenu HTML
+  const htmlContent = renderDateChangeEmailHTML({
+    quote: {
+      id: quote.id,
+      reference: quote.reference,
+      desiredStart: quote.desiredStart,
+      desiredEnd: quote.desiredEnd,
+      background: quote.background,
+      message: quote.message,
+      amountTTC: quote.amountTTC
+    },
+    client: quote.client,
+    settings: {
+      studioName: settings.studioName,
+      studioAddress: settings.studioAddress,
+      studioPhone: settings.studioPhone,
+      studioEmail: settings.studioEmail,
+      senderEmail: settings.senderEmail
+    },
+    oldStartDate,
+    oldEndDate,
+    newStartDate,
+    newEndDate
+  })
+
+  const emailOptions = {
+    from: settings.senderEmail,
+    to: quote.client.email,
+    subject: `📅 Modification confirmée - Réservation ${quote.reference}`,
+    html: htmlContent,
+  }
+
+  let result
+  
+  console.log('📧 Configuration email notification:', {
+    to: emailOptions.to,
+    subject: emailOptions.subject,
+    isDevelopment,
+    hasResend: !!resend,
+    NODE_ENV: process.env.NODE_ENV,
+    RESEND_API_KEY_EXISTS: !!process.env.RESEND_API_KEY,
+    RESEND_API_KEY_LENGTH: process.env.RESEND_API_KEY?.length
+  })
+
+  if (isDevelopment) {
+    // Mode développement - afficher l'email dans la console
+    console.log('\n=== EMAIL MODIFICATION DATES (MODE DÉVELOPPEMENT) ===')
+    console.log('De:', emailOptions.from)
+    console.log('À:', emailOptions.to)
+    console.log('Sujet:', emailOptions.subject)
+    console.log('HTML Content:')
+    console.log(htmlContent.substring(0, 500) + '...')
+    console.log('====================================================\n')
+    
+    // Simuler une réponse réussie
+    result = { data: { id: 'dev-' + Date.now() } }
+  } else if (!resend) {
+    // Production mais pas de clé API Resend
+    console.error('❌ ERREUR: Pas de clé API Resend pour notification!')
+    throw new Error('Configuration email manquante en production')
+  } else {
+    console.log('🚀 Envoi notification via Resend API...')
+    result = await resend.emails.send(emailOptions)
+    console.log('✅ Réponse Resend:', result)
+  }
+
+  // Log de l'événement
+  await prisma.eventLog.create({
+    data: {
+      entityType: 'QUOTE',
+      entityId: quoteId,
+      action: 'DATE_CHANGE_EMAIL_SENT',
+      payload: JSON.stringify({
+        recipient: quote.client.email,
+        oldDates: { start: oldStartDate, end: oldEndDate },
+        newDates: { start: newStartDate, end: newEndDate },
+        sentAt: new Date().toISOString()
+      }),
+    }
+  })
+
+  console.log('✅ Notification de changement de dates envoyée avec succès')
   return result?.data || { id: 'fallback-' + Date.now() }
 }
