@@ -1022,286 +1022,179 @@ export function renderDateChangeEmailHTML(data: QuoteEmailData & {
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
-            color: #1a202c;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px 0;
+            color: #2d3748;
+            background-color: #f7fafc;
         }
         
         .email-container {
-            max-width: 680px;
-            margin: 0 auto;
+            max-width: 640px;
+            margin: 20px auto;
             background: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             overflow: hidden;
-            position: relative;
         }
         
         .header {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ffa726 100%);
-            padding: 50px 40px;
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            padding: 40px 30px;
             text-align: center;
             position: relative;
-            overflow: hidden;
         }
         
-        .header::before {
+        .header::after {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/><circle cx="25" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-            animation: float 20s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(5deg); }
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #ed8936, #dd6b20, #c05621);
         }
         
         .header-content {
-            position: relative;
-            z-index: 2;
             color: white;
         }
         
-        .header-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            display: block;
-            animation: bounce 2s ease-in-out infinite;
-        }
-        
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-10px); }
-            60% { transform: translateY(-5px); }
-        }
-        
         .header-title {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
         }
         
         .header-subtitle {
-            font-size: 18px;
-            opacity: 0.95;
-            font-weight: 500;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 8px 16px;
-            border-radius: 20px;
-            display: inline-block;
+            font-size: 16px;
+            opacity: 0.9;
         }
         
         .content {
-            padding: 50px 40px;
+            padding: 40px 30px;
         }
         
         .greeting {
-            font-size: 22px;
+            font-size: 28px;
             font-weight: 600;
             color: #2d3748;
-            margin-bottom: 30px;
-            position: relative;
-        }
-        
-        .greeting::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 0;
-            width: 60px;
-            height: 3px;
-            background: linear-gradient(90deg, #ff6b6b, #ffa726);
-            border-radius: 2px;
+            margin-bottom: 24px;
         }
         
         .intro-text {
-            font-size: 18px;
+            font-size: 16px;
             color: #4a5568;
-            margin-bottom: 40px;
-            line-height: 1.8;
-            text-align: center;
-            background: #f8fafc;
+            margin-bottom: 32px;
+            line-height: 1.7;
+        }
+        
+        .confirmation-message {
+            background: linear-gradient(135deg, #f0fff4 0%, #dcfce7 100%);
+            border: 1px solid #10b981;
+            border-radius: 8px;
             padding: 24px;
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
+            margin: 32px 0;
+            text-align: center;
+        }
+        
+        .confirmation-message h3 {
+            color: #059669;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .confirmation-message p {
+            color: #047857;
+            font-size: 16px;
+            margin: 0;
         }
         
         .date-change-section {
             background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-            border-radius: 20px;
-            padding: 40px;
-            margin: 40px 0;
-            border: 2px solid #e2e8f0;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .date-change-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #ff6b6b, #ffa726, #ff6b6b);
+            border-radius: 12px;
+            padding: 32px;
+            margin: 32px 0;
+            border: 1px solid #e2e8f0;
         }
         
         .section-title {
-            text-align: center;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
             color: #2d3748;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
+            text-align: center;
         }
         
         .date-comparison {
             display: grid;
-            gap: 24px;
-            position: relative;
+            gap: 20px;
         }
         
         .date-block {
-            padding: 24px;
-            border-radius: 16px;
+            padding: 20px;
+            border-radius: 8px;
             text-align: center;
-            position: relative;
-            transition: transform 0.3s ease;
-            border: 2px solid transparent;
         }
         
         .old-dates {
-            background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
-            border-color: #fc8181;
-            box-shadow: 0 8px 25px rgba(252, 129, 129, 0.2);
+            background: #fef2f2;
+            border: 1px solid #fecaca;
         }
         
         .new-dates {
-            background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
-            border-color: #68d391;
-            box-shadow: 0 8px 25px rgba(104, 211, 145, 0.2);
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
         }
         
         .date-label {
-            font-weight: 700;
-            font-size: 16px;
+            font-weight: 600;
+            font-size: 14px;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
         }
         
         .old-dates .date-label {
-            color: #c53030;
+            color: #dc2626;
         }
         
         .new-dates .date-label {
-            color: #22543d;
+            color: #16a34a;
         }
         
         .date-info {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 4px;
             color: #2d3748;
         }
         
         .date-time {
-            font-size: 16px;
+            font-size: 14px;
             color: #4a5568;
-            font-weight: 500;
         }
         
         .arrow-container {
             text-align: center;
-            margin: 20px 0;
-            position: relative;
+            margin: 16px 0;
         }
         
         .arrow-down {
-            font-size: 32px;
-            color: #ff6b6b;
-            animation: pulse 2s ease-in-out infinite;
-            display: inline-block;
-            background: white;
-            padding: 12px;
-            border-radius: 50%;
-            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        
-        .confirmation-message {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ffa726 100%);
-            color: white;
-            padding: 32px;
-            border-radius: 20px;
-            text-align: center;
-            margin: 40px 0;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .confirmation-message::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 100px;
-            height: 100px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            animation: float 6s ease-in-out infinite;
-        }
-        
-        .confirmation-message h3 {
             font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            position: relative;
-            z-index: 2;
-        }
-        
-        .confirmation-message p {
-            font-size: 16px;
-            opacity: 0.95;
-            position: relative;
-            z-index: 2;
+            color: #ed8936;
         }
         
         .details-section {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            padding: 32px;
-            border-radius: 20px;
-            border-left: 6px solid #ff6b6b;
-            margin: 40px 0;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 32px 0;
         }
         
         .details-title {
-            font-weight: 700;
-            font-size: 20px;
+            font-weight: 600;
             color: #2d3748;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .details-title::before {
-            content: '📋';
-            font-size: 20px;
+            margin-bottom: 16px;
+            font-size: 16px;
         }
         
         .details-list {
@@ -1313,109 +1206,90 @@ export function renderDateChangeEmailHTML(data: QuoteEmailData & {
             margin-bottom: 12px;
             color: #4a5568;
             display: flex;
-            align-items: center;
-            font-size: 16px;
+            align-items: flex-start;
             padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .details-list li:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
         }
         
         .details-list li:before {
-            content: '✨';
+            content: '•';
+            color: #ed8936;
+            font-weight: bold;
             margin-right: 12px;
-            font-size: 16px;
+            margin-top: 2px;
         }
         
         .contact-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px;
-            border-radius: 20px;
-            margin: 40px 0;
+            background: #f8f9fa;
+            padding: 24px;
+            border-radius: 8px;
+            margin: 32px 0;
             text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .contact-section::before {
-            content: '';
-            position: absolute;
-            top: -30px;
-            left: -30px;
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            animation: float 8s ease-in-out infinite reverse;
         }
         
         .contact-title {
-            font-weight: 700;
-            font-size: 22px;
-            margin-bottom: 16px;
-            position: relative;
-            z-index: 2;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 12px;
+            font-size: 16px;
         }
         
         .contact-info {
-            font-size: 16px;
-            opacity: 0.95;
-            position: relative;
-            z-index: 2;
-            line-height: 1.7;
+            color: #4a5568;
+            font-size: 14px;
+            line-height: 1.6;
         }
         
         .footer {
-            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
             color: #a0aec0;
-            padding: 40px;
+            padding: 30px;
             text-align: center;
-            position: relative;
+            font-size: 14px;
         }
         
         .footer-title {
             color: white;
-            font-weight: 700;
-            font-size: 20px;
-            margin-bottom: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
         }
         
         .footer-info {
             margin-bottom: 8px;
-            font-size: 15px;
         }
         
-        .footer-divider {
-            width: 60px;
-            height: 2px;
-            background: linear-gradient(90deg, #ff6b6b, #ffa726);
-            margin: 20px auto;
-            border-radius: 1px;
+        .closing {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .signature {
+            color: #4a5568;
+            font-weight: 500;
         }
         
         @media (max-width: 600px) {
             .email-container {
                 margin: 10px;
-                border-radius: 16px;
+                border-radius: 8px;
             }
             
             .content, .header {
-                padding: 30px 24px;
+                padding: 24px 20px;
             }
             
             .date-block {
-                padding: 20px;
-            }
-            
-            .header-title {
-                font-size: 24px;
+                padding: 16px;
             }
             
             .greeting {
-                font-size: 20px;
-            }
-            
-            .intro-text {
-                font-size: 16px;
-                padding: 20px;
+                font-size: 24px;
             }
         }
     </style>
@@ -1424,29 +1298,28 @@ export function renderDateChangeEmailHTML(data: QuoteEmailData & {
     <div class="email-container">
         <div class="header">
             <div class="header-content">
-                <span class="header-icon">📅</span>
-                <div class="header-title">Modification de réservation</div>
+                <div class="header-title">📅 Modification de réservation</div>
                 <div class="header-subtitle">Référence ${quote.reference}</div>
             </div>
         </div>
         
         <div class="content">
-            <div class="greeting">
-                Bonjour ${client.firstName} 👋
-            </div>
+            <h1 class="greeting">Bonjour ${client.firstName},</h1>
             
-            <div class="intro-text">
-                <strong>Bonne nouvelle !</strong> Nous avons bien pris en compte votre demande de modification des dates pour votre réservation <strong>${quote.reference}</strong>. Tout est maintenant confirmé dans notre planning ! ✨
+            <p class="intro-text">
+                Nous vous confirmons que nous avons bien pris en compte votre demande de modification des dates pour votre réservation <strong>${quote.reference}</strong>.
+            </p>
+            
+            <div class="confirmation-message">
+                <h3>✅ Modification confirmée</h3>
+                <p>Vos nouvelles dates sont maintenant réservées et confirmées dans notre planning.</p>
             </div>
             
             <div class="date-change-section">
-                <div class="section-title">📊 Récapitulatif des modifications</div>
+                <div class="section-title">Récapitulatif des modifications</div>
                 <div class="date-comparison">
                     <div class="date-block old-dates">
-                        <div class="date-label">
-                            <span>❌</span>
-                            <span>Anciennes dates</span>
-                        </div>
+                        <div class="date-label">❌ Anciennes dates</div>
                         <div class="date-info">${oldStartFormatted}</div>
                         <div class="date-time">au ${oldEndFormatted}</div>
                     </div>
@@ -1456,19 +1329,11 @@ export function renderDateChangeEmailHTML(data: QuoteEmailData & {
                     </div>
                     
                     <div class="date-block new-dates">
-                        <div class="date-label">
-                            <span>✅</span>
-                            <span>Nouvelles dates confirmées</span>
-                        </div>
+                        <div class="date-label">✅ Nouvelles dates confirmées</div>
                         <div class="date-info">${newStartFormatted}</div>
                         <div class="date-time">au ${newEndFormatted}</div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="confirmation-message">
-                <h3>🎉 C'est confirmé !</h3>
-                <p>Vos nouvelles dates sont réservées et sécurisées dans notre planning. Nous avons hâte de vous accueillir !</p>
             </div>
             
             <div class="details-section">
@@ -1481,18 +1346,24 @@ export function renderDateChangeEmailHTML(data: QuoteEmailData & {
             </div>
             
             <div class="contact-section">
-                <div class="contact-title">💬 Une question ? Nous sommes là !</div>
+                <div class="contact-title">Une question ? Nous sommes là pour vous aider</div>
                 <div class="contact-info">
-                    Notre équipe reste à votre disposition pour toute question concernant votre séance photo.<br>
-                    <strong>Préparez-vous à vivre une expérience extraordinaire ! 📸</strong>
+                    N'hésitez pas à nous contacter si vous avez des questions concernant votre réservation.<br>
+                    Nous avons hâte de vous accueillir dans notre studio.
                 </div>
+            </div>
+            
+            <div class="closing">
+                <p class="signature">
+                    Merci pour votre confiance,<br>
+                    <strong>L'équipe ${settings.studioName}</strong>
+                </p>
             </div>
         </div>
         
         <div class="footer">
             <div class="footer-title">${settings.studioName}</div>
-            <div class="footer-divider"></div>
-            <div class="footer-info">📍 ${settings.studioAddress}</div>
+            <div class="footer-info">${settings.studioAddress}</div>
             <div class="footer-info">📞 ${settings.studioPhone}</div>
             <div class="footer-info">✉️ ${settings.studioEmail}</div>
         </div>
