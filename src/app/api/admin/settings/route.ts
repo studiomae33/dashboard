@@ -16,7 +16,7 @@ export async function GET() {
           studioAddress: '123 Rue de la Photographie, 75001 Paris',
           studioPhone: '01 23 45 67 89',
           studioEmail: 'contact@studiomae.fr',
-          senderEmail: 'devis@studiomae.fr',
+          senderEmail: 'devis@mail.studiomae.fr',
         }
       })
       return NextResponse.json(defaultSettings)

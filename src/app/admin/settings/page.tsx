@@ -206,7 +206,7 @@ export default function SettingsPage() {
                   type="email"
                   value={settings.senderEmail}
                   onChange={(e) => updateSettings('senderEmail', e.target.value)}
-                  placeholder="devis@studiomae.fr"
+                  placeholder="devis@mail.studiomae.fr"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Doit être un domaine vérifié dans Resend
