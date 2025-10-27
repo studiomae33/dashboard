@@ -110,27 +110,70 @@ export async function renderDevisEmailHTML(data: QuoteEmailData): Promise<string
 </tr>
 <tr>
 <td style="padding: 20px;">
-<h2 style="margin-top: 0; color: #060c20 !important;">Bonjour ${clientName},</h2>
-<p style="color: #333 !important;">Merci de trouver ci-joint le devis relatif à votre réservation. Vous pouvez le valider en nous le renvoyant signé <strong>ou simplement en répondant à ce mail avec :</strong><br><br><em>"Je valide le devis ${quote.reference}"</em></p>
-<p style="color: #333 !important;">Vous pouvez également <strong><a href="${validationUrl}" style="color: #3853ea;">valider directement votre devis en ligne ici</a></strong>.</p>
-<p style="color: #333 !important;"><strong>📅 Date et heure de la location :</strong><br>${startDate} – ${endTime}</p>
-<p style="color: #333 !important;"><strong>🎨 Fond(s) utilisé(s) :</strong><br>${quote.background}</p>
-<div style="background: #fff8e1 !important; border-left: 4px solid #ffc107 !important; padding: 12px; margin: 20px 0;">
-<p style="margin: 0; color: #333 !important;"><strong>⚠️ Sol du fond blanc :</strong><br>Le sol est protégé par une moquette que vous pouvez retirer si nécessaire.<br>Il est repeint avant chaque location pour garantir un rendu propre.<br>En cas de traces ou de dégradations constatées après votre passage, une remise en peinture de <strong>40 € HT</strong> sera facturée.</p>
+<h2 style="margin-top: 0; color: #060c20 !important;">Bonjour ${clientName} !</h2>
+
+<p style="color: #333 !important;">Merci de trouver ci-joint votre devis personnalisé pour votre location du Studio MAE. Nous avons préparé cette proposition avec soin selon vos besoins spécifiques.</p>
+
+<div style="text-align: center; margin: 32px 0; padding: 24px; background: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+<h3 style="margin-bottom: 16px; color: #2d3748; font-weight: 600;">Validation de votre devis</h3>
+<a href="${validationUrl}" style="display: inline-block; background: #48bb78; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">📋 Voir les conditions et valider le devis</a>
+<p style="margin-top: 16px; color: #718096; font-size: 14px;">Validation sécurisée et immédiate</p>
 </div>
-<p style="color: #333 !important;"><strong>📄 Référence du devis :</strong><br>${quote.reference}</p>
-${quote.amountTTC ? `<p style="color: #333 !important;"><strong>💰 Montant :</strong><br>${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(quote.amountTTC)}</p>` : ''}
-<p style="color: #333 !important;">🧾 <strong>Vous souhaitez modifier l'adresse de facturation ?</strong><br>Il suffit de nous indiquer les informations à corriger dans votre mail signature du devis, et nous les mettrons à jour directement sur la facture finale.</p>
-<div style="margin: 25px 0; background: #f1f1f1; border-left: 4px solid #3853ea; padding: 15px;">
-<p style="margin: 0; color: #333 !important;">📎 <strong>Le devis est joint à ce message au format PDF.</strong><br>Il peut être validé par retour signé ou par une confirmation écrite dans votre réponse.</p>
+
+<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; margin: 20px 0;">
+<div style="display: flex; align-items: flex-start; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
+<div style="font-size: 20px; margin-right: 12px; min-width: 32px;">📅</div>
+<div>
+<h4 style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 16px;">Séance programmée</h4>
+<p style="color: #4a5568; margin: 0; font-size: 15px;">${startDate} • ${endTime}</p>
 </div>
-<p style="color: #333 !important;">💡 Dès réception du devis validé, nous vous transmettrons les consignes de paiement par mail.</p>
-<p style="margin-bottom: 0; color: #333 !important;">Merci pour votre confiance,</p>
-<p style="margin-top: 5px; color: #333 !important;">L'équipe Studio MAE</p>
+</div>
+
+<div style="display: flex; align-items: flex-start; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
+<div style="font-size: 20px; margin-right: 12px; min-width: 32px;">🎨</div>
+<div>
+<h4 style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 16px;">Configuration studio</h4>
+<p style="color: #4a5568; margin: 0; font-size: 15px;">${quote.background}</p>
+</div>
+</div>
+
+<div style="display: flex; align-items: flex-start; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
+<div style="font-size: 20px; margin-right: 12px; min-width: 32px;">💰</div>
+<div>
+<h4 style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 16px;">Tarif</h4>
+<p style="color: #4a5568; margin: 0; font-size: 15px;">${quote.amountTTC ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(quote.amountTTC) : '450,00 €'} TTC</p>
+</div>
+</div>
+
+<div style="display: flex; align-items: flex-start;">
+<div style="font-size: 20px; margin-right: 12px; min-width: 32px;">📄</div>
+<div>
+<h4 style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 16px;">Référence devis</h4>
+<p style="color: #4a5568; margin: 0; font-size: 15px; font-family: 'Courier New', monospace;">${quote.reference}</p>
+</div>
+</div>
+</div>
+
+<div style="background: #ebf8ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 0 8px 8px 0; margin: 24px 0;">
+<p style="margin: 0; color: #1e40af; font-weight: 500;"><strong>📋 Conditions et informations détaillées</strong><br>
+Retrouvez toutes les informations nécessaires à votre location (conditions, tarifs, modalités) directement dans le lien de validation du devis ci-dessus.</p>
+</div>
+
+<div style="background: #f0fff4; border-left: 4px solid #10b981; padding: 20px; border-radius: 0 8px 8px 0; margin: 32px 0;">
+<p style="margin: 0; color: #059669; font-weight: 500;"><strong>💡 Prochaine étape</strong><br>
+Dès réception de votre validation, nous vous transmettrons immédiatement les instructions de paiement par email.</p>
+</div>
+
+<div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e2e8f0;">
+<p style="color: #4a5568; font-weight: 500;">
+Merci pour votre confiance,<br>
+<strong>L'équipe Studio MAE</strong>
+</p>
+</div>
 </td>
 </tr>
 <tr>
-<td style="background: #f9f9f9 !important; padding: 15px; font-size: 12px; text-align: center; color: #777 !important;">Studio MAE – 46 rue Promis, 33100 Bordeaux<br>📞 05.54.54.70.93 – 📧 contact@studiomae.fr</td>
+<td style="background: #f9f9f9 !important; padding: 15px; font-size: 12px; text-align: center; color: #777 !important;"><strong>Studio MAE</strong><br>46 rue Promis, 33100 Bordeaux<br>📞 05.54.54.70.93 • ✉️ contact@studiomae.fr</td>
 </tr>
 </tbody>
 </table>`
@@ -175,359 +218,203 @@ export function renderEquipmentRequestEmailHTML(data: EquipmentRequestEmailData)
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Demande de location de matériel - ${quote.reference}</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #2d3748;
-            background-color: #f7fafc;
-        }
-        
-        .email-container {
-            max-width: 640px;
-            margin: 20px auto;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
-            padding: 40px 30px;
-            text-align: center;
-            position: relative;
-        }
-        
-        .header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: linear-gradient(90deg, #f6ad55, #ed8936, #dd6b20);
-        }
-        
-        .header-title {
-            color: white;
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        
-        .header-subtitle {
-            color: #a0aec0;
-            font-size: 16px;
-        }
-        
-        .content {
-            padding: 40px 30px;
-        }
-        
-        .greeting {
-            font-size: 28px;
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 24px;
-        }
-        
-        .intro-text {
-            font-size: 16px;
-            color: #4a5568;
-            margin-bottom: 32px;
-            line-height: 1.7;
-        }
-        
-        .info-section {
-            margin: 32px 0;
-        }
-        
-        .info-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 24px;
-            margin: 20px 0;
-        }
-        
-        .info-row {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 16px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        
-        .info-row:last-child {
-            margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
-        }
-        
-        .info-icon {
-            font-size: 20px;
-            margin-right: 12px;
-            min-width: 32px;
-        }
-        
-        .info-content h4 {
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 4px;
-            font-size: 16px;
-        }
-        
-        .info-content p {
-            color: #4a5568;
-            margin: 0;
-            font-size: 15px;
-        }
-        
-        .equipment-section {
-            background: linear-gradient(135deg, #f0fff4 0%, #dcfce7 100%);
-            border: 1px solid #16a34a;
-            border-radius: 12px;
-            padding: 24px;
-            margin: 32px 0;
-        }
-        
-        .equipment-title {
-            color: #15803d;
-            font-weight: 600;
-            margin-bottom: 16px;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .equipment-list {
-            background: white;
-            border-radius: 8px;
-            padding: 16px;
-            color: #374151;
-            white-space: pre-wrap;
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        
-        .action-section {
-            background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
-            border: 1px solid #f59e0b;
-            border-radius: 12px;
-            padding: 32px;
-            margin: 32px 0;
-            text-align: center;
-        }
-        
-        .action-title {
-            color: #92400e;
-            font-weight: 600;
-            margin-bottom: 16px;
-            font-size: 20px;
-        }
-        
-        .action-subtitle {
-            color: #a16207;
-            margin-bottom: 24px;
-            font-size: 16px;
-        }
-        
-        .button-container {
-            display: flex;
-            gap: 16px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 14px 28px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            min-width: 140px;
-        }
-        
-        .btn-confirm {
-            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-            color: white !important;
-            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
-        }
-        
-        .btn-confirm:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(22, 163, 74, 0.4);
-        }
-        
-        .btn-reject {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-            color: white !important;
-            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
-        }
-        
-        .btn-reject:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
-        }
-        
-        .footer-note {
-            background: linear-gradient(135deg, #ebf8ff 0%, #dbeafe 100%);
-            border-left: 4px solid #3b82f6;
-            padding: 20px;
-            border-radius: 0 8px 8px 0;
-            margin: 32px 0;
-        }
-        
-        .footer-note p {
-            margin: 0;
-            color: #1e40af;
-            font-weight: 500;
-        }
-        
-        .footer {
-            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
-            padding: 24px 30px;
-            text-align: center;
-            color: #a0aec0;
-            font-size: 14px;
-        }
-        
-        .footer-content {
-            line-height: 1.8;
-        }
-        
-        .footer strong {
-            color: #ffffff;
-        }
-        
-        @media (max-width: 600px) {
-            .button-container {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .btn {
-                min-width: 200px;
-            }
-            
-            .email-container {
-                margin: 10px;
-                border-radius: 8px;
-            }
-            
-            .content, .header {
-                padding: 24px 20px;
-            }
-        }
-    </style>
 </head>
-<body>
-    <div class="email-container">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-title">📦 Demande de location de matériel</div>
-            <div class="header-subtitle">Devis ${quote.reference}</div>
-        </div>
-        
-        <!-- Content -->
-        <div class="content">
-            <h1 class="greeting">Nouvelle demande de location</h1>
-            
-            <p class="intro-text">
-                Bonjour,<br><br>
-                Vous avez reçu une nouvelle demande de location de matériel pour une séance photo au ${settings.studioName}.
-                Merci de confirmer ou refuser la disponibilité du matériel demandé.
-            </p>
-            
-            <!-- Info Section -->
-            <div class="info-section">
-                <div class="info-card">
-                    <div class="info-row">
-                        <div class="info-icon">👤</div>
-                        <div class="info-content">
-                            <h4>Client</h4>
-                            <p>${clientName}</p>
-                        </div>
-                    </div>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f5f5f5;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5;">
+        <tr>
+            <td align="center" style="padding: 20px;">
+                <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background-color: #060c20; padding: 40px 30px; text-align: center;">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td style="color: #ffffff; font-size: 24px; font-weight: bold; margin-bottom: 8px;">
+                                        📦 Demande de location de matériel
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #ffffff; font-size: 16px; opacity: 0.9; padding-top: 8px;">
+                                        Devis ${quote.reference}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
                     
-                    <div class="info-row">
-                        <div class="info-icon">📋</div>
-                        <div class="info-content">
-                            <h4>Référence devis</h4>
-                            <p>${quote.reference}</p>
-                        </div>
-                    </div>
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <!-- Greeting -->
+                                <tr>
+                                    <td style="font-size: 28px; font-weight: bold; color: #333333; padding-bottom: 24px;">
+                                        Nouvelle demande de location
+                                    </td>
+                                </tr>
+                                
+                                <!-- Intro text -->
+                                <tr>
+                                    <td style="color: #666666; line-height: 1.7; padding-bottom: 32px;">
+                                        Bonjour,<br><br>
+                                        Vous avez reçu une nouvelle demande de location de matériel pour une séance photo au ${settings.studioName}.<br>
+                                        Merci de confirmer ou refuser la disponibilité du matériel demandé.
+                                    </td>
+                                </tr>
+                                
+                                <!-- Info Section -->
+                                <tr>
+                                    <td style="padding-bottom: 32px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                                            <tr>
+                                                <td style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9;">
+                                                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                        <tr>
+                                                            <td style="width: 32px; font-size: 20px; vertical-align: top; padding-right: 12px;">👤</td>
+                                                            <td>
+                                                                <div style="font-weight: bold; color: #2d3748; margin-bottom: 4px; font-size: 16px;">Client</div>
+                                                                <div style="color: #4a5568; font-size: 15px;">${clientName}</div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9;">
+                                                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                        <tr>
+                                                            <td style="width: 32px; font-size: 20px; vertical-align: top; padding-right: 12px;">📋</td>
+                                                            <td>
+                                                                <div style="font-weight: bold; color: #2d3748; margin-bottom: 4px; font-size: 16px;">Référence devis</div>
+                                                                <div style="color: #4a5568; font-size: 15px;">${quote.reference}</div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9;">
+                                                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                        <tr>
+                                                            <td style="width: 32px; font-size: 20px; vertical-align: top; padding-right: 12px;">📅</td>
+                                                            <td>
+                                                                <div style="font-weight: bold; color: #2d3748; margin-bottom: 4px; font-size: 16px;">Date de la séance</div>
+                                                                <div style="color: #4a5568; font-size: 15px;">${startDate} • ${endTime}</div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 12px 16px;">
+                                                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                        <tr>
+                                                            <td style="width: 32px; font-size: 20px; vertical-align: top; padding-right: 12px;">🎨</td>
+                                                            <td>
+                                                                <div style="font-weight: bold; color: #2d3748; margin-bottom: 4px; font-size: 16px;">Configuration studio</div>
+                                                                <div style="color: #4a5568; font-size: 15px;">${quote.background}</div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Equipment Section -->
+                                <tr>
+                                    <td style="padding-bottom: 32px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f0fff4; border: 2px solid #16a34a; border-radius: 8px;">
+                                            <tr>
+                                                <td style="padding: 24px;">
+                                                    <div style="color: #15803d; font-weight: bold; font-size: 18px; margin-bottom: 16px;">
+                                                        📦 Matériel demandé
+                                                    </div>
+                                                    <div style="background-color: #ffffff; border-radius: 8px; padding: 16px; color: #374151; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.5;">
+                                                        ${equipmentRequest.equipment}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Action Section -->
+                                <tr>
+                                    <td style="padding-bottom: 32px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px;">
+                                            <tr>
+                                                <td style="padding: 32px; text-align: center;">
+                                                    <div style="color: #92400e; font-weight: bold; font-size: 20px; margin-bottom: 16px;">
+                                                        Confirmez-vous la disponibilité ?
+                                                    </div>
+                                                    <div style="color: #a16207; margin-bottom: 24px; font-size: 16px;">
+                                                        Cliquez sur l'un des boutons ci-dessous pour répondre à cette demande
+                                                    </div>
+                                                    <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+                                                        <tr>
+                                                            <td style="padding-right: 8px;">
+                                                                <table cellpadding="0" cellspacing="0" border="0">
+                                                                    <tr>
+                                                                        <td style="background-color: #16a34a; border-radius: 6px; text-align: center;">
+                                                                            <a href="${confirmUrl}" 
+                                                                               style="display: inline-block; padding: 14px 28px; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 16px; min-width: 140px;">
+                                                                                ✅ Confirmer la disponibilité
+                                                                            </a>
+                                                                        </td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+                                                            <td style="padding-left: 8px;">
+                                                                <table cellpadding="0" cellspacing="0" border="0">
+                                                                    <tr>
+                                                                        <td style="background-color: #dc2626; border-radius: 6px; text-align: center;">
+                                                                            <a href="${rejectUrl}" 
+                                                                               style="display: inline-block; padding: 14px 28px; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 16px; min-width: 140px;">
+                                                                                ❌ Matériel non disponible
+                                                                            </a>
+                                                                        </td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Footer note -->
+                                <tr>
+                                    <td style="padding-bottom: 32px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ebf8ff; border-left: 4px solid #3b82f6; border-radius: 0 8px 8px 0;">
+                                            <tr>
+                                                <td style="padding: 20px; color: #1e40af; font-weight: 500;">
+                                                    <strong>💡 Important</strong><br>
+                                                    Une fois votre réponse donnée, le studio sera automatiquement notifié et pourra informer le client de la disponibilité du matériel.
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
                     
-                    <div class="info-row">
-                        <div class="info-icon">📅</div>
-                        <div class="info-content">
-                            <h4>Date de la séance</h4>
-                            <p>${startDate} • ${endTime}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="info-row">
-                        <div class="info-icon">🎨</div>
-                        <div class="info-content">
-                            <h4>Configuration studio</h4>
-                            <p>${quote.background}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Equipment Section -->
-            <div class="equipment-section">
-                <div class="equipment-title">
-                    📦 Matériel demandé
-                </div>
-                <div class="equipment-list">${equipmentRequest.equipment}</div>
-            </div>
-            
-            <!-- Action Section -->
-            <div class="action-section">
-                <h2 class="action-title">Confirmez-vous la disponibilité ?</h2>
-                <p class="action-subtitle">
-                    Cliquez sur l'un des boutons ci-dessous pour répondre à cette demande
-                </p>
-                
-                <div class="button-container">
-                    <a href="${confirmUrl}" class="btn btn-confirm">
-                        ✅ Confirmer la disponibilité
-                    </a>
-                    <a href="${rejectUrl}" class="btn btn-reject">
-                        ❌ Matériel non disponible
-                    </a>
-                </div>
-            </div>
-            
-            <div class="footer-note">
-                <p><strong>💡 Important</strong><br>
-                Une fois votre réponse donnée, le studio sera automatiquement notifié et pourra informer le client de la disponibilité du matériel.</p>
-            </div>
-        </div>
-        
-        <!-- Footer -->
-        <div class="footer">
-            <div class="footer-content">
-                <strong>Demande envoyée par ${settings.studioName}</strong><br>
-                ${settings.studioAddress}<br>
-                📞 ${settings.studioPhone} • ✉️ ${settings.studioEmail}
-            </div>
-        </div>
-    </div>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #060c20; padding: 24px 30px; text-align: center; color: #ffffff; font-size: 14px; line-height: 1.8;">
+                            <strong>Demande envoyée par ${settings.studioName}</strong><br>
+                            ${settings.studioAddress}<br>
+                            📞 ${settings.studioPhone} • ✉️ ${settings.studioEmail}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>`
 }
@@ -1051,147 +938,45 @@ export function renderPaymentEmailHTML(data: QuoteEmailData & {
     : '450,00 €'
 
   return `
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instructions de paiement - ${settings.studioName}</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #2d3748;
-            background-color: #f7fafc;
-        }
-        
-        .email-container {
-            max-width: 640px;
-            margin: 20px auto;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
-            padding: 40px 30px;
-            text-align: center;
-            position: relative;
-        }
-        
-        .content {
-            padding: 40px 30px;
-        }
-        
-        .greeting {
-            font-size: 28px;
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 24px;
-        }
-        
-        .payment-amount {
-            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-            color: white;
-            padding: 24px;
-            border-radius: 12px;
-            text-align: center;
-            margin: 32px 0;
-            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.2);
-        }
-        
-        .payment-amount .amount {
-            font-size: 32px;
-            font-weight: 700;
-            margin: 0;
-        }
-        
-        .footer {
-            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-            font-size: 14px;
-        }
-    </style>
-</head>
-<body>
-    <div class="email-container">
-        <div class="header">
-            <img src="https://www.studiomae.fr/images/logo_mail.png" alt="Studio MAE" width="120" height="60" />
-        </div>
-        
-        <div class="content">
-            <h1 class="greeting">Instructions de paiement</h1>
-            
-            <p>
-                Bonjour <strong>${clientName}</strong>,<br><br>
-                Merci d'avoir validé votre devis ! Pour finaliser votre réservation au studio, 
-                voici les informations nécessaires pour effectuer votre paiement.
-            </p>
-            
-            <div class="payment-amount">
-                <div>Montant à régler</div>
-                <div class="amount">${amountFormatted}</div>
-            </div>
-            
-            ${paymentDueDate ? `
-            <div style="background: #fed7d7; border: 1px solid #fc8181; border-radius: 12px; padding: 20px; margin: 24px 0;">
-                <p style="margin: 0; color: #c53030; font-weight: 500;">
-                    <strong>⚠️ Date limite de paiement : ${paymentDueDate}</strong>
-                </p>
-                <p style="margin-top: 8px; font-weight: normal; color: #c53030;">
-                    Merci de procéder au paiement avant cette date pour confirmer votre réservation.
-                </p>
-            </div>
-            ` : ''}
-            
-            <div style="text-align: center; margin: 32px 0;">
-                <a href="${paymentLink}" 
-                   style="display: inline-block; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); 
-                          color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; 
-                          font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);">
-                    💳 Payer la location
-                </a>
-                <p style="margin-top: 16px; font-size: 14px; color: #666;">
-                    Paiement sécurisé par SumUp
-                </p>
-            </div>
-            
-            <div style="background: #e6fffa; border: 1px solid #38b2ac; border-radius: 12px; padding: 20px; margin: 24px 0;">
-                <p style="margin: 0; color: #234e52; font-weight: 500;">
-                    <strong>💡 Pour finaliser votre réservation :</strong>
-                </p>
-                <p style="margin-top: 8px; color: #234e52;">
-                    Cliquez sur le bouton "Payer la location" ci-dessus pour accéder au paiement sécurisé. 
-                    Votre réservation sera automatiquement confirmée après validation du paiement.
-                </p>
-            </div>
-            
-            <p>
-                À très bientôt au studio !<br>
-                <strong>L'équipe ${settings.studioName}</strong>
-            </p>
-        </div>
-        
-        <div class="footer">
-            <p><strong>${settings.studioName}</strong></p>
-            <p>${settings.studioAddress}</p>
-            <p>📞 ${settings.studioPhone} • 📧 ${settings.studioEmail}</p>
-        </div>
-    </div>
-</body>
-</html>`
+<table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333 !important;">
+<tbody>
+<tr>
+<td style="background-color: #060c20 !important; padding: 20px; text-align: center;"><img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio"></td>
+</tr>
+<tr>
+<td style="padding: 20px;">
+<h2 style="margin-top: 0; color: #060c20 !important;">Instructions de paiement</h2>
+
+<p style="color: #333 !important;">Bonjour <strong>${clientName}</strong>,<br><br>Merci d'avoir validé votre devis ! Pour finaliser votre réservation au studio, voici les informations nécessaires pour effectuer votre paiement.</p>
+
+<div style="text-align: center; margin: 32px 0; padding: 24px; background: #48bb78; border-radius: 8px; color: white;">
+<div style="font-size: 16px; margin-bottom: 8px;">Montant à régler</div>
+<div style="font-size: 32px; font-weight: 700; margin: 0;">${amountFormatted}</div>
+</div>
+
+${paymentDueDate ? `
+<div style="background: #fff8e1 !important; border-left: 4px solid #ffc107 !important; padding: 12px; margin: 20px 0;">
+<p style="margin: 0; color: #333 !important;"><strong>⚠️ Date limite de paiement : ${paymentDueDate}</strong><br>Merci de procéder au paiement avant cette date pour confirmer votre réservation.</p>
+</div>
+` : ''}
+
+<div style="text-align: center; margin: 32px 0;">
+<a href="${paymentLink}" style="display: inline-block; background: #48bb78; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">💳 Payer la location</a>
+<p style="margin-top: 16px; font-size: 14px; color: #666;">Paiement sécurisé par SumUp</p>
+</div>
+
+<div style="margin: 25px 0; background: #f1f1f1; border-left: 4px solid #3853ea; padding: 15px;">
+<p style="margin: 0; color: #333 !important;"><strong>💡 Pour finaliser votre réservation :</strong><br>Cliquez sur le bouton "Payer la location" ci-dessus pour accéder au paiement sécurisé. Votre réservation sera automatiquement confirmée après validation du paiement.</p>
+</div>
+
+<p style="color: #333 !important;">À très bientôt au studio !<br><strong>L'équipe ${settings.studioName}</strong></p>
+</td>
+</tr>
+<tr>
+<td style="background: #f9f9f9 !important; padding: 15px; font-size: 12px; text-align: center; color: #777 !important;"><strong>${settings.studioName}</strong><br>${settings.studioAddress}<br>📞 ${settings.studioPhone} • 📧 ${settings.studioEmail}</td>
+</tr>
+</tbody>
+</table>`
 }
 
 export function renderDateChangeEmailHTML(data: QuoteEmailData & {
@@ -1222,139 +1007,56 @@ export function renderDateChangeEmailHTML(data: QuoteEmailData & {
   const newEndFormatted = formatDateTime(newEndDate)
 
   return `
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modification de votre réservation ${quote.reference} - ${settings.studioName}</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #2d3748;
-            background-color: #f7fafc;
-        }
-        
-        .email-container {
-            max-width: 640px;
-            margin: 20px auto;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
-            padding: 40px 30px;
-            text-align: center;
-            position: relative;
-        }
-        
-        .header-content {
-            color: white;
-        }
-        
-        .header-title {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        
-        .content {
-            padding: 40px 30px;
-        }
-        
-        .greeting {
-            font-size: 28px;
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 24px;
-        }
-        
-        .confirmation-message {
-            background: linear-gradient(135deg, #f0fff4 0%, #dcfce7 100%);
-            border: 1px solid #10b981;
-            border-radius: 8px;
-            padding: 24px;
-            margin: 32px 0;
-            text-align: center;
-        }
-        
-        .footer {
-            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
-            color: #a0aec0;
-            padding: 30px;
-            text-align: center;
-            font-size: 14px;
-        }
-    </style>
-</head>
-<body>
-    <div class="email-container">
-        <div class="header">
-            <div class="header-content">
-                <div class="header-title">📅 Modification de réservation</div>
-                <div>Référence ${quote.reference}</div>
-            </div>
-        </div>
-        
-        <div class="content">
-            <h1 class="greeting">Bonjour ${client.firstName},</h1>
-            
-            <p>
-                Nous vous confirmons que nous avons bien pris en compte votre demande de modification des dates pour votre réservation <strong>${quote.reference}</strong>.
-            </p>
-            
-            <div class="confirmation-message">
-                <h3 style="color: #059669; font-size: 20px; font-weight: 600; margin-bottom: 8px;">✅ Modification confirmée</h3>
-                <p style="color: #047857; font-size: 16px; margin: 0;">Vos nouvelles dates sont maintenant réservées et confirmées dans notre planning.</p>
-            </div>
-            
-            <div style="background: #f7fafc; border-radius: 12px; padding: 32px; margin: 32px 0; border: 1px solid #e2e8f0;">
-                <div style="font-size: 18px; font-weight: 600; color: #2d3748; margin-bottom: 24px; text-align: center;">Récapitulatif des modifications</div>
-                
-                <div style="padding: 20px; border-radius: 8px; text-align: center; background: #fef2f2; border: 1px solid #fecaca; margin-bottom: 16px;">
-                    <div style="font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; color: #dc2626;">❌ Anciennes dates</div>
-                    <div style="font-size: 16px; font-weight: 500; margin-bottom: 4px; color: #2d3748;">${oldStartFormatted}</div>
-                    <div style="font-size: 14px; color: #4a5568;">au ${oldEndFormatted}</div>
-                </div>
-                
-                <div style="text-align: center; margin: 16px 0;">
-                    <div style="font-size: 24px; color: #ed8936;">⬇️</div>
-                </div>
-                
-                <div style="padding: 20px; border-radius: 8px; text-align: center; background: #f0fdf4; border: 1px solid #bbf7d0;">
-                    <div style="font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; color: #16a34a;">✅ Nouvelles dates confirmées</div>
-                    <div style="font-size: 16px; font-weight: 500; margin-bottom: 4px; color: #2d3748;">${newStartFormatted}</div>
-                    <div style="font-size: 14px; color: #4a5568;">au ${newEndFormatted}</div>
-                </div>
-            </div>
-            
-            <p style="margin-top: 32px; text-align: center; color: #4a5568;">
-                Merci pour votre confiance,<br>
-                <strong>L'équipe ${settings.studioName}</strong>
-            </p>
-        </div>
-        
-        <div class="footer">
-            <div style="color: white; font-weight: 600; margin-bottom: 12px;">${settings.studioName}</div>
-            <div style="margin-bottom: 8px;">${settings.studioAddress}</div>
-            <div style="margin-bottom: 8px;">📞 ${settings.studioPhone}</div>
-            <div>✉️ ${settings.studioEmail}</div>
-        </div>
-    </div>
-</body>
-</html>
+<table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333 !important;">
+<tbody>
+<tr>
+<td style="background-color: #060c20 !important; padding: 20px; text-align: center;"><img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio"></td>
+</tr>
+<tr>
+<td style="padding: 20px;">
+<h2 style="margin-top: 0; color: #060c20 !important;">📅 Modification de réservation</h2>
+<p style="margin: 5px 0 20px 0; color: #666; font-size: 14px;">Référence ${quote.reference}</p>
+
+<h3 style="color: #060c20 !important;">Bonjour ${client.firstName},</h3>
+
+<p style="color: #333 !important;">Nous vous confirmons que nous avons bien pris en compte votre demande de modification des dates pour votre réservation <strong>${quote.reference}</strong>.</p>
+
+<div style="background: #f0fff4; border-left: 4px solid #10b981; padding: 20px; border-radius: 0 8px 8px 0; margin: 32px 0; text-align: center;">
+<h3 style="color: #059669; font-size: 20px; font-weight: 600; margin-bottom: 8px;">✅ Modification confirmée</h3>
+<p style="color: #047857; font-size: 16px; margin: 0;">Vos nouvelles dates sont maintenant réservées et confirmées dans notre planning.</p>
+</div>
+
+<div style="background: #f7fafc; border-radius: 8px; padding: 24px; margin: 32px 0; border: 1px solid #e2e8f0;">
+<div style="font-size: 18px; font-weight: 600; color: #2d3748; margin-bottom: 24px; text-align: center;">Récapitulatif des modifications</div>
+
+<div style="padding: 20px; border-radius: 8px; text-align: center; background: #fef2f2; border: 1px solid #fecaca; margin-bottom: 16px;">
+<div style="font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; color: #dc2626;">❌ Anciennes dates</div>
+<div style="font-size: 16px; font-weight: 500; margin-bottom: 4px; color: #2d3748;">${oldStartFormatted}</div>
+<div style="font-size: 14px; color: #4a5568;">au ${oldEndFormatted}</div>
+</div>
+
+<div style="text-align: center; margin: 16px 0;">
+<div style="font-size: 24px; color: #ed8936;">⬇️</div>
+</div>
+
+<div style="padding: 20px; border-radius: 8px; text-align: center; background: #f0fdf4; border: 1px solid #bbf7d0;">
+<div style="font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; color: #16a34a;">✅ Nouvelles dates confirmées</div>
+<div style="font-size: 16px; font-weight: 500; margin-bottom: 4px; color: #2d3748;">${newStartFormatted}</div>
+<div style="font-size: 14px; color: #4a5568;">au ${newEndFormatted}</div>
+</div>
+</div>
+
+<p style="margin-top: 32px; text-align: center; color: #333 !important;">
+Merci pour votre confiance,<br>
+<strong>L'équipe ${settings.studioName}</strong>
+</p>
+</td>
+</tr>
+<tr>
+<td style="background: #f9f9f9 !important; padding: 15px; font-size: 12px; text-align: center; color: #777 !important;"><strong>${settings.studioName}</strong><br>${settings.studioAddress}<br>📞 ${settings.studioPhone} • ✉️ ${settings.studioEmail}</td>
+</tr>
+</tbody>
+</table>
   `
 }
 
@@ -1469,373 +1171,220 @@ export function renderInvoiceEmailHTML(data: QuoteEmailData & {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Facture ${invoiceRef} - ${settings.studioName}</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #2d3748;
-            background-color: #f7fafc;
-        }
-        
-        .email-container {
-            max-width: 640px;
-            margin: 20px auto;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            padding: 40px 30px;
-            text-align: center;
-            position: relative;
-        }
-        
-        .header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: linear-gradient(90deg, #3b82f6, #1d4ed8, #1e40af);
-        }
-        
-        .header-content {
-            color: white;
-        }
-        
-        .header-title {
-            font-size: 28px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        
-        .header-subtitle {
-            font-size: 16px;
-            opacity: 0.9;
-        }
-        
-        .content {
-            padding: 40px 30px;
-        }
-        
-        .greeting {
-            font-size: 28px;
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 24px;
-        }
-        
-        .intro-text {
-            font-size: 16px;
-            color: #4a5568;
-            margin-bottom: 32px;
-            line-height: 1.7;
-        }
-        
-        .invoice-summary {
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-            border: 1px solid #3b82f6;
-            border-radius: 12px;
-            padding: 24px;
-            margin: 32px 0;
-        }
-        
-        .invoice-header {
-            text-align: center;
-            margin-bottom: 24px;
-        }
-        
-        .invoice-ref {
-            font-size: 24px;
-            font-weight: 700;
-            color: #1e40af;
-            font-family: 'Courier New', monospace;
-        }
-        
-        .invoice-date {
-            color: #64748b;
-            font-size: 14px;
-            margin-top: 4px;
-        }
-        
-        .booking-details {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            border: 1px solid #e2e8f0;
-        }
-        
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        
-        .detail-row:last-child {
-            border-bottom: none;
-            font-weight: 600;
-            font-size: 18px;
-            color: #1e40af;
-        }
-        
-        .detail-label {
-            color: #64748b;
-        }
-        
-        .detail-value {
-            color: #1e293b;
-            font-weight: 500;
-        }
-        
-        .download-section {
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-            border: 1px solid #3b82f6;
-            border-radius: 12px;
-            padding: 24px;
-            margin: 32px 0;
-            text-align: center;
-        }
-        
-        .download-title {
-            color: #1e40af;
-            font-weight: 600;
-            margin-bottom: 16px;
-            font-size: 18px;
-        }
-        
-        .download-text {
-            color: #1e40af;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-        
-        .download-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white !important;
-            padding: 14px 28px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 16px;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-            transition: all 0.3s ease;
-        }
-        
-        .download-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
-        }
-        
-        .google-review-section {
-            background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
-            border: 1px solid #f59e0b;
-            border-radius: 12px;
-            padding: 24px;
-            margin: 32px 0;
-            text-align: center;
-        }
-        
-        .google-review-title {
-            color: #92400e;
-            font-weight: 600;
-            margin-bottom: 16px;
-            font-size: 18px;
-        }
-        
-        .google-review-text {
-            color: #a16207;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-        
-        .google-review-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: white !important;
-            padding: 12px 24px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 16px;
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-            transition: all 0.3s ease;
-        }
-        
-        .google-review-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
-        }
-        
-        .thank-you-section {
-            background: linear-gradient(135deg, #f0fff4 0%, #dcfce7 100%);
-            border-left: 4px solid #10b981;
-            padding: 20px;
-            border-radius: 0 8px 8px 0;
-            margin: 32px 0;
-        }
-        
-        .thank-you-section p {
-            margin: 0;
-            color: #059669;
-            font-weight: 500;
-        }
-        
-        .closing {
-            margin-top: 40px;
-            padding-top: 24px;
-            border-top: 1px solid #e2e8f0;
-        }
-        
-        .signature {
-            color: #4a5568;
-            font-weight: 500;
-        }
-        
-        .footer {
-            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
-            padding: 24px 30px;
-            text-align: center;
-            color: #a0aec0;
-            font-size: 14px;
-        }
-        
-        .footer-content {
-            line-height: 1.8;
-        }
-        
-        .footer strong {
-            color: #ffffff;
-        }
-    </style>
 </head>
-<body>
-    <div class="email-container">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-content">
-                <div class="header-title">📄 Facture transmise</div>
-                <div class="header-subtitle">Merci pour votre séance au studio</div>
-            </div>
-        </div>
-        
-        <!-- Content -->
-        <div class="content">
-            <h1 class="greeting">Bonjour ${clientName} !</h1>
-            
-            <p class="intro-text">
-                Merci d'avoir choisi le ${settings.studioName} pour votre séance photo ! 
-                Nous espérons que vous avez apprécié votre expérience dans nos locaux.
-                Vous trouverez ci-joint votre facture.
-            </p>
-            
-            <!-- Récapitulatif de la facture -->
-            <div class="invoice-summary">
-                <div class="invoice-header">
-                    <div class="invoice-ref">Facture ${invoiceRef}</div>
-                    <div class="invoice-date">
-                        Émise le ${new Intl.DateTimeFormat('fr-FR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric'
-                        }).format(new Date())}
-                    </div>
-                </div>
-                
-                <div class="booking-details">
-                    <div class="detail-row">
-                        <span class="detail-label">📅 Date de la séance</span>
-                        <span class="detail-value">${startDate}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">⏰ Horaires</span>
-                        <span class="detail-value">${startTime} - ${endTime}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">🎨 Configuration</span>
-                        <span class="detail-value">${quote.background}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">📋 Référence devis</span>
-                        <span class="detail-value">${quote.reference}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">💰 Montant TTC</span>
-                        <span class="detail-value">${amountFormatted}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Section téléchargement facture -->
-            ${invoiceFileUrl ? `
-            <div class="download-section">
-                <h3 class="download-title">📄 Votre facture</h3>
-                <p class="download-text">
-                    Votre facture ${invoiceRef} est prête ! Cliquez sur le bouton ci-dessous pour la télécharger au format PDF.
-                </p>
-                <a href="${invoiceFileUrl}" 
-                   target="_blank" 
-                   download="facture-${invoiceRef}.pdf"
-                   class="download-button">
-                    📥 Télécharger la facture PDF
-                </a>
-            </div>
-            ` : ''}
-            
-            <!-- Section avis Google -->
-            <div class="google-review-section">
-                <h3 class="google-review-title">⭐ Votre avis nous intéresse !</h3>
-                <p class="google-review-text">
-                    Nous serions ravis de connaître votre expérience au studio. 
-                    Votre avis nous aide à améliorer nos services et aide d'autres clients à nous découvrir.
-                </p>
-                <a href="https://g.page/r/YOUR_GOOGLE_BUSINESS_ID/review" 
-                   target="_blank" 
-                   class="google-review-button">
-                    ⭐ Laisser un avis Google
-                </a>
-            </div>
-            
-            <!-- Message de remerciement -->
-            <div class="thank-you-section">
-                <p>
-                    <strong>🙏 Merci pour votre confiance !</strong><br>
-                    Nous espérons vous revoir bientôt au ${settings.studioName} pour de nouveaux projets créatifs !
-                </p>
-            </div>
-            
-            <div class="closing">
-                <p class="signature">
-                    Cordialement,<br>
-                    <strong>L'équipe ${settings.studioName}</strong>
-                </p>
-            </div>
-        </div>
-        
-        <!-- Footer -->
-        <div class="footer">
-            <div class="footer-content">
-                <strong>${settings.studioName}</strong><br>
-                ${settings.studioAddress}<br>
-                📞 ${settings.studioPhone} • ✉️ ${settings.studioEmail}
-            </div>
-        </div>
-    </div>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f5f5f5;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5;">
+        <tr>
+            <td align="center" style="padding: 20px;">
+                <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background-color: #060c20; padding: 40px 30px; text-align: center;">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td style="color: #ffffff; font-size: 28px; font-weight: bold; margin-bottom: 8px;">
+                                        📄 Facture transmise
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="color: #ffffff; font-size: 16px; opacity: 0.9; padding-top: 8px;">
+                                        Merci pour votre séance au studio
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <!-- Greeting -->
+                                <tr>
+                                    <td style="font-size: 28px; font-weight: bold; color: #333333; padding-bottom: 24px;">
+                                        Bonjour ${clientName} !
+                                    </td>
+                                </tr>
+                                
+                                <!-- Intro text -->
+                                <tr>
+                                    <td style="color: #666666; line-height: 1.7; padding-bottom: 32px;">
+                                        Merci d'avoir choisi le ${settings.studioName} pour votre séance photo !<br>
+                                        Nous espérons que vous avez apprécié votre expérience dans nos locaux.<br>
+                                        Vous trouverez ci-joint votre facture.
+                                    </td>
+                                </tr>
+                                
+                                <!-- Invoice Summary -->
+                                <tr>
+                                    <td style="padding-bottom: 32px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                                            <!-- Invoice header -->
+                                            <tr>
+                                                <td style="text-align: center; padding: 24px 20px;">
+                                                    <div style="font-size: 24px; font-weight: bold; color: #2563eb; font-family: 'Courier New', monospace;">
+                                                        Facture ${invoiceRef}
+                                                    </div>
+                                                    <div style="color: #64748b; font-size: 14px; margin-top: 4px;">
+                                                        Émise le ${new Intl.DateTimeFormat('fr-FR', {
+                                                          day: '2-digit',
+                                                          month: '2-digit',
+                                                          year: 'numeric'
+                                                        }).format(new Date())}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            
+                                            <!-- Booking details -->
+                                            <tr>
+                                                <td style="padding: 0 20px 20px;">
+                                                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 6px; border: 1px solid #e2e8f0;">
+                                                        <tr>
+                                                            <td style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #64748b;">
+                                                                📅 Date de la séance
+                                                            </td>
+                                                            <td style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #1e293b; font-weight: 500; text-align: right;">
+                                                                ${startDate}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #64748b;">
+                                                                ⏰ Horaires
+                                                            </td>
+                                                            <td style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #1e293b; font-weight: 500; text-align: right;">
+                                                                ${startTime} - ${endTime}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #64748b;">
+                                                                🎨 Configuration
+                                                            </td>
+                                                            <td style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #1e293b; font-weight: 500; text-align: right;">
+                                                                ${quote.background}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #64748b;">
+                                                                📋 Référence devis
+                                                            </td>
+                                                            <td style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #1e293b; font-weight: 500; text-align: right;">
+                                                                ${quote.reference}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="padding: 12px 16px; color: #64748b;">
+                                                                💰 Montant TTC
+                                                            </td>
+                                                            <td style="padding: 12px 16px; color: #2563eb; font-weight: bold; font-size: 18px; text-align: right;">
+                                                                ${amountFormatted}
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Download Section -->
+                                ${invoiceFileUrl ? `
+                                <tr>
+                                    <td style="padding-bottom: 32px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #dbeafe; border: 2px solid #3b82f6; border-radius: 8px;">
+                                            <tr>
+                                                <td style="padding: 24px; text-align: center;">
+                                                    <div style="color: #1e40af; font-weight: bold; font-size: 18px; margin-bottom: 16px;">
+                                                        📄 Votre facture
+                                                    </div>
+                                                    <div style="color: #1e40af; margin-bottom: 20px; line-height: 1.6;">
+                                                        Votre facture ${invoiceRef} est prête ! Cliquez sur le bouton ci-dessous pour la télécharger au format PDF.
+                                                    </div>
+                                                    <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+                                                        <tr>
+                                                            <td style="background-color: #3b82f6; border-radius: 6px; text-align: center;">
+                                                                <a href="${invoiceFileUrl}" 
+                                                                   target="_blank" 
+                                                                   download="facture-${invoiceRef}.pdf"
+                                                                   style="display: inline-block; padding: 14px 28px; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 16px;">
+                                                                    📥 Télécharger la facture PDF
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                ` : ''}
+                                
+                                <!-- Google Review Section -->
+                                <tr>
+                                    <td style="padding-bottom: 32px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px;">
+                                            <tr>
+                                                <td style="padding: 24px; text-align: center;">
+                                                    <div style="color: #92400e; font-weight: bold; font-size: 18px; margin-bottom: 16px;">
+                                                        ⭐ Votre avis nous intéresse !
+                                                    </div>
+                                                    <div style="color: #a16207; margin-bottom: 20px; line-height: 1.6;">
+                                                        Nous serions ravis de connaître votre expérience au studio.<br>
+                                                        Votre avis nous aide à améliorer nos services et aide d'autres clients à nous découvrir.
+                                                    </div>
+                                                    <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+                                                        <tr>
+                                                            <td style="background-color: #f59e0b; border-radius: 6px; text-align: center;">
+                                                                <a href="https://g.page/r/YOUR_GOOGLE_BUSINESS_ID/review" 
+                                                                   target="_blank" 
+                                                                   style="display: inline-block; padding: 12px 24px; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 16px;">
+                                                                    ⭐ Laisser un avis Google
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Thank you section -->
+                                <tr>
+                                    <td style="padding-bottom: 32px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f0fff4; border-left: 4px solid #10b981; border-radius: 0 8px 8px 0;">
+                                            <tr>
+                                                <td style="padding: 20px; color: #059669; font-weight: 500;">
+                                                    <strong>🙏 Merci pour votre confiance !</strong><br>
+                                                    Nous espérons vous revoir bientôt au ${settings.studioName} pour de nouveaux projets créatifs !
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Closing -->
+                                <tr>
+                                    <td style="border-top: 1px solid #e2e8f0; padding-top: 24px; color: #666666; font-weight: 500;">
+                                        Cordialement,<br>
+                                        <strong>L'équipe ${settings.studioName}</strong>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #060c20; padding: 24px 30px; text-align: center; color: #ffffff; font-size: 14px; line-height: 1.8;">
+                            <strong>${settings.studioName}</strong><br>
+                            ${settings.studioAddress}<br>
+                            📞 ${settings.studioPhone} • ✉️ ${settings.studioEmail}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>`
 }
