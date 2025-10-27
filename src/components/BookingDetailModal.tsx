@@ -33,9 +33,10 @@ interface BookingDetailModalProps {
   booking: Booking | null
   isOpen: boolean
   onClose: () => void
+  onRefresh?: () => void
 }
 
-export function BookingDetailModal({ booking, isOpen, onClose }: BookingDetailModalProps) {
+export function BookingDetailModal({ booking, isOpen, onClose, onRefresh }: BookingDetailModalProps) {
   if (!booking) return null
 
   const formatTime = (date: Date) => {

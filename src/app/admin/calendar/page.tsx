@@ -37,33 +37,64 @@ export default function CalendarPage() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
 
   useEffect(() => {
     fetchBookings()
+    
+    // Actualiser automatiquement quand la fenêtre reprend le focus
+    const handleFocus = () => {
+      fetchBookings()
+    }
+    
+    // Actualiser automatiquement toutes les 30 secondes
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        fetchBookings()
+      }
+    }, 30000)
+    
+    window.addEventListener('focus', handleFocus)
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      clearInterval(interval)
+    }
   }, [])
 
   async function fetchBookings() {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/admin/bookings', {
+      // Ajouter un timestamp pour éviter le cache
+      const timestamp = new Date().getTime()
+      const response = await fetch(`/api/admin/bookings?t=${timestamp}`, {
         cache: 'no-store',
         headers: {
-          'Cache-Control': 'no-cache'
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
       })
       if (response.ok) {
         const data = await response.json()
+        console.log(`Données chargées: ${data.length} réservations trouvées`) // Debug log
         setBookings(data.map((booking: any) => ({
           ...booking,
           start: new Date(booking.start),
           end: new Date(booking.end),
         })))
+        setLastUpdate(new Date())
       }
     } catch (error) {
       console.error('Erreur lors du chargement des réservations:', error)
     } finally {
       setIsLoading(false)
     }
+  }
+
+  async function handleRefresh() {
+    console.log('Actualisation manuelle du calendrier...') // Debug log
+    await fetchBookings()
   }
 
   function getMonthDays() {
@@ -138,7 +169,7 @@ export default function CalendarPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={fetchBookings}
+              onClick={handleRefresh}
               disabled={isLoading}
               className="flex items-center space-x-2"
             >
@@ -157,6 +188,11 @@ export default function CalendarPage() {
               </svg>
               <span>{isLoading ? 'Actualisation...' : 'Actualiser'}</span>
             </Button>
+            {lastUpdate && (
+              <span className="text-xs text-gray-500">
+                Dernière MAJ: {lastUpdate.toLocaleTimeString('fr-FR')}
+              </span>
+            )}
             <div className="flex items-center space-x-2">
               <Button
                 variant={view === 'month' ? 'default' : 'outline'}
@@ -384,6 +420,7 @@ export default function CalendarPage() {
         booking={selectedBooking}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+        onRefresh={handleRefresh}
       />
     </AdminLayout>
   )
