@@ -14,6 +14,8 @@ interface DashboardStats {
   totalQuotes: number
   quotesToSend: number
   signedQuotes: number
+  invoicedQuotes: number
+  monthlyRevenue: number
   recentQuotes: Array<{
     id: string
     reference: string
@@ -43,6 +45,11 @@ interface DashboardStats {
       }
     }
   }>
+  monthInfo: {
+    startOfMonth: string
+    endOfMonth: string
+    currentMonth: string
+  }
 }
 
 export default function AdminDashboard() {
@@ -102,17 +109,19 @@ export default function AdminDashboard() {
       <div className="p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600">Vue d'ensemble de votre activité Studio MAE</p>
+          <p className="text-gray-600">
+            Vue d'ensemble de votre activité Studio MAE - {stats?.monthInfo?.currentMonth || 'Octobre 2024'}
+          </p>
         </div>
 
-        {/* Statistiques */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Statistiques mensuelles */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="text-2xl">📋</div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total devis</p>
+                  <p className="text-sm font-medium text-gray-600">Devis ce mois</p>
                   <p className="text-2xl font-semibold text-gray-900">
                     {stats?.totalQuotes || 0}
                   </p>
@@ -140,7 +149,7 @@ export default function AdminDashboard() {
               <div className="flex items-center">
                 <div className="text-2xl">✅</div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Signés</p>
+                  <p className="text-sm font-medium text-gray-600">Signés ce mois</p>
                   <p className="text-2xl font-semibold text-green-600">
                     {stats?.signedQuotes || 0}
                   </p>
@@ -152,15 +161,25 @@ export default function AdminDashboard() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
+                <div className="text-2xl">🏁</div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Facturés ce mois</p>
+                  <p className="text-2xl font-semibold text-purple-600">
+                    {stats?.invoicedQuotes || 0}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
                 <div className="text-2xl">💰</div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">CA ce mois</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {formatCurrency(
-                      stats?.recentQuotes
-                        ?.filter(q => q.status === 'INVOICED')
-                        ?.reduce((sum, q) => sum + (q.invoiceAmountTTC || 0), 0) || 0
-                    )}
+                  <p className="text-sm font-medium text-gray-600">CA ce mois (HT)</p>
+                  <p className="text-2xl font-semibold text-emerald-600">
+                    {formatCurrency((stats?.monthlyRevenue || 0) / 1.20)}
                   </p>
                 </div>
               </div>
@@ -172,8 +191,8 @@ export default function AdminDashboard() {
           {/* Devis récents */}
           <Card>
             <CardHeader>
-              <CardTitle>Devis en cours</CardTitle>
-              <CardDescription>Devis nécessitant encore une action</CardDescription>
+              <CardTitle>Devis en cours ce mois</CardTitle>
+              <CardDescription>Devis créés ce mois nécessitant encore une action</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4 max-h-64 overflow-y-auto">
@@ -212,8 +231,8 @@ export default function AdminDashboard() {
           {/* Réservations à venir */}
           <Card>
             <CardHeader>
-              <CardTitle>Réservations à venir</CardTitle>
-              <CardDescription>Prochaines sessions planifiées</CardDescription>
+              <CardTitle>Réservations ce mois</CardTitle>
+              <CardDescription>Sessions planifiées pour ce mois</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4 max-h-64 overflow-y-auto">

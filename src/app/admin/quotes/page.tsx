@@ -75,7 +75,11 @@ export default function QuotesPage() {
     }
   }
 
-  const filteredQuotes = quotes.filter((quote) => {
+  // Séparer les devis en cours et les devis passés
+  const activeQuotes = quotes.filter(quote => quote.status !== 'INVOICED')
+  const completedQuotes = quotes.filter(quote => quote.status === 'INVOICED')
+
+  const filteredActiveQuotes = activeQuotes.filter((quote) => {
     const matchesSearch = 
       quote.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
       quote.client.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -84,6 +88,20 @@ export default function QuotesPage() {
       quote.client.email.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesStatus = !statusFilter || quote.status === statusFilter
+
+    return matchesSearch && matchesStatus
+  })
+
+  const filteredCompletedQuotes = completedQuotes.filter((quote) => {
+    const matchesSearch = 
+      quote.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quote.client.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quote.client.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (quote.client.companyName && quote.client.companyName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      quote.client.email.toLowerCase().includes(searchTerm.toLowerCase())
+
+    // Pour les devis passés, on affiche tous si pas de filtre ou si le filtre est INVOICED
+    const matchesStatus = !statusFilter || statusFilter === 'INVOICED'
 
     return matchesSearch && matchesStatus
   })
@@ -105,6 +123,112 @@ export default function QuotesPage() {
     return null
   }
 
+  // Fonction pour rendre un tableau de devis
+  const renderQuotesTable = (quotesToRender: QuoteRequest[], showActions: boolean = true) => {
+    if (quotesToRender.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-gray-500">Aucun devis dans cette catégorie</p>
+        </div>
+      )
+    }
+
+    return (
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Référence
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Client
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Date souhaitée
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Fond
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Statut
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Montant
+              </th>
+              {showActions && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {quotesToRender.map((quote) => (
+              <tr key={quote.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">
+                    {quote.reference}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {formatDate(new Date(quote.createdAt))}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">
+                    {quote.client.companyName || `${quote.client.firstName} ${quote.client.lastName}`}
+                  </div>
+                  {quote.client.companyName && (
+                    <div className="text-sm text-gray-500">
+                      {quote.client.firstName} {quote.client.lastName}
+                    </div>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {formatDate(new Date(quote.desiredStart))}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {formatDate(new Date(quote.desiredEnd))}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="text-sm text-gray-600">
+                    {quote.background}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <StatusBadge status={quote.status} />
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {quote.invoiceAmountTTC ? formatCurrency(quote.invoiceAmountTTC) : '-'}
+                </td>
+                {showActions && (
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex items-center space-x-2">
+                      <Link href={`/admin/quotes/${quote.id}`}>
+                        <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
+                          👁️ Voir
+                        </Button>
+                      </Link>
+                      {quote.status === 'READY' && (
+                        <Link href={`/admin/quotes/${quote.id}/email`}>
+                          <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                            📧 Envoyer
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
   return (
     <AdminLayout>
       <div className="p-6">
@@ -120,9 +244,16 @@ export default function QuotesPage() {
           </Link>
         </div>
 
-        <Card>
+        {/* Section Devis en cours */}
+        <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Liste des devis</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <span className="text-blue-600">🏃‍♂️</span>
+              Devis en cours
+              <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-normal">
+                {filteredActiveQuotes.length}
+              </span>
+            </CardTitle>
             <div className="flex flex-col sm:flex-row gap-4">
               <Input
                 placeholder="Rechercher un devis..."
@@ -135,7 +266,7 @@ export default function QuotesPage() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="max-w-sm rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {statusFilters.map((filter) => (
+                {statusFilters.filter(f => f.value !== 'INVOICED').map((filter) => (
                   <option key={filter.value} value={filter.value}>
                     {filter.label}
                   </option>
@@ -144,10 +275,10 @@ export default function QuotesPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {filteredQuotes.length === 0 ? (
+            {filteredActiveQuotes.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500">
-                  {searchTerm || statusFilter ? 'Aucun devis trouvé pour cette recherche' : 'Aucun devis enregistré'}
+                  {searchTerm || statusFilter ? 'Aucun devis en cours trouvé pour cette recherche' : 'Aucun devis en cours'}
                 </p>
                 {!searchTerm && !statusFilter && (
                   <Link href="/admin/quotes/new">
@@ -158,94 +289,34 @@ export default function QuotesPage() {
                 )}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Référence
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Client
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date souhaitée
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Fond
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Statut
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Montant
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredQuotes.map((quote) => (
-                      <tr key={quote.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {quote.reference}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {formatDate(new Date(quote.createdAt))}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {quote.client.companyName || `${quote.client.firstName} ${quote.client.lastName}`}
-                          </div>
-                          {quote.client.companyName && (
-                            <div className="text-sm text-gray-500">
-                              {quote.client.firstName} {quote.client.lastName}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {formatDate(new Date(quote.desiredStart))}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {formatDate(new Date(quote.desiredEnd))}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-600">
-                            {quote.background}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <StatusBadge status={quote.status} />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {quote.invoiceAmountTTC ? formatCurrency(quote.invoiceAmountTTC) : '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex items-center space-x-2">
-                            <Link href={`/admin/quotes/${quote.id}`}>
-                              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
-                                👁️ Voir
-                              </Button>
-                            </Link>
-                            {quote.status === 'READY' && (
-                              <Link href={`/admin/quotes/${quote.id}/email`}>
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
-                                  📧 Envoyer
-                                </Button>
-                              </Link>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              renderQuotesTable(filteredActiveQuotes, true)
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Section Devis passés (clôturés) */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span className="text-purple-600">📋</span>
+              Devis passés (facturés)
+              <span className="text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-normal">
+                {filteredCompletedQuotes.length}
+              </span>
+            </CardTitle>
+            <p className="text-sm text-gray-600">
+              Locations terminées et facturées
+            </p>
+          </CardHeader>
+          <CardContent>
+            {filteredCompletedQuotes.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">
+                  {searchTerm ? 'Aucun devis passé trouvé pour cette recherche' : 'Aucun devis passé'}
+                </p>
               </div>
+            ) : (
+              renderQuotesTable(filteredCompletedQuotes, false)
             )}
           </CardContent>
         </Card>

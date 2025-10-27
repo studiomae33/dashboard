@@ -5,7 +5,9 @@ import { AdminLayout } from '@/components/admin-layout'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { formatDate, formatCurrency } from '@/lib/utils'
+import { ChevronUpIcon, ChevronDownIcon, MagnifyingGlassIcon, EyeIcon, PencilIcon } from '@heroicons/react/24/outline'
 
 interface Quote {
   id: string
@@ -25,18 +27,24 @@ interface Quote {
 }
 
 const statusConfig = {
-  DRAFT: { label: 'Brouillons', color: 'bg-gray-100', textColor: 'text-gray-600' },
-  READY: { label: 'Prêts à envoyer', color: 'bg-blue-100', textColor: 'text-blue-600' },
-  SENT: { label: 'Envoyés', color: 'bg-yellow-100', textColor: 'text-yellow-600' },
-  SIGNED: { label: 'Signés', color: 'bg-green-100', textColor: 'text-green-600' },
-  PAID: { label: 'Règlement effectué', color: 'bg-emerald-100', textColor: 'text-emerald-600' },
-  INVOICED: { label: 'Facturés', color: 'bg-purple-100', textColor: 'text-purple-600' },
-  CANCELED: { label: 'Annulés', color: 'bg-red-100', textColor: 'text-red-600' },
+  DRAFT: { label: 'Brouillon', color: 'bg-gray-500', priority: 1 },
+  READY: { label: 'Prêt à envoyer', color: 'bg-blue-500', priority: 2 },
+  SENT: { label: 'Envoyé', color: 'bg-yellow-500', priority: 3 },
+  SIGNED: { label: 'Signé', color: 'bg-green-500', priority: 4 },
+  PAID: { label: 'Payé', color: 'bg-emerald-500', priority: 5 },
+  INVOICED: { label: 'Facturé', color: 'bg-purple-500', priority: 6 },
+  CANCELED: { label: 'Annulé', color: 'bg-red-500', priority: 0 },
 }
+
+type SortField = 'reference' | 'client' | 'status' | 'desiredStart' | 'amount'
+type SortDirection = 'asc' | 'desc'
 
 export default function PipelinePage() {
   const [quotes, setQuotes] = useState<Quote[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [sortField, setSortField] = useState<SortField>('desiredStart')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
   useEffect(() => {
     fetchQuotes()
@@ -78,15 +86,69 @@ export default function PipelinePage() {
     }
   }
 
-  function getQuotesForStatus(status: string) {
-    return quotes.filter(quote => quote.status === status)
-  }
-
   function getClientName(client: Quote['client']) {
     return client.companyName || `${client.firstName} ${client.lastName}`
   }
 
-  const statusOrder = ['DRAFT', 'READY', 'SENT', 'SIGNED', 'PAID', 'INVOICED', 'CANCELED']
+  function handleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  const filteredAndSortedQuotes = quotes
+    .filter(quote => {
+      const searchLower = searchTerm.toLowerCase()
+      return (
+        quote.reference.toLowerCase().includes(searchLower) ||
+        getClientName(quote.client).toLowerCase().includes(searchLower) ||
+        quote.background.toLowerCase().includes(searchLower) ||
+        statusConfig[quote.status as keyof typeof statusConfig]?.label.toLowerCase().includes(searchLower)
+      )
+    })
+    .sort((a, b) => {
+      let aValue: any
+      let bValue: any
+
+      switch (sortField) {
+        case 'reference':
+          aValue = a.reference
+          bValue = b.reference
+          break
+        case 'client':
+          aValue = getClientName(a.client)
+          bValue = getClientName(b.client)
+          break
+        case 'status':
+          aValue = statusConfig[a.status as keyof typeof statusConfig]?.priority || 0
+          bValue = statusConfig[b.status as keyof typeof statusConfig]?.priority || 0
+          break
+        case 'desiredStart':
+          aValue = a.desiredStart.getTime()
+          bValue = b.desiredStart.getTime()
+          break
+        case 'amount':
+          aValue = a.invoiceAmountTTC || 0
+          bValue = b.invoiceAmountTTC || 0
+          break
+        default:
+          return 0
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <div className="w-4 h-4" />
+    return sortDirection === 'asc' ? 
+      <ChevronUpIcon className="w-4 h-4" /> : 
+      <ChevronDownIcon className="w-4 h-4" />
+  }
 
   if (isLoading) {
     return (
@@ -101,198 +163,213 @@ export default function PipelinePage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        {/* En-tête */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-2xl font-bold text-gray-900">Pipeline des devis</h1>
-          <Button onClick={fetchQuotes}>
-            Actualiser
-          </Button>
+          
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Barre de recherche */}
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Rechercher devis, client, background..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-64"
+              />
+            </div>
+            
+            <Button onClick={fetchQuotes} variant="outline">
+              Actualiser
+            </Button>
+          </div>
         </div>
 
-        {/* Vue Kanban améliorée */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-7 gap-4">
-          {statusOrder.map(status => {
-            const statusQuotes = getQuotesForStatus(status)
-            const config = statusConfig[status as keyof typeof statusConfig]
-            
+        {/* Statistiques */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          {Object.entries(statusConfig).map(([status, config]) => {
+            const count = quotes.filter(quote => quote.status === status).length
             return (
-              <Card key={status} className="h-fit min-h-[200px] flex flex-col">
-                <CardHeader className={`${config.color} rounded-t-lg p-3`}>
-                  <CardTitle className={`text-sm ${config.textColor} flex items-center justify-between`}>
-                    <span className="font-medium truncate">{config.label}</span>
-                    <span className={`text-xs font-bold px-2 py-1 rounded-full bg-white/90 ${config.textColor} min-w-[24px] text-center`}>
-                      {statusQuotes.length}
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-2 space-y-2 flex-1 max-h-[calc(100vh-300px)] overflow-y-auto">
-                  {statusQuotes.length === 0 ? (
-                    <div className="text-center text-gray-400 text-xs py-8">
-                      Aucun devis
-                    </div>
-                  ) : (
-                    statusQuotes.map(quote => (
-                      <div 
-                        key={quote.id} 
-                        className="border rounded-md p-2 bg-white hover:shadow-sm transition-all duration-200 hover:border-blue-300 cursor-pointer group"
-                        onClick={() => window.location.href = `/admin/quotes/${quote.id}`}
-                      >
-                        {/* En-tête compact */}
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-semibold text-xs text-blue-600 truncate flex-1 mr-2">
-                            {quote.reference}
-                          </span>
-                          {quote.invoiceAmountTTC && (
-                            <span className="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
-                              {formatCurrency(quote.invoiceAmountTTC)}
-                            </span>
-                          )}
-                        </div>
-                        
-                        {/* Client */}
-                        <div className="text-xs font-medium text-gray-900 mb-1 truncate">
-                          {getClientName(quote.client)}
-                        </div>
-                        
-                        {/* Date et background sur une ligne */}
-                        <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-                          <span className="truncate flex-1">📅 {formatDate(quote.desiredStart)}</span>
-                        </div>
-                        
-                        {/* Background */}
-                        <div className="text-xs text-gray-600 mb-2 truncate">
-                          🎨 {quote.background}
-                        </div>
-                        
-                        {/* Message tronqué */}
-                        {quote.message && (
-                          <div className="text-xs text-gray-400 line-clamp-1 mb-2 italic">
-                            "{quote.message}"
-                          </div>
-                        )}
-                        
-                        {/* Actions compactes */}
-                        <div className="flex justify-center pt-1 border-t border-gray-100">
-                          {status === 'DRAFT' && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                updateQuoteStatus(quote.id, 'READY')
-                              }}
-                              className="text-xs h-6 px-2 hover:bg-blue-50 hover:text-blue-600"
-                            >
-                              ✓ Finaliser
-                            </Button>
-                          )}
-                          
-                          {status === 'READY' && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                window.location.href = `/admin/quotes/${quote.id}/email`
-                              }}
-                              className="text-xs h-6 px-2 hover:bg-blue-50 hover:text-blue-600"
-                            >
-                              📧 Envoyer
-                            </Button>
-                          )}
-                          
-                          {status === 'SENT' && (
-                            <div className="text-xs text-center py-1">
-                              <div className="text-blue-600 font-medium">⏳ En attente</div>
-                            </div>
-                          )}
-                          
-                          {status === 'SIGNED' && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                updateQuoteStatus(quote.id, 'PAID')
-                              }}
-                              className="text-xs h-6 px-2 hover:bg-green-50 hover:text-green-600"
-                            >
-                              💰 Encaisser
-                            </Button>
-                          )}
-                          
-                          {status === 'PAID' && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                updateQuoteStatus(quote.id, 'INVOICED')
-                              }}
-                              className="text-xs h-6 px-2 hover:bg-purple-50 hover:text-purple-600"
-                            >
-                              📄 Facturer
-                            </Button>
-                          )}
-                          
-                          {(status === 'INVOICED' || status === 'CANCELED') && (
-                            <div className="text-xs text-center py-1">
-                              <div className="text-gray-500">✓ Terminé</div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  )}
+              <Card key={status} className="text-center">
+                <CardContent className="p-4">
+                  <div className="text-2xl font-bold text-gray-900 mb-1">{count}</div>
+                  <div className="text-sm text-gray-600">{config.label}</div>
                 </CardContent>
               </Card>
             )
           })}
         </div>
 
-        {/* Statistiques compactes */}
-        <div className="bg-white rounded-lg border p-4">
-          <h2 className="text-sm font-medium text-gray-700 mb-3">📊 Résumé</h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="text-center">
-              <div className="text-xl font-bold text-gray-900">
-                {quotes.length}
-              </div>
-              <div className="text-xs text-gray-500">Total devis</div>
+        {/* Tableau */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Tous les devis ({filteredAndSortedQuotes.length})</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                      onClick={() => handleSort('reference')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Référence
+                        <SortIcon field="reference" />
+                      </div>
+                    </th>
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                      onClick={() => handleSort('client')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Client
+                        <SortIcon field="client" />
+                      </div>
+                    </th>
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                      onClick={() => handleSort('status')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Statut
+                        <SortIcon field="status" />
+                      </div>
+                    </th>
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                      onClick={() => handleSort('desiredStart')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Date souhaitée
+                        <SortIcon field="desiredStart" />
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Background
+                    </th>
+                    <th 
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                      onClick={() => handleSort('amount')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Montant
+                        <SortIcon field="amount" />
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredAndSortedQuotes.map((quote) => {
+                    const config = statusConfig[quote.status as keyof typeof statusConfig]
+                    return (
+                      <tr key={quote.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-4">
+                          <div className="text-sm font-medium text-blue-600 hover:text-blue-800">
+                            {quote.reference}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="text-sm text-gray-900">
+                            {getClientName(quote.client)}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {quote.client.email}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white ${config.color}`}>
+                            {config.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="text-sm text-gray-900">
+                            {formatDate(quote.desiredStart)}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            → {formatDate(quote.desiredEnd)}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="text-sm text-gray-900 max-w-32 truncate" title={quote.background}>
+                            {quote.background}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          {quote.invoiceAmountTTC ? (
+                            <div className="text-sm font-medium text-green-600">
+                              {formatCurrency(quote.invoiceAmountTTC)}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-400">-</div>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => window.location.href = `/admin/quotes/${quote.id}`}
+                              className="h-8 w-8 p-0"
+                              title="Voir le détail"
+                            >
+                              <EyeIcon className="w-4 h-4" />
+                            </Button>
+                            
+                            {quote.status === 'DRAFT' && (
+                              <Button
+                                size="sm"
+                                onClick={() => updateQuoteStatus(quote.id, 'READY')}
+                                className="h-8 px-3 text-xs"
+                              >
+                                Finaliser
+                              </Button>
+                            )}
+                            
+                            {quote.status === 'READY' && (
+                              <Button
+                                size="sm"
+                                onClick={() => window.location.href = `/admin/quotes/${quote.id}/email`}
+                                className="h-8 px-3 text-xs"
+                              >
+                                Envoyer
+                              </Button>
+                            )}
+                            
+                            {quote.status === 'SIGNED' && (
+                              <Button
+                                size="sm"
+                                onClick={() => updateQuoteStatus(quote.id, 'PAID')}
+                                className="h-8 px-3 text-xs bg-green-600 hover:bg-green-700"
+                              >
+                                Encaisser
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              
+              {filteredAndSortedQuotes.length === 0 && (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 text-lg mb-2">Aucun devis trouvé</div>
+                  <div className="text-gray-500 text-sm">
+                    {searchTerm ? 'Essayez de modifier votre recherche' : 'Créez votre premier devis'}
+                  </div>
+                </div>
+              )}
             </div>
-            
-            <div className="text-center">
-              <div className="text-xl font-bold text-yellow-600">
-                {getQuotesForStatus('SENT').length}
-              </div>
-              <div className="text-xs text-gray-500">En attente</div>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-xl font-bold text-green-600">
-                {getQuotesForStatus('SIGNED').length}
-              </div>
-              <div className="text-xs text-gray-500">Signés</div>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-xl font-bold text-emerald-600">
-                {getQuotesForStatus('PAID').length}
-              </div>
-              <div className="text-xs text-gray-500">Payés</div>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-lg font-bold text-purple-600">
-                {formatCurrency(
-                  quotes
-                    .filter(q => q.status === 'INVOICED' && q.invoiceAmountTTC)
-                    .reduce((sum, q) => sum + (q.invoiceAmountTTC || 0), 0)
-                )}
-              </div>
-              <div className="text-xs text-gray-500">CA facturé</div>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   )

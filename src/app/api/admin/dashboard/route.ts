@@ -14,21 +14,61 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    // Récupérer les statistiques
-    const totalQuotes = await prisma.quoteRequest.count()
+    // Calculer le début et la fin du mois actuel
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
+
+    // Récupérer les statistiques du mois actuel
+    const totalQuotesThisMonth = await prisma.quoteRequest.count({
+      where: {
+        createdAt: {
+          gte: startOfMonth,
+          lte: endOfMonth
+        }
+      }
+    })
     
     const quotesToSend = await prisma.quoteRequest.count({
-      where: { status: 'READY' }
+      where: { 
+        status: 'READY',
+        createdAt: {
+          gte: startOfMonth,
+          lte: endOfMonth
+        }
+      }
     })
 
-    const signedQuotes = await prisma.quoteRequest.count({
-      where: { status: 'SIGNED' }
+    const signedQuotesThisMonth = await prisma.quoteRequest.count({
+      where: { 
+        status: 'SIGNED',
+        createdAt: {
+          gte: startOfMonth,
+          lte: endOfMonth
+        }
+      }
     })
 
-    // Récupérer les devis nécessitant encore une action (tâches restantes)
+    const invoicedQuotesThisMonth = await prisma.quoteRequest.count({
+      where: { 
+        status: 'INVOICED',
+        createdAt: {
+          gte: startOfMonth,
+          lte: endOfMonth
+        }
+      }
+    })
+
+    // Récupérer les devis en cours (créés ce mois et nécessitant encore une action)
     const recentQuotes = await prisma.quoteRequest.findMany({
       where: {
         AND: [
+          {
+            createdAt: {
+              gte: startOfMonth,
+              lte: endOfMonth
+            }
+          },
           {
             desiredEnd: {
               gte: new Date()
@@ -54,8 +94,8 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Récupérer les réservations à venir, triées par date de devis (desiredStart)
-    const upcomingBookings = await prisma.booking.findMany({
+    // Récupérer les réservations à venir ce mois
+    const upcomingBookingsThisMonth = await prisma.booking.findMany({
       where: {
         AND: [
           {
@@ -64,8 +104,9 @@ export async function GET(request: NextRequest) {
             }
           },
           {
-            end: {
-              gte: new Date()
+            start: {
+              gte: startOfMonth,
+              lte: endOfMonth
             }
           }
         ]
@@ -88,18 +129,43 @@ export async function GET(request: NextRequest) {
         }
       },
       orderBy: {
-        quoteRequest: {
-          desiredStart: 'asc'
-        }
+        start: 'asc'
+      }
+    })
+
+    // Calculer le CA du mois (devis facturés ce mois)
+    const monthlyRevenue = await prisma.quoteRequest.aggregate({
+      where: {
+        AND: [
+          {
+            status: 'INVOICED'
+          },
+          {
+            createdAt: {
+              gte: startOfMonth,
+              lte: endOfMonth
+            }
+          }
+        ]
+      },
+      _sum: {
+        invoiceAmountTTC: true
       }
     })
 
     const stats = {
-      totalQuotes,
+      totalQuotes: totalQuotesThisMonth,
       quotesToSend,
-      signedQuotes,
+      signedQuotes: signedQuotesThisMonth,
+      invoicedQuotes: invoicedQuotesThisMonth,
+      monthlyRevenue: monthlyRevenue._sum.invoiceAmountTTC || 0,
       recentQuotes,
-      upcomingBookings,
+      upcomingBookings: upcomingBookingsThisMonth,
+      monthInfo: {
+        startOfMonth: startOfMonth.toISOString(),
+        endOfMonth: endOfMonth.toISOString(),
+        currentMonth: now.toLocaleString('fr-FR', { month: 'long', year: 'numeric' })
+      }
     }
 
     return NextResponse.json(stats)
