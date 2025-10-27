@@ -1702,3 +1702,485 @@ export function renderDateChangeEmailHTML(data: QuoteEmailData & {
 </html>
   `
 }
+
+export async function sendInvoiceEmail({
+  quote,
+  client,
+  invoiceFileUrl,
+  invoiceRef
+}: {
+  quote: any
+  client: any
+  invoiceFileUrl: string
+  invoiceRef: string
+}) {
+  console.log('📧 Début envoi email de facture...')
+  
+  const settings = await prisma.settings.findUnique({
+    where: { id: 'singleton' }
+  })
+
+  if (!settings) {
+    throw new Error('Paramètres non trouvés')
+  }
+
+  const htmlContent = renderInvoiceEmailHTML({
+    quote,
+    client,
+    settings,
+    invoiceRef,
+    invoiceFileUrl
+  })
+
+  // Pour Vercel Blob, nous utilisons l'URL directement dans l'email
+  // Pas besoin d'attacher le fichier, on fournit le lien de téléchargement
+  console.log('✅ URL de la facture PDF:', invoiceFileUrl)
+
+  const emailOptions: any = {
+    from: `${settings.studioName} <${settings.senderEmail}>`,
+    to: client.email,
+    subject: `Facture ${invoiceRef} - ${settings.studioName}`,
+    html: htmlContent,
+  }
+
+  let result
+  
+  console.log('📧 Configuration email facture:', {
+    from: emailOptions.from,
+    to: emailOptions.to,
+    subject: emailOptions.subject,
+    invoiceUrl: invoiceFileUrl,
+    isDevelopment,
+    hasResend: !!resend
+  })
+
+  if (isDevelopment) {
+    console.log('\n=== EMAIL DE FACTURE (MODE DÉVELOPPEMENT) ===')
+    console.log('De:', emailOptions.from)
+    console.log('À:', emailOptions.to)
+    console.log('Sujet:', emailOptions.subject)
+    console.log('URL Facture:', invoiceFileUrl)
+    console.log('HTML Content:')
+    console.log(htmlContent.substring(0, 500) + '...')
+    console.log('============================================\n')
+    
+    result = { data: { id: 'dev-' + Date.now() } }
+  } else if (!resend) {
+    console.error('❌ ERREUR: Pas de clé API Resend pour email de facture!')
+    throw new Error('Configuration email manquante en production')
+  } else {
+    console.log('🚀 Envoi email de facture via Resend API...')
+    result = await resend.emails.send(emailOptions)
+    console.log('✅ Réponse Resend:', result)
+  }
+
+  console.log('✅ Email de facture envoyé avec succès')
+  return result?.data || { id: 'fallback-' + Date.now() }
+}
+
+export function renderInvoiceEmailHTML(data: QuoteEmailData & { 
+  invoiceRef: string,
+  invoiceFileUrl?: string
+}): string {
+  const { quote, client, settings, invoiceRef, invoiceFileUrl } = data
+  const clientName = client.companyName || `${client.firstName} ${client.lastName}`
+  
+  // Formatage des dates
+  const startDate = new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }).format(quote.desiredStart)
+
+  const startTime = new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(quote.desiredStart)
+
+  const endTime = new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(quote.desiredEnd)
+
+  const amountFormatted = quote.amountTTC 
+    ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(quote.amountTTC)
+    : '450,00 €'
+
+  return `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facture ${invoiceRef} - ${settings.studioName}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            background-color: #f7fafc;
+        }
+        
+        .email-container {
+            max-width: 640px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8, #1e40af);
+        }
+        
+        .header-content {
+            color: white;
+        }
+        
+        .header-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .header-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .greeting {
+            font-size: 28px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 24px;
+        }
+        
+        .intro-text {
+            font-size: 16px;
+            color: #4a5568;
+            margin-bottom: 32px;
+            line-height: 1.7;
+        }
+        
+        .invoice-summary {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 1px solid #3b82f6;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+        }
+        
+        .invoice-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .invoice-ref {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e40af;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .invoice-date {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        
+        .booking-details {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+            font-weight: 600;
+            font-size: 18px;
+            color: #1e40af;
+        }
+        
+        .detail-label {
+            color: #64748b;
+        }
+        
+        .detail-value {
+            color: #1e293b;
+            font-weight: 500;
+        }
+        
+        .download-section {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border: 1px solid #3b82f6;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+            text-align: center;
+        }
+        
+        .download-title {
+            color: #1e40af;
+            font-weight: 600;
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+        
+        .download-text {
+            color: #1e40af;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .download-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white !important;
+            padding: 14px 28px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .download-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+        
+        .google-review-section {
+            background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+            border: 1px solid #f59e0b;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+            text-align: center;
+        }
+        
+        .google-review-title {
+            color: #92400e;
+            font-weight: 600;
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+        
+        .google-review-text {
+            color: #a16207;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .google-review-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white !important;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .google-review-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+        }
+        
+        .thank-you-section {
+            background: linear-gradient(135deg, #f0fff4 0%, #dcfce7 100%);
+            border-left: 4px solid #10b981;
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 32px 0;
+        }
+        
+        .thank-you-section p {
+            margin: 0;
+            color: #059669;
+            font-weight: 500;
+        }
+        
+        .closing {
+            margin-top: 40px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .signature {
+            color: #4a5568;
+            font-weight: 500;
+        }
+        
+        .footer {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            padding: 24px 30px;
+            text-align: center;
+            color: #a0aec0;
+            font-size: 14px;
+        }
+        
+        .footer-content {
+            line-height: 1.8;
+        }
+        
+        .footer strong {
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-title">📄 Facture transmise</div>
+                <div class="header-subtitle">Merci pour votre séance au studio</div>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <h1 class="greeting">Bonjour ${clientName} !</h1>
+            
+            <p class="intro-text">
+                Merci d'avoir choisi le ${settings.studioName} pour votre séance photo ! 
+                Nous espérons que vous avez apprécié votre expérience dans nos locaux.
+                Vous trouverez ci-joint votre facture.
+            </p>
+            
+            <!-- Récapitulatif de la facture -->
+            <div class="invoice-summary">
+                <div class="invoice-header">
+                    <div class="invoice-ref">Facture ${invoiceRef}</div>
+                    <div class="invoice-date">
+                        Émise le ${new Intl.DateTimeFormat('fr-FR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        }).format(new Date())}
+                    </div>
+                </div>
+                
+                <div class="booking-details">
+                    <div class="detail-row">
+                        <span class="detail-label">📅 Date de la séance</span>
+                        <span class="detail-value">${startDate}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">⏰ Horaires</span>
+                        <span class="detail-value">${startTime} - ${endTime}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">🎨 Configuration</span>
+                        <span class="detail-value">${quote.background}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">📋 Référence devis</span>
+                        <span class="detail-value">${quote.reference}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">💰 Montant TTC</span>
+                        <span class="detail-value">${amountFormatted}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Section téléchargement facture -->
+            ${invoiceFileUrl ? `
+            <div class="download-section">
+                <h3 class="download-title">📄 Votre facture</h3>
+                <p class="download-text">
+                    Votre facture ${invoiceRef} est prête ! Cliquez sur le bouton ci-dessous pour la télécharger au format PDF.
+                </p>
+                <a href="${invoiceFileUrl}" 
+                   target="_blank" 
+                   download="facture-${invoiceRef}.pdf"
+                   class="download-button">
+                    📥 Télécharger la facture PDF
+                </a>
+            </div>
+            ` : ''}
+            
+            <!-- Section avis Google -->
+            <div class="google-review-section">
+                <h3 class="google-review-title">⭐ Votre avis nous intéresse !</h3>
+                <p class="google-review-text">
+                    Nous serions ravis de connaître votre expérience au studio. 
+                    Votre avis nous aide à améliorer nos services et aide d'autres clients à nous découvrir.
+                </p>
+                <a href="https://g.page/r/YOUR_GOOGLE_BUSINESS_ID/review" 
+                   target="_blank" 
+                   class="google-review-button">
+                    ⭐ Laisser un avis Google
+                </a>
+            </div>
+            
+            <!-- Message de remerciement -->
+            <div class="thank-you-section">
+                <p>
+                    <strong>🙏 Merci pour votre confiance !</strong><br>
+                    Nous espérons vous revoir bientôt au ${settings.studioName} pour de nouveaux projets créatifs !
+                </p>
+            </div>
+            
+            <div class="closing">
+                <p class="signature">
+                    Cordialement,<br>
+                    <strong>L'équipe ${settings.studioName}</strong>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-content">
+                <strong>${settings.studioName}</strong><br>
+                ${settings.studioAddress}<br>
+                📞 ${settings.studioPhone} • ✉️ ${settings.studioEmail}
+            </div>
+        </div>
+    </div>
+</body>
+</html>`
+}

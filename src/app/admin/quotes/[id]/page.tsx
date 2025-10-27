@@ -11,6 +11,8 @@ import { formatDate, formatCurrency } from '@/lib/utils'
 import { PaymentEmailModal } from '@/components/PaymentEmailModal'
 import { PaymentEmailSentModal } from '@/components/PaymentEmailSentModal'
 import { ModifyDateModal } from '@/components/ModifyDateModal'
+import { InvoiceUploadModal } from '@/components/InvoiceUploadModal'
+import { InvoiceSentModal } from '@/components/InvoiceSentModal'
 import Link from 'next/link'
 
 interface QuoteDetails {
@@ -62,7 +64,15 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
   const [sendingPaymentEmail, setSendingPaymentEmail] = useState(false)
   const [showModifyDateModal, setShowModifyDateModal] = useState(false)
   const [modifyingDates, setModifyingDates] = useState(false)
+  const [showInvoiceUploadModal, setShowInvoiceUploadModal] = useState(false)
+  const [showInvoiceSentModal, setShowInvoiceSentModal] = useState(false)
+  const [sendingInvoice, setSendingInvoice] = useState(false)
   const [paymentEmailData, setPaymentEmailData] = useState<{
+    recipientEmail: string
+    quoteReference: string
+    invoiceRef: string
+  } | null>(null)
+  const [invoiceSentData, setInvoiceSentData] = useState<{
     recipientEmail: string
     quoteReference: string
     invoiceRef: string
@@ -268,6 +278,49 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
       alert('Erreur lors de la modification des dates')
     } finally {
       setModifyingDates(false)
+    }
+  }
+
+  async function sendInvoice(file: File, invoiceRef: string) {
+    if (!quote) return
+
+    setSendingInvoice(true)
+    try {
+      const formData = new FormData()
+      formData.append('quoteId', quote.id)
+      formData.append('invoiceRef', invoiceRef)
+      formData.append('invoiceFile', file)
+
+      const response = await fetch('/api/admin/quotes/send-invoice', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        
+        // Mettre à jour le devis avec le statut INVOICED
+        setQuote(prev => prev ? { ...prev, status: 'INVOICED', invoiceRef } : null)
+        
+        // Préparer les données pour la modal de confirmation
+        setInvoiceSentData({
+          recipientEmail: result.recipientEmail,
+          quoteReference: result.quoteReference,
+          invoiceRef,
+        })
+        
+        // Fermer la modal d'upload et ouvrir la modal de confirmation
+        setShowInvoiceUploadModal(false)
+        setShowInvoiceSentModal(true)
+      } else {
+        const error = await response.json()
+        alert(`Erreur: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi de la facture:', error)
+      alert('Erreur lors de l\'envoi de la facture')
+    } finally {
+      setSendingInvoice(false)
     }
   }
 
@@ -510,22 +563,13 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
 
                   {canInvoice && (
                     <Button
-                      onClick={() => {
-                        const invoiceRef = prompt('Référence de la facture:')
-                        const amount = prompt('Montant TTC (€):')
-                        if (invoiceRef && amount) {
-                          updateStatus('INVOICED', {
-                            invoiceRef,
-                            invoiceAmountTTC: parseFloat(amount)
-                          })
-                        }
-                      }}
-                      disabled={updating}
+                      onClick={() => setShowInvoiceUploadModal(true)}
+                      disabled={updating || sendingInvoice}
                       variant="outline"
                       className="w-full justify-start"
                     >
                       <span className="mr-2">📄</span>
-                      Marquer comme facturé
+                      Envoyer la facture
                     </Button>
                   )}
 
@@ -707,6 +751,28 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
         {/* Modales pour l'email de paiement */}
         {quote && (
           <>
+            {/* Modal pour upload et envoi de facture */}
+            <InvoiceUploadModal
+              isOpen={showInvoiceUploadModal}
+              onClose={() => setShowInvoiceUploadModal(false)}
+              onSubmit={sendInvoice}
+              loading={sendingInvoice}
+            />
+
+            {/* Modal de confirmation d'envoi de facture */}
+            {invoiceSentData && (
+              <InvoiceSentModal
+                isOpen={showInvoiceSentModal}
+                onClose={() => {
+                  setShowInvoiceSentModal(false)
+                  setInvoiceSentData(null)
+                }}
+                recipientEmail={invoiceSentData.recipientEmail}
+                quoteReference={invoiceSentData.quoteReference}
+                invoiceRef={invoiceSentData.invoiceRef}
+              />
+            )}
+
             <PaymentEmailModal
               isOpen={showPaymentModal}
               onClose={() => setShowPaymentModal(false)}
