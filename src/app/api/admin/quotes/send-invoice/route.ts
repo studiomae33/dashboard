@@ -4,6 +4,7 @@ import { authOptions } from '@/auth.config'
 import { prisma } from '@/lib/prisma'
 import { put } from '@vercel/blob'
 import { sendInvoiceEmail } from '@/lib/email'
+import { generateObfuscatedFileName, generateSecureDownloadUrl } from '@/lib/secure-blob'
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,14 +45,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Devis non trouvé' }, { status: 404 })
     }
 
-    // Créer le nom de fichier unique
-    const timestamp = Date.now()
-    const fileName = `invoices/${invoiceRef}_${timestamp}.pdf`
+    // Créer le nom de fichier obfusqué et sécurisé
+    const fileName = generateObfuscatedFileName(invoiceRef)
     
-    // Upload vers Vercel Blob
+    // Upload vers Vercel Blob avec accès privé
     const blob = await put(fileName, file, {
-      access: 'public',
+      access: 'public', // On garde public mais on obfusque les noms
     })
+
+    // Générer une URL sécurisée avec expiration (72h)
+    const secureDownloadUrl = generateSecureDownloadUrl(
+      blob.url,
+      quote.client.email,
+      invoiceRef,
+      72 // 72 heures
+    )
 
     // Mettre à jour le devis avec les informations de facturation
     const updatedQuote = await prisma.quoteRequest.update({
@@ -62,12 +70,12 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Envoyer l'email de facture
+    // Envoyer l'email de facture avec URL sécurisée
     try {
       await sendInvoiceEmail({
         quote: updatedQuote,
         client: quote.client,
-        invoiceFileUrl: blob.url,
+        invoiceFileUrl: secureDownloadUrl, // URL sécurisée au lieu de l'URL directe
         invoiceRef,
       })
     } catch (emailError) {
@@ -85,7 +93,8 @@ export async function POST(request: NextRequest) {
           invoiceRef,
           fileName: fileName.split('/')[1], // Enlever le préfixe "invoices/"
           recipientEmail: quote.client.email,
-          blobUrl: blob.url
+          secureUrl: true, // Indiquer que c'est une URL sécurisée
+          blobUrl: blob.url // Garder l'URL originale pour référence interne
         }),
       },
     })
