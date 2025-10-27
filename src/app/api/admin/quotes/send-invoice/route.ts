@@ -59,7 +59,6 @@ export async function POST(request: NextRequest) {
       data: {
         status: 'INVOICED',
         invoiceRef,
-        invoiceSentAt: new Date(),
       },
     })
 
