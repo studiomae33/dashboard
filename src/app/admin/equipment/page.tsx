@@ -40,6 +40,11 @@ export default function EquipmentPage() {
   const [loadingQuotes, setLoadingQuotes] = useState(true)
   const [loadingRequests, setLoadingRequests] = useState(true)
 
+  useEffect(() => {
+    fetchQuotes()
+    fetchEquipmentRequests()
+  }, [])
+
   if (status === 'loading') {
     return <div>Chargement...</div>
   }
@@ -47,11 +52,6 @@ export default function EquipmentPage() {
   if (status === 'unauthenticated') {
     redirect('/login')
   }
-
-  useEffect(() => {
-    fetchQuotes()
-    fetchEquipmentRequests()
-  }, [])
 
   const fetchQuotes = async () => {
     try {
