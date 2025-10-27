@@ -1154,7 +1154,7 @@ export async function sendQuoteEmail(quoteId: string, pdfPath?: string) {
   return result
 }
 
-export async function sendPaymentEmail(quoteId: string, invoiceRef: string, paymentDueDate?: string) {
+export async function sendPaymentEmail(quoteId: string, invoiceRef: string, paymentDueDate?: string, paymentLink?: string) {
   const quote = await prisma.quoteRequest.findUnique({
     where: { id: quoteId },
     include: { client: true }
@@ -1177,7 +1177,8 @@ export async function sendPaymentEmail(quoteId: string, invoiceRef: string, paym
     client: quote.client,
     settings,
     invoiceRef,
-    paymentDueDate
+    paymentDueDate,
+    paymentLink
   }
 
   const htmlContent = renderPaymentEmailHTML(emailData)
@@ -1367,8 +1368,9 @@ export async function sendDateChangeNotification(quoteId: string, oldStartDate: 
 export function renderPaymentEmailHTML(data: QuoteEmailData & { 
   invoiceRef: string
   paymentDueDate?: string
+  paymentLink?: string
 }): string {
-  const { quote, client, settings, invoiceRef, paymentDueDate } = data
+  const { quote, client, settings, invoiceRef, paymentDueDate, paymentLink } = data
   const clientName = client.companyName || `${client.firstName} ${client.lastName}`
   
   // Formatage des dates
@@ -1498,6 +1500,56 @@ export function renderPaymentEmailHTML(data: QuoteEmailData & {
                 </p>
             </div>
             ` : ''}
+            
+            ${paymentLink ? `
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="${paymentLink}" 
+                   style="display: inline-block; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); 
+                          color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; 
+                          font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);">
+                    💳 Payer la location
+                </a>
+                <p style="margin-top: 16px; font-size: 14px; color: #666;">
+                    Paiement sécurisé par SumUp
+                </p>
+            </div>
+            ` : ''}
+            
+            <div style="background: #f7fafc; border-radius: 12px; padding: 24px; margin: 24px 0;">
+                <h3 style="color: #2d3748; margin-bottom: 16px; font-size: 18px;">
+                    ${paymentLink ? 'Ou paiement par virement bancaire :' : 'Modalités de paiement :'}
+                </h3>
+                
+                <div style="background: white; border-radius: 8px; padding: 20px; margin-bottom: 16px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: 600; color: #4a5568; width: 150px;">Bénéficiaire :</td>
+                            <td style="padding: 8px 0; color: #2d3748;">${settings.studioName}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: 600; color: #4a5568;">IBAN :</td>
+                            <td style="padding: 8px 0; color: #2d3748; font-family: monospace;">FR76 3000 4008 4200 0103 5087 146</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: 600; color: #4a5568;">BIC :</td>
+                            <td style="padding: 8px 0; color: #2d3748; font-family: monospace;">BNPAFRPP</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: 600; color: #4a5568;">Objet :</td>
+                            <td style="padding: 8px 0; color: #2d3748; font-weight: 600;">${invoiceRef} - ${quote.reference}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: 600; color: #4a5568;">Montant :</td>
+                            <td style="padding: 8px 0; color: #2d3748; font-weight: 600; font-size: 18px;">${amountFormatted}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <p style="margin: 0; font-size: 14px; color: #666; font-style: italic;">
+                    ⚠️ Important : Merci de bien indiquer la référence <strong>${invoiceRef}</strong> 
+                    comme objet de votre virement pour faciliter l'identification de votre paiement.
+                </p>
+            </div>
             
             <p>
                 À très bientôt au studio !<br>

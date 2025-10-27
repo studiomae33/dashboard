@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
     quoteId = body.quoteId
     const invoiceRef = body.invoiceRef
     const paymentDueDate = body.paymentDueDate
+    const paymentLink = body.paymentLink
 
     if (!quoteId) {
       return NextResponse.json({ error: 'ID du devis manquant' }, { status: 400 })
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Envoyer l'email de paiement
-    const result = await sendPaymentEmail(quoteId, invoiceRef, paymentDueDate)
+    const result = await sendPaymentEmail(quoteId, invoiceRef, paymentDueDate, paymentLink)
 
     console.log('✅ Email de paiement envoyé pour le devis:', quote.reference)
 

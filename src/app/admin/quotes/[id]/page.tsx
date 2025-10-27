@@ -128,7 +128,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
     }
   }
 
-  async function sendPaymentEmail(invoiceRef: string, paymentDueDate?: string) {
+  async function sendPaymentEmail(invoiceRef: string, paymentDueDate?: string, paymentLink?: string) {
     if (!quote) return
 
     setSendingPaymentEmail(true)
@@ -140,6 +140,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
           quoteId: quote.id,
           invoiceRef,
           paymentDueDate,
+          paymentLink,
         }),
       })
 

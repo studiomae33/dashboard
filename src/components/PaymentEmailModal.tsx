@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 interface PaymentEmailModalProps {
   isOpen: boolean
   onClose: () => void
-  onSend: (invoiceRef: string, paymentDueDate?: string) => void
+  onSend: (invoiceRef: string, paymentDueDate?: string, paymentLink?: string) => void
   isLoading: boolean
   quoteReference: string
   rentalStartDate?: string
@@ -24,6 +24,7 @@ export function PaymentEmailModal({
 }: PaymentEmailModalProps) {
   const [invoiceRef, setInvoiceRef] = useState('')
   const [paymentDueDate, setPaymentDueDate] = useState('')
+  const [paymentLink, setPaymentLink] = useState('')
   const [error, setError] = useState('')
 
   // Fonction pour calculer la date limite de paiement (4 jours avant la date de location)
@@ -57,13 +58,14 @@ export function PaymentEmailModal({
       return
     }
 
-    onSend(invoiceRef.trim(), paymentDueDate.trim() || undefined)
+    onSend(invoiceRef.trim(), paymentDueDate.trim() || undefined, paymentLink.trim() || undefined)
   }
 
   const handleClose = () => {
     if (!isLoading) {
       setInvoiceRef('')
       setPaymentDueDate('')
+      setPaymentLink('')
       setError('')
       onClose()
     }
@@ -118,6 +120,24 @@ export function PaymentEmailModal({
             />
             <p className="text-xs text-gray-500 mt-1">
               Si renseigné, cette date apparaîtra dans l'avertissement de paiement
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="paymentLink" className="block text-sm font-medium text-gray-700 mb-1">
+              Lien de paiement SumUp (optionnel)
+            </label>
+            <Input
+              id="paymentLink"
+              type="url"
+              value={paymentLink}
+              onChange={(e) => setPaymentLink(e.target.value)}
+              placeholder="https://checkout.sumup.com/checkout/..."
+              disabled={isLoading}
+              className="w-full"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Si renseigné, un bouton "Payer la location" sera ajouté dans l'email
             </p>
           </div>
 
