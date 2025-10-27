@@ -28,6 +28,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Référence facture manquante' }, { status: 400 })
     }
 
+    if (!paymentLink) {
+      return NextResponse.json({ error: 'Lien de paiement SumUp manquant' }, { status: 400 })
+    }
+
     // Vérifier que le devis existe et récupérer ses informations
     const quote = await prisma.quoteRequest.findUnique({
       where: { id: quoteId },

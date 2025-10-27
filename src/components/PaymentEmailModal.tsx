@@ -58,7 +58,20 @@ export function PaymentEmailModal({
       return
     }
 
-    onSend(invoiceRef.trim(), paymentDueDate.trim() || undefined, paymentLink.trim() || undefined)
+    if (!paymentLink.trim()) {
+      setError('Veuillez saisir le lien de paiement SumUp')
+      return
+    }
+
+    // Validation basique de l'URL
+    try {
+      new URL(paymentLink.trim())
+    } catch {
+      setError('Veuillez saisir un lien de paiement valide')
+      return
+    }
+
+    onSend(invoiceRef.trim(), paymentDueDate.trim() || undefined, paymentLink.trim())
   }
 
   const handleClose = () => {
@@ -84,7 +97,7 @@ export function PaymentEmailModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-md">
             <p className="font-medium">Devis : {quoteReference}</p>
-            <p className="mt-1">Un email avec les instructions de paiement sera envoyé au client.</p>
+            <p className="mt-1">Un email avec le bouton de paiement SumUp sera envoyé au client.</p>
           </div>
 
           <div>
@@ -125,7 +138,7 @@ export function PaymentEmailModal({
 
           <div>
             <label htmlFor="paymentLink" className="block text-sm font-medium text-gray-700 mb-1">
-              Lien de paiement SumUp (optionnel)
+              Lien de paiement SumUp *
             </label>
             <Input
               id="paymentLink"
@@ -137,7 +150,7 @@ export function PaymentEmailModal({
               className="w-full"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Si renseigné, un bouton "Payer la location" sera ajouté dans l'email
+              Créez ce lien sur votre tableau de bord SumUp et collez-le ici
             </p>
           </div>
 
@@ -158,7 +171,7 @@ export function PaymentEmailModal({
             </Button>
             <Button 
               type="submit" 
-              disabled={isLoading || !invoiceRef.trim()}
+              disabled={isLoading || !invoiceRef.trim() || !paymentLink.trim()}
               className="bg-green-600 hover:bg-green-700"
             >
               {isLoading ? (
