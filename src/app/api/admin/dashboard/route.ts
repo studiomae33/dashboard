@@ -97,12 +97,12 @@ export async function GET(request: NextRequest) {
         })
       : []
 
-    // Récupérer les devis en cours (créés ce mois et nécessitant encore une action)
+    // Récupérer les devis en cours (avec date de location ce mois et nécessitant encore une action)
     const recentQuotes = await prisma.quoteRequest.findMany({
       where: {
         AND: [
           {
-            createdAt: {
+            desiredStart: {
               gte: startOfMonth,
               lte: endOfMonth
             }
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
         ]
       },
       take: 10,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { desiredStart: 'asc' },
       include: {
         client: {
           select: {

@@ -221,7 +221,7 @@ export default function AdminDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Devis en cours ce mois</CardTitle>
-              <CardDescription>Devis créés ce mois nécessitant encore une action</CardDescription>
+              <CardDescription>Devis avec date de location ce mois nécessitant encore une action</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4 max-h-64 overflow-y-auto">
