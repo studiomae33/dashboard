@@ -24,6 +24,7 @@ interface QuoteDetails {
   desiredEnd: string
   background: string
   message?: string
+  comments?: string
   createdAt: string
   sentAt?: string
   signedAt?: string
@@ -83,6 +84,9 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
     quoteReference: string
     invoiceRef: string
   } | null>(null)
+  const [comments, setComments] = useState('')
+  const [savingComments, setSavingComments] = useState(false)
+  const [commentsChanged, setCommentsChanged] = useState(false)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -107,6 +111,8 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
           data.eventLogs = []
         }
         setQuote(data)
+        setComments(data.comments || '')
+        setCommentsChanged(false)
       } else if (response.status === 404) {
         router.push('/admin/quotes')
       }
@@ -402,6 +408,43 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
     }
   }
 
+  async function saveComments() {
+    if (!quote) return
+
+    setSavingComments(true)
+    try {
+      const response = await fetch(`/api/admin/quotes/${quote.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          comments: comments.trim() || null,
+        }),
+      })
+
+      if (response.ok) {
+        const updatedQuote = await response.json()
+        setQuote(updatedQuote)
+        setCommentsChanged(false)
+        // Optionnel : afficher une notification de succès discrète
+      } else {
+        const error = await response.json()
+        alert(`Erreur lors de la sauvegarde: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde des commentaires:', error)
+      alert('Erreur lors de la sauvegarde des commentaires')
+    } finally {
+      setSavingComments(false)
+    }
+  }
+
+  function handleCommentsChange(value: string) {
+    setComments(value)
+    setCommentsChanged(value !== (quote?.comments || ''))
+  }
+
   if (status === 'loading' || loading) {
     return (
       <AdminLayout>
@@ -590,6 +633,78 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                     <p className="text-sm text-gray-900 mt-1 p-3 bg-gray-50 rounded-md">
                       {quote.client.billingAddress}
                     </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Commentaires internes</span>
+                  {quote.comments && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                      📝 Commenté
+                    </span>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-500 block mb-2">
+                    Notes et informations internes (visibles uniquement par l'équipe)
+                  </label>
+                  <textarea
+                    value={comments}
+                    onChange={(e) => handleCommentsChange(e.target.value)}
+                    placeholder="Ajoutez des commentaires internes sur ce devis..."
+                    className="w-full min-h-[100px] p-3 border border-gray-300 rounded-md resize-vertical focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    disabled={savingComments}
+                  />
+                </div>
+                
+                {commentsChanged && (
+                  <div className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <div className="flex items-center text-sm text-yellow-800">
+                      <span className="mr-2">⚠️</span>
+                      Modifications non sauvegardées
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setComments(quote.comments || '')
+                          setCommentsChanged(false)
+                        }}
+                        disabled={savingComments}
+                        className="text-xs"
+                      >
+                        Annuler
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={saveComments}
+                        disabled={savingComments}
+                        className="text-xs"
+                      >
+                        {savingComments ? 'Sauvegarde...' : 'Sauvegarder'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                {!commentsChanged && comments.trim() && (
+                  <div className="flex items-center justify-end">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={saveComments}
+                      disabled={savingComments}
+                      className="text-xs text-gray-500 hover:text-gray-700"
+                    >
+                      {savingComments ? 'Sauvegarde...' : 'Sauvegarder'}
+                    </Button>
                   </div>
                 )}
               </CardContent>
@@ -792,6 +907,11 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                         actionDisplay = 'Email de paiement envoyé'
                         actionColor = 'text-purple-700'
                         break
+                      case 'COMMENTS_UPDATED':
+                        actionIcon = '📝'
+                        actionDisplay = 'Commentaires modifiés'
+                        actionColor = 'text-gray-700'
+                        break
                       case 'DELETED':
                         actionIcon = '🗑️'
                         actionDisplay = 'Supprimé'
@@ -823,6 +943,9 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                                 }
                                 if (log.action === 'BACKGROUND_MODIFIED') {
                                   return `${payload.from} → ${payload.to}`
+                                }
+                                if (log.action === 'COMMENTS_UPDATED') {
+                                  return payload.hasComments ? `Commentaires ajoutés/modifiés (${payload.commentsLength} caractères)` : 'Commentaires supprimés'
                                 }
                                 return JSON.stringify(payload, null, 2)
                               } catch {

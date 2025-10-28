@@ -52,6 +52,7 @@ model QuoteRequest {
   sentAt           DateTime?
   invoiceRef       String?
   invoiceAmountTTC Float?
+  comments         String?            // Commentaires internes visibles uniquement par l'admin
   booking          Booking?
   equipmentRequests EquipmentRequest[]
   client           Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)

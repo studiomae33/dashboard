@@ -57,7 +57,7 @@ export async function PATCH(
 
     const { id } = params
     const body = await request.json()
-    const { status: newStatus, invoiceRef, invoiceAmountTTC } = body
+    const { status: newStatus, invoiceRef, invoiceAmountTTC, comments } = body
 
     const quote = await prisma.quoteRequest.findUnique({
       where: { id },
@@ -71,28 +71,60 @@ export async function PATCH(
       return NextResponse.json({ error: 'Devis non trouvé' }, { status: 404 })
     }
 
+    // Préparer les données à mettre à jour
+    const updateData: any = {}
+    
+    if (newStatus !== undefined) {
+      updateData.status = newStatus
+    }
+    
+    if (invoiceRef !== undefined) {
+      updateData.invoiceRef = invoiceRef
+    }
+    
+    if (invoiceAmountTTC !== undefined) {
+      updateData.invoiceAmountTTC = invoiceAmountTTC
+    }
+    
+    if (comments !== undefined) {
+      updateData.comments = comments
+    }
+
     const updatedQuote = await prisma.quoteRequest.update({
       where: { id },
-      data: {
-        status: newStatus,
-        invoiceRef: invoiceRef || quote.invoiceRef,
-        invoiceAmountTTC: invoiceAmountTTC || quote.invoiceAmountTTC,
-      },
+      data: updateData,
       include: {
         client: true,
         booking: true,
       }
     })
 
-    // Log de l'événement
-    await prisma.eventLog.create({
-      data: {
-        entityType: 'QUOTE',
-        entityId: quote.id,
-        action: 'STATUS_CHANGED',
-        payload: JSON.stringify({ from: quote.status, to: newStatus }),
-      }
-    })
+    // Log de l'événement uniquement pour les changements de statut
+    if (newStatus !== undefined && newStatus !== quote.status) {
+      await prisma.eventLog.create({
+        data: {
+          entityType: 'QUOTE',
+          entityId: quote.id,
+          action: 'STATUS_CHANGED',
+          payload: JSON.stringify({ from: quote.status, to: newStatus }),
+        }
+      })
+    }
+
+    // Log pour les commentaires modifiés
+    if (comments !== undefined && comments !== (quote as any).comments) {
+      await prisma.eventLog.create({
+        data: {
+          entityType: 'QUOTE',
+          entityId: quote.id,
+          action: 'COMMENTS_UPDATED',
+          payload: JSON.stringify({ 
+            hasComments: !!comments,
+            commentsLength: comments ? comments.length : 0
+          }),
+        }
+      })
+    }
 
     return NextResponse.json(updatedQuote)
   } catch (error) {
