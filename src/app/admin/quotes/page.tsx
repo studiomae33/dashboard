@@ -22,6 +22,7 @@ interface QuoteRequest {
   createdAt: string
   sentAt?: string
   signedAt?: string
+  amountTTC?: number
   invoiceAmountTTC?: number
   client: {
     id: string
@@ -201,7 +202,7 @@ export default function QuotesPage() {
                   <StatusBadge status={quote.status} />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {quote.invoiceAmountTTC ? formatCurrency(quote.invoiceAmountTTC) : '-'}
+                  {quote.amountTTC ? formatCurrency(quote.amountTTC) : (quote.invoiceAmountTTC ? formatCurrency(quote.invoiceAmountTTC) : '-')}
                 </td>
                 {showActions && (
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

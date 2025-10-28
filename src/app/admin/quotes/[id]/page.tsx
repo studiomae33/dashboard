@@ -28,6 +28,7 @@ interface QuoteDetails {
   signedAt?: string
   signedIp?: string
   invoiceRef?: string
+  amountTTC?: number
   invoiceAmountTTC?: number
   pdfPath?: string
   client: {
@@ -478,10 +479,10 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                       <p className="text-sm text-gray-900">{quote.invoiceRef}</p>
                     </div>
                   )}
-                  {quote.invoiceAmountTTC && (
+                  {(quote.amountTTC || quote.invoiceAmountTTC) && (
                     <div>
                       <label className="text-sm font-medium text-gray-500">Montant TTC</label>
-                      <p className="text-sm text-gray-900">{formatCurrency(quote.invoiceAmountTTC)}</p>
+                      <p className="text-sm text-gray-900">{formatCurrency(quote.amountTTC || quote.invoiceAmountTTC || 0)}</p>
                     </div>
                   )}
                 </div>

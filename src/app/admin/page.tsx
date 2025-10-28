@@ -26,6 +26,7 @@ interface DashboardStats {
       companyName?: string
     }
     createdAt: string
+    amountTTC?: number
     invoiceAmountTTC?: number
   }>
   upcomingBookings: Array<{

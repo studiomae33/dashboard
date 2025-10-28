@@ -17,6 +17,7 @@ interface Quote {
   desiredEnd: Date
   background: string
   message?: string
+  amountTTC?: number
   invoiceAmountTTC?: number
   client: {
     firstName: string
@@ -131,8 +132,8 @@ export default function PipelinePage() {
           bValue = b.desiredStart.getTime()
           break
         case 'amount':
-          aValue = a.invoiceAmountTTC || 0
-          bValue = b.invoiceAmountTTC || 0
+          aValue = a.amountTTC || a.invoiceAmountTTC || 0
+          bValue = b.amountTTC || b.invoiceAmountTTC || 0
           break
         default:
           return 0
@@ -302,9 +303,9 @@ export default function PipelinePage() {
                           </div>
                         </td>
                         <td className="px-4 py-4">
-                          {quote.invoiceAmountTTC ? (
+                          {(quote.amountTTC || quote.invoiceAmountTTC) ? (
                             <div className="text-sm font-medium text-green-600">
-                              {formatCurrency(quote.invoiceAmountTTC)}
+                              {formatCurrency(quote.amountTTC || quote.invoiceAmountTTC || 0)}
                             </div>
                           ) : (
                             <div className="text-sm text-gray-400">-</div>

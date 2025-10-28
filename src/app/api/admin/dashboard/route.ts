@@ -133,8 +133,30 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Calculer le CA du mois (devis facturés ce mois)
-    const monthlyRevenue = await prisma.quoteRequest.aggregate({
+    // Calculer le CA du mois (devis signés, en attente de paiement, payés et facturés ce mois)
+    // Inclure tous les devis confirmés avec leur montant TTC
+    const confirmedQuotesRevenue = await prisma.quoteRequest.aggregate({
+      where: {
+        AND: [
+          {
+            status: {
+              in: ['SIGNED', 'PAYMENT_PENDING', 'PAID']
+            }
+          },
+          {
+            createdAt: {
+              gte: startOfMonth,
+              lte: endOfMonth
+            }
+          }
+        ]
+      },
+      _sum: {
+        amountTTC: true
+      }
+    })
+
+    const invoicedQuotesRevenue = await prisma.quoteRequest.aggregate({
       where: {
         AND: [
           {
@@ -153,12 +175,15 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // Calculer le CA total du mois
+    const totalMonthlyRevenue = (confirmedQuotesRevenue._sum.amountTTC || 0) + (invoicedQuotesRevenue._sum.invoiceAmountTTC || 0)
+
     const stats = {
       totalQuotes: totalQuotesThisMonth,
       quotesToSend,
       signedQuotes: signedQuotesThisMonth,
       invoicedQuotes: invoicedQuotesThisMonth,
-      monthlyRevenue: monthlyRevenue._sum.invoiceAmountTTC || 0,
+      monthlyRevenue: totalMonthlyRevenue,
       recentQuotes,
       upcomingBookings: upcomingBookingsThisMonth,
       monthInfo: {
