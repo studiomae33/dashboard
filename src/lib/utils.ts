@@ -30,3 +30,38 @@ export function generateReference(prefix: string, counter: number, year?: number
   const currentYear = year || new Date().getFullYear()
   return `${prefix}${currentYear}${counter.toString().padStart(4, '0')}`
 }
+
+/**
+ * Détermine si un devis payé nécessite l'envoi d'une facture
+ * Un devis nécessite une facture si :
+ * - Il est dans le statut PAID
+ * - La date de fin de location est passée de plus d'1 heure
+ */
+export function needsInvoice(quote: {
+  status: string
+  desiredEnd: string | Date
+}): boolean {
+  if (quote.status !== 'PAID') {
+    return false
+  }
+
+  const endDate = new Date(quote.desiredEnd)
+  const now = new Date()
+  const oneHourAfterEnd = new Date(endDate.getTime() + (60 * 60 * 1000)) // +1 heure
+
+  return now > oneHourAfterEnd
+}
+
+/**
+ * Retourne le statut d'affichage d'un devis
+ * Si le devis est PAID mais nécessite une facture, retourne 'NEEDS_INVOICE'
+ */
+export function getDisplayStatus(quote: {
+  status: string
+  desiredEnd: string | Date
+}): string {
+  if (needsInvoice(quote)) {
+    return 'NEEDS_INVOICE'
+  }
+  return quote.status
+}

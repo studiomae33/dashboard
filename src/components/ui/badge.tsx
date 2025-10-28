@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+import { cn, getDisplayStatus } from '@/lib/utils'
 
 interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'secondary' | 'destructive' | 'outline'
@@ -24,9 +24,16 @@ function Badge({ className, variant = 'default', ...props }: BadgeProps) {
 
 interface StatusBadgeProps {
   status: string
+  quote?: {
+    status: string
+    desiredEnd: string | Date
+  }
 }
 
-function StatusBadge({ status }: StatusBadgeProps) {
+function StatusBadge({ status, quote }: StatusBadgeProps) {
+  // Utiliser le statut d'affichage si on a les détails du devis
+  const displayStatus = quote ? getDisplayStatus(quote) : status
+  
   const config = {
     DRAFT: { label: 'Brouillon', variant: 'secondary' as const },
     READY: { label: 'Prêt', variant: 'outline' as const },
@@ -34,10 +41,11 @@ function StatusBadge({ status }: StatusBadgeProps) {
     SIGNED: { label: 'Signé', variant: 'secondary' as const },
     PAYMENT_PENDING: { label: 'Paiement demandé', variant: 'secondary' as const },
     PAID: { label: 'Réglé', variant: 'secondary' as const },
+    NEEDS_INVOICE: { label: 'Facture à envoyer', variant: 'destructive' as const },
     INVOICED: { label: 'Facturé', variant: 'secondary' as const },
   }
 
-  const { label, variant } = config[status as keyof typeof config] || { label: status, variant: 'secondary' as const }
+  const { label, variant } = config[displayStatus as keyof typeof config] || { label: displayStatus, variant: 'secondary' as const }
 
   return <Badge variant={variant}>{label}</Badge>
 }

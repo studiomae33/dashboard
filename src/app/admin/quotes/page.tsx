@@ -199,7 +199,13 @@ export default function QuotesPage() {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <StatusBadge status={quote.status} />
+                  <StatusBadge 
+                    status={quote.status} 
+                    quote={{
+                      status: quote.status,
+                      desiredEnd: quote.desiredEnd
+                    }}
+                  />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {quote.amountTTC ? formatCurrency(quote.amountTTC) : (quote.invoiceAmountTTC ? formatCurrency(quote.invoiceAmountTTC) : '-')}

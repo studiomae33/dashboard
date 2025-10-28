@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/auth.config'
 import { prisma } from '@/lib/prisma'
+import { needsInvoice } from '@/lib/utils'
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -58,6 +59,43 @@ export async function GET(request: NextRequest) {
         }
       }
     })
+
+    // Récupérer tous les devis payés pour vérifier lesquels nécessitent une facture
+    const paidQuotes = await prisma.quoteRequest.findMany({
+      where: { 
+        status: 'PAID'
+      },
+      select: {
+        id: true,
+        status: true,
+        desiredEnd: true
+      }
+    })
+
+    // Compter les devis qui nécessitent une facture
+    const quotesNeedingInvoice = paidQuotes.filter(needsInvoice)
+    const invoicesToSendCount = quotesNeedingInvoice.length
+
+    // Récupérer les détails complets des devis nécessitant une facture (limité à 5 pour l'affichage)
+    const quotesNeedingInvoiceDetails = quotesNeedingInvoice.length > 0 
+      ? await prisma.quoteRequest.findMany({
+          where: {
+            id: {
+              in: quotesNeedingInvoice.slice(0, 5).map(q => q.id)
+            }
+          },
+          include: {
+            client: {
+              select: {
+                firstName: true,
+                lastName: true,
+                companyName: true,
+              }
+            }
+          },
+          orderBy: { desiredEnd: 'asc' }
+        })
+      : []
 
     // Récupérer les devis en cours (créés ce mois et nécessitant encore une action)
     const recentQuotes = await prisma.quoteRequest.findMany({
@@ -186,6 +224,8 @@ export async function GET(request: NextRequest) {
       monthlyRevenue: totalMonthlyRevenue,
       recentQuotes,
       upcomingBookings: upcomingBookingsThisMonth,
+      invoicesToSendCount,
+      quotesNeedingInvoiceDetails,
       monthInfo: {
         startOfMonth: startOfMonth.toISOString(),
         endOfMonth: endOfMonth.toISOString(),

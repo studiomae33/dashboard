@@ -412,7 +412,13 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
             </div>
           </div>
           <div className="flex items-center space-x-3">
-            <StatusBadge status={quote.status} />
+            <StatusBadge 
+              status={quote.status} 
+              quote={{
+                status: quote.status,
+                desiredEnd: quote.desiredEnd
+              }}
+            />
             {canSend && (
               <Link href={`/admin/quotes/${quote.id}/email`}>
                 <Button>📧 Envoyer le devis</Button>
@@ -437,7 +443,13 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                   <div>
                     <label className="text-sm font-medium text-gray-500">Statut</label>
                     <div className="mt-1 flex items-center space-x-2">
-                      <StatusBadge status={quote.status} />
+                      <StatusBadge 
+                        status={quote.status} 
+                        quote={{
+                          status: quote.status,
+                          desiredEnd: quote.desiredEnd
+                        }}
+                      />
                       {quote.pdfPath && (
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">
                           📄 PDF

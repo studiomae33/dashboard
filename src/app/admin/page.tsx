@@ -15,6 +15,7 @@ interface DashboardStats {
   quotesToSend: number
   signedQuotes: number
   invoicedQuotes: number
+  invoicesToSendCount: number
   monthlyRevenue: number
   recentQuotes: Array<{
     id: string
@@ -26,6 +27,19 @@ interface DashboardStats {
       companyName?: string
     }
     createdAt: string
+    amountTTC?: number
+    invoiceAmountTTC?: number
+  }>
+  quotesNeedingInvoiceDetails: Array<{
+    id: string
+    reference: string
+    status: string
+    desiredEnd: string
+    client: {
+      firstName: string
+      lastName: string
+      companyName?: string
+    }
     amountTTC?: number
     invoiceAmountTTC?: number
   }>
@@ -116,7 +130,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Statistiques mensuelles */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -162,6 +176,20 @@ export default function AdminDashboard() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
+                <div className="text-2xl">📄</div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Factures à envoyer</p>
+                  <p className="text-2xl font-semibold text-orange-600">
+                    {stats?.invoicesToSendCount || 0}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
                 <div className="text-2xl">🏁</div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Facturés ce mois</p>
@@ -188,7 +216,7 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Devis récents */}
           <Card>
             <CardHeader>
@@ -229,6 +257,71 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
+          {/* Factures à envoyer */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span className="text-orange-600">📄</span>
+                Factures à envoyer
+                {(stats?.invoicesToSendCount || 0) > 0 && (
+                  <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded-full font-normal">
+                    {stats?.invoicesToSendCount}
+                  </span>
+                )}
+              </CardTitle>
+              <CardDescription>Locations terminées en attente de facturation</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4 max-h-64 overflow-y-auto">
+                {stats?.quotesNeedingInvoiceDetails?.map((quote) => (
+                  <div key={quote.id} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border-l-4 border-orange-200">
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {quote.client.companyName || `${quote.client.firstName} ${quote.client.lastName}`}
+                      </p>
+                      <p className="text-sm text-gray-500">{quote.reference}</p>
+                      <p className="text-xs text-gray-400">
+                        Fin de location: {formatDate(new Date(quote.desiredEnd))}
+                      </p>
+                      {(quote.amountTTC || quote.invoiceAmountTTC) && (
+                        <p className="text-xs text-green-600 font-medium">
+                          {formatCurrency(quote.amountTTC || quote.invoiceAmountTTC || 0)}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                        Facture à envoyer
+                      </span>
+                      <Link href={`/admin/quotes/${quote.id}`}>
+                        <Button variant="outline" size="sm" className="text-orange-600 hover:text-orange-700">
+                          Facturer
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )) || (
+                  <div className="text-center py-8">
+                    <div className="text-gray-400 text-4xl mb-2">✅</div>
+                    <p className="text-gray-500">Aucune facture en attente</p>
+                    <p className="text-sm text-gray-400">Toutes les locations sont à jour</p>
+                  </div>
+                )}
+              </div>
+              {(stats?.invoicesToSendCount || 0) > 0 && (
+                <div className="mt-4 pt-4 border-t">
+                  <Link href="/admin/quotes?status=PAID">
+                    <Button variant="outline" className="w-full text-orange-600 hover:text-orange-700">
+                      Voir tous les devis payés
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
           {/* Réservations à venir */}
           <Card>
             <CardHeader>
