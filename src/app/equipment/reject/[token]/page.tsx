@@ -6,6 +6,8 @@ import { useParams, useRouter } from 'next/navigation'
 interface EquipmentRequest {
   id: string
   equipment: string
+  status: string
+  rejectionReason?: string
   quoteRequest: {
     reference: string
     desiredStart: string
@@ -38,12 +40,29 @@ export default function RejectEquipmentPage() {
   const fetchEquipmentRequest = async () => {
     try {
       const response = await fetch(`/api/equipment/details/${token}`)
-      if (response.ok) {
-        const data = await response.json()
-        setEquipmentRequest(data)
-      } else {
+      if (!response.ok) {
         setError('Demande non trouvée ou token invalide')
+        setLoading(false)
+        return
       }
+      
+      const data = await response.json()
+      setEquipmentRequest(data)
+      
+      // Si la demande est déjà rejetée, on affiche un message approprié
+      if (data.status === 'REJECTED') {
+        setError('Cette demande a déjà été rejetée')
+        setLoading(false)
+        return
+      }
+      
+      // Si la demande est confirmée, on affiche un message approprié
+      if (data.status === 'CONFIRMED') {
+        setError('Cette demande a déjà été confirmée')
+        setLoading(false)
+        return
+      }
+      
     } catch (error) {
       console.error('Erreur:', error)
       setError('Erreur lors du chargement des données')
@@ -70,7 +89,12 @@ export default function RejectEquipmentPage() {
         setSuccess(true)
       } else {
         const errorData = await response.json()
-        setError(errorData.message || 'Erreur lors du rejet')
+        // Si l'erreur dit que c'est déjà traité, on affiche un message plus clair
+        if (errorData.message?.includes('déjà été traitée')) {
+          setError('Cette demande a déjà été traitée par une autre personne')
+        } else {
+          setError(errorData.message || 'Erreur lors du rejet')
+        }
       }
     } catch (error) {
       console.error('Erreur:', error)
@@ -109,6 +133,38 @@ export default function RejectEquipmentPage() {
           <div className="text-red-500 text-5xl mb-4">❌</div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">Erreur</h1>
           <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => router.back()}
+            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Retour
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Si la demande a déjà été traitée, on affiche un message approprié
+  if (equipmentRequest && (equipmentRequest.status === 'CONFIRMED' || equipmentRequest.status === 'REJECTED')) {
+    const isConfirmed = equipmentRequest.status === 'CONFIRMED'
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 text-center">
+          <div className={`text-5xl mb-4 ${isConfirmed ? 'text-green-500' : 'text-orange-500'}`}>
+            {isConfirmed ? '✅' : '⚠️'}
+          </div>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">
+            Demande déjà traitée
+          </h1>
+          <p className="text-gray-600 mb-4">
+            Cette demande de matériel a déjà été {isConfirmed ? 'acceptée' : 'refusée'}.
+          </p>
+          {equipmentRequest.status === 'REJECTED' && equipmentRequest.rejectionReason && (
+            <div className="bg-gray-50 p-4 rounded-md text-left mb-4">
+              <p className="text-sm font-medium text-gray-700">Raison du refus :</p>
+              <p className="text-sm text-gray-600 mt-1">{equipmentRequest.rejectionReason}</p>
+            </div>
+          )}
           <button
             onClick={() => router.back()}
             className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"

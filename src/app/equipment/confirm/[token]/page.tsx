@@ -3,6 +3,24 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 
+interface EquipmentRequest {
+  id: string
+  equipment: string
+  status: string
+  rejectionReason?: string
+  quoteRequest: {
+    reference: string
+    desiredStart: string
+    desiredEnd: string
+    background: string
+    client: {
+      firstName: string
+      lastName: string
+      companyName?: string
+    }
+  }
+}
+
 export default function ConfirmEquipmentPage() {
   const params = useParams()
   const token = params.token as string
@@ -10,7 +28,7 @@ export default function ConfirmEquipmentPage() {
   const [loading, setLoading] = useState(true)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
-  const [equipmentRequest, setEquipmentRequest] = useState<any>(null)
+  const [equipmentRequest, setEquipmentRequest] = useState<EquipmentRequest | null>(null)
 
   useEffect(() => {
     confirmEquipment()
@@ -20,19 +38,43 @@ export default function ConfirmEquipmentPage() {
     try {
       // D'abord récupérer les détails
       const detailsResponse = await fetch(`/api/equipment/details/${token}`)
-      if (detailsResponse.ok) {
-        const details = await detailsResponse.json()
-        setEquipmentRequest(details)
+      if (!detailsResponse.ok) {
+        setError('Demande non trouvée')
+        setLoading(false)
+        return
+      }
+      
+      const details = await detailsResponse.json()
+      setEquipmentRequest(details)
+      
+      // Si la demande est déjà confirmée, on affiche directement le succès
+      if (details.status === 'CONFIRMED') {
+        setSuccess(true)
+        setLoading(false)
+        return
+      }
+      
+      // Si la demande est rejetée, on affiche une erreur
+      if (details.status === 'REJECTED') {
+        setError('Cette demande a été rejetée')
+        setLoading(false)
+        return
       }
 
-      // Puis confirmer
-      const response = await fetch(`/api/equipment/validate/${token}/confirm`)
-      if (response.ok) {
-        const data = await response.json()
-        setSuccess(true)
-      } else {
-        const errorData = await response.json()
-        setError(errorData.message || 'Erreur lors de la confirmation')
+      // Seulement si la demande est encore en attente, on essaie de la confirmer
+      if (details.status === 'PENDING') {
+        const response = await fetch(`/api/equipment/validate/${token}/confirm`)
+        if (response.ok) {
+          setSuccess(true)
+        } else {
+          const errorData = await response.json()
+          // Si l'erreur dit que c'est déjà traité, on considère ça comme un succès
+          if (errorData.message?.includes('déjà été traitée')) {
+            setSuccess(true)
+          } else {
+            setError(errorData.message || 'Erreur lors de la confirmation')
+          }
+        }
       }
     } catch (error) {
       console.error('Erreur:', error)
@@ -59,6 +101,27 @@ export default function ConfirmEquipmentPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Confirmation en cours...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Si la demande a été rejetée, on affiche un message approprié
+  if (equipmentRequest && equipmentRequest.status === 'REJECTED') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 text-center">
+          <div className="text-orange-500 text-5xl mb-4">⚠️</div>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">Demande déjà rejetée</h1>
+          <p className="text-gray-600 mb-4">
+            Cette demande de matériel a déjà été refusée.
+          </p>
+          {equipmentRequest.rejectionReason && (
+            <div className="bg-gray-50 p-4 rounded-md text-left">
+              <p className="text-sm font-medium text-gray-700">Raison du refus :</p>
+              <p className="text-sm text-gray-600 mt-1">{equipmentRequest.rejectionReason}</p>
+            </div>
+          )}
         </div>
       </div>
     )
