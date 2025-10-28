@@ -82,7 +82,7 @@ export default function SettingsPage() {
     setReminderTestResult(null)
 
     try {
-      const response = await fetch('/api/admin/test-reminders', {
+      const response = await fetch('/api/admin/test-sms', {
         method: 'POST',
       })
 
@@ -90,11 +90,11 @@ export default function SettingsPage() {
         const data = await response.json()
         setReminderTestResult(data)
       } else {
-        setReminderTestResult({ error: 'Erreur lors du test des rappels' })
+        setReminderTestResult({ error: 'Erreur lors du test SMS' })
       }
     } catch (error) {
-      console.error('Erreur lors du test des rappels:', error)
-      setReminderTestResult({ error: 'Erreur lors du test des rappels' })
+      console.error('Erreur lors du test SMS:', error)
+      setReminderTestResult({ error: 'Erreur lors du test SMS' })
     } finally {
       setTestingReminders(false)
     }
@@ -331,10 +331,10 @@ export default function SettingsPage() {
                   disabled={testingReminders}
                   className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
-                  {testingReminders ? '⏳ Test en cours...' : '🧪 Tester le système de rappels'}
+                  {testingReminders ? '⏳ Envoi en cours...' : '📱 Envoyer un SMS de test'}
                 </button>
                 <p className="text-xs text-gray-500 mt-1">
-                  Lance manuellement la vérification des locations dans 48h
+                  Envoie un SMS de test aux numéros administrateurs configurés
                 </p>
               </div>
               
@@ -370,49 +370,6 @@ export default function SettingsPage() {
                   Variables disponibles : {'{'}{'{'} studioName {'}'}{'}'}, {'{'}{'{'} clientName {'}'}{'}'}, {'{'}{'{'} quoteRef {'}'}{'}'}, {'{'}{'{'} validationUrl {'}'}{'}'}
                 </p>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Système de rappels SMS */}
-          <Card>
-            <CardHeader>
-              <CardTitle>📱 Rappels SMS automatiques</CardTitle>
-              <CardDescription>Système de rappels 48h avant les locations</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-200">
-                <h4 className="font-medium text-blue-900 mb-2">🤖 Fonctionnement automatique</h4>
-                <p className="text-sm text-blue-800 mb-2">
-                  Chaque jour à 10h00, le système vérifie automatiquement les locations prévues dans 48h et envoie un SMS de rappel.
-                </p>
-                <p className="text-xs text-blue-600">
-                  • SMS envoyés aux numéros configurés dans SMS_ADMIN_NUMBERS<br/>
-                  • Uniquement pour les devis signés/payés/facturés<br/>
-                  • Contient : date, heure, client, référence, type de fond
-                </p>
-              </div>
-              
-              <div>
-                <button
-                  onClick={testReminders}
-                  disabled={testingReminders}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                >
-                  {testingReminders ? '⏳ Test en cours...' : '🧪 Tester le système de rappels'}
-                </button>
-                <p className="text-xs text-gray-500 mt-1">
-                  Lance manuellement la vérification des locations dans 48h
-                </p>
-              </div>
-              
-              {reminderTestResult && (
-                <div className="mt-4 p-3 bg-gray-50 rounded-md">
-                  <h5 className="font-medium text-gray-900 mb-2">Résultat du test :</h5>
-                  <pre className="text-xs bg-white p-2 rounded border overflow-auto">
-                    {JSON.stringify(reminderTestResult, null, 2)}
-                  </pre>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
