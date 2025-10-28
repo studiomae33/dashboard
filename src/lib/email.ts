@@ -794,6 +794,98 @@ export async function sendPaymentEmail(quoteId: string, invoiceRef: string, paym
   return result?.data || { id: 'fallback-' + Date.now() }
 }
 
+export async function sendPaymentReminderEmail(quoteId: string, invoiceRef: string, paymentDueDate?: string, paymentLink?: string) {
+  const quote = await prisma.quoteRequest.findUnique({
+    where: { id: quoteId },
+    include: { client: true }
+  })
+
+  if (!quote) {
+    throw new Error('Devis non trouvé')
+  }
+
+  const settings = await prisma.settings.findUnique({
+    where: { id: 'singleton' }
+  })
+
+  if (!settings) {
+    throw new Error('Configuration manquante')
+  }
+
+  const emailData = {
+    quote,
+    client: quote.client,
+    settings,
+    invoiceRef,
+    paymentDueDate,
+    paymentLink,
+    isReminder: true // Indicateur pour le template
+  }
+
+  const htmlContent = renderPaymentReminderEmailHTML(emailData)
+
+  const emailOptions: any = {
+    from: `${settings.studioName} <${settings.senderEmail}>`,
+    to: quote.client.email,
+    subject: `🔄 Rappel de paiement - Devis ${quote.reference} - ${settings.studioName}`,
+    html: htmlContent,
+  }
+
+  let result
+  
+  console.log('📧 Préparation envoi relance de paiement:', {
+    from: emailOptions.from,
+    to: emailOptions.to,
+    subject: emailOptions.subject,
+    isDevelopment,
+    hasResend: !!resend,
+    NODE_ENV: process.env.NODE_ENV
+  })
+
+  if (isDevelopment) {
+    // Mode développement - afficher l'email dans la console
+    console.log('\n=== RELANCE DE PAIEMENT (MODE DÉVELOPPEMENT) ===')
+    console.log('De:', emailOptions.from)
+    console.log('À:', emailOptions.to)
+    console.log('Sujet:', emailOptions.subject)
+    console.log('HTML Content:')
+    console.log(htmlContent.substring(0, 500) + '...')
+    console.log('===========================================\n')
+    
+    // Simuler une réponse réussie
+    result = { data: { id: 'dev-reminder-' + Date.now() } }
+  } else if (!resend) {
+    // Production mais pas de clé API Resend
+    console.error('❌ ERREUR: Pas de clé API Resend pour relance de paiement!')
+    throw new Error('Configuration email manquante en production')
+  } else {
+    console.log('🚀 Envoi relance de paiement via Resend API...')
+    result = await resend.emails.send(emailOptions)
+    console.log('✅ Réponse Resend:', result)
+  }
+
+  // NE PAS mettre à jour le statut du devis pour une relance
+  // Le devis reste en statut PAYMENT_PENDING
+
+  // Log de l'événement
+  await prisma.eventLog.create({
+    data: {
+      entityType: 'QUOTE',
+      entityId: quoteId,
+      action: 'PAYMENT_REMINDER_SENT',
+      payload: JSON.stringify({ 
+        invoiceRef,
+        paymentDueDate,
+        sentAt: new Date().toISOString(),
+        recipientEmail: quote.client.email
+      }),
+    }
+  })
+
+  console.log('✅ Relance de paiement envoyée avec succès')
+  return result?.data || { id: 'fallback-reminder-' + Date.now() }
+}
+
 export async function sendDateChangeNotification(quoteId: string, oldStartDate: Date, oldEndDate: Date, newStartDate: Date, newEndDate: Date) {
   console.log('🔄 Début envoi notification changement de dates...')
   
@@ -902,6 +994,88 @@ export async function sendDateChangeNotification(quoteId: string, oldStartDate: 
 
   console.log('✅ Notification de changement de dates envoyée avec succès')
   return result?.data || { id: 'fallback-' + Date.now() }
+}
+
+export function renderPaymentReminderEmailHTML(data: QuoteEmailData & { 
+  invoiceRef: string
+  paymentDueDate?: string
+  paymentLink?: string
+  isReminder?: boolean
+}): string {
+  const { quote, client, settings, invoiceRef, paymentDueDate, paymentLink } = data
+  const clientName = client.companyName || `${client.firstName} ${client.lastName}`
+  
+  // Formatage des dates
+  const startDate = new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }).format(quote.desiredStart)
+
+  const startTime = new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(quote.desiredStart)
+
+  const endTime = new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(quote.desiredEnd)
+
+  const amountFormatted = quote.amountTTC 
+    ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(quote.amountTTC)
+    : '450,00 €'
+
+  return `
+<table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333 !important;">
+<tbody>
+<tr>
+<td style="background-color: #060c20 !important; padding: 20px; text-align: center;"><img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio"></td>
+</tr>
+<tr>
+<td style="padding: 20px;">
+<h2 style="margin-top: 0; color: #f59e0b !important;">🔄 Rappel de paiement</h2>
+
+<p style="color: #333 !important;">Bonjour <strong>${clientName}</strong>,<br><br>Nous vous rappelons que le paiement de votre réservation est toujours en attente. Pour maintenir votre créneau réservé, merci de procéder au règlement dans les plus brefs délais.</p>
+
+<div style="background: #fef3c7 !important; border-left: 4px solid #f59e0b !important; padding: 16px; margin: 24px 0;">
+<p style="margin: 0; color: #333 !important; font-weight: 600;">⚠️ Votre réservation est actuellement en attente de paiement</p>
+<p style="margin: 8px 0 0 0; color: #333 !important;">Sans règlement rapide, votre créneau pourrait être libéré pour d'autres clients.</p>
+</div>
+
+<div style="text-align: center; margin: 32px 0; padding: 24px; background: #f59e0b; border-radius: 8px; color: white;">
+<div style="font-size: 16px; margin-bottom: 8px;">Montant à régler</div>
+<div style="font-size: 32px; font-weight: 700; margin: 0;">${amountFormatted}</div>
+</div>
+
+${paymentDueDate ? `
+<div style="background: #fef2f2 !important; border-left: 4px solid #ef4444 !important; padding: 12px; margin: 20px 0;">
+<p style="margin: 0; color: #333 !important;"><strong>🚨 Date limite de paiement : ${paymentDueDate}</strong><br>Cette date approche rapidement ! Merci de procéder au paiement dès maintenant.</p>
+</div>
+` : ''}
+
+<div style="text-align: center; margin: 32px 0;">
+<a href="${paymentLink}" style="display: inline-block; background: #f59e0b; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">💳 Payer maintenant</a>
+<p style="margin-top: 16px; font-size: 14px; color: #666;">Paiement sécurisé par SumUp</p>
+</div>
+
+<div style="margin: 25px 0; background: #f1f1f1; border-left: 4px solid #f59e0b; padding: 15px;">
+<p style="margin: 0; color: #333 !important;"><strong>💡 Rappel de votre réservation :</strong><br>
+<strong>Devis :</strong> ${quote.reference}<br>
+<strong>Date :</strong> ${startDate}<br>
+<strong>Horaires :</strong> ${startTime} - ${endTime}<br>
+<strong>Montant :</strong> ${amountFormatted}</p>
+</div>
+
+<p style="color: #333 !important;">Si vous avez des questions concernant votre paiement, n'hésitez pas à nous contacter.<br><br>Cordialement,<br><strong>L'équipe ${settings.studioName}</strong></p>
+</td>
+</tr>
+<tr>
+<td style="background: #f9f9f9 !important; padding: 15px; font-size: 12px; text-align: center; color: #777 !important;"><strong>${settings.studioName}</strong><br>${settings.studioAddress}<br>📞 ${settings.studioPhone} • 📧 ${settings.studioEmail}</td>
+</tr>
+</tbody>
+</table>`
 }
 
 export function renderPaymentEmailHTML(data: QuoteEmailData & { 

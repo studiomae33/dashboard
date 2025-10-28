@@ -12,6 +12,7 @@ interface PaymentEmailModalProps {
   isLoading: boolean
   quoteReference: string
   rentalStartDate?: string
+  isReminder?: boolean
 }
 
 export function PaymentEmailModal({ 
@@ -20,7 +21,8 @@ export function PaymentEmailModal({
   onSend, 
   isLoading, 
   quoteReference,
-  rentalStartDate 
+  rentalStartDate,
+  isReminder = false
 }: PaymentEmailModalProps) {
   const [invoiceRef, setInvoiceRef] = useState('')
   const [paymentDueDate, setPaymentDueDate] = useState('')
@@ -89,14 +91,20 @@ export function PaymentEmailModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <span className="text-2xl">💳</span>
-            Envoyer mail de paiement
+            <span className="text-2xl">{isReminder ? '🔄' : '💳'}</span>
+            {isReminder ? 'Relancer le paiement' : 'Envoyer mail de paiement'}
           </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-md">
+          <div className={`text-sm p-3 rounded-md ${isReminder ? 'text-orange-800 bg-orange-50' : 'text-gray-600 bg-blue-50'}`}>
             <p className="font-medium">Devis : {quoteReference}</p>
+            <p className="mt-1">
+              {isReminder 
+                ? 'Envoyer un rappel de paiement au client pour ce devis.'
+                : 'Demander le paiement au client pour ce devis validé.'
+              }
+            </p>
             <p className="mt-1">Un email avec le bouton de paiement SumUp sera envoyé au client.</p>
           </div>
 
@@ -181,7 +189,7 @@ export function PaymentEmailModal({
                 </>
               ) : (
                 <>
-                  📧 Envoyer
+                  {isReminder ? '🔄 Relancer' : '📧 Envoyer'}
                 </>
               )}
             </Button>

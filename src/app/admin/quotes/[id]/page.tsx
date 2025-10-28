@@ -62,6 +62,8 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false)
   const [sendingPaymentEmail, setSendingPaymentEmail] = useState(false)
+  const [sendingPaymentReminder, setSendingPaymentReminder] = useState(false)
+  const [isPaymentReminder, setIsPaymentReminder] = useState(false)
   const [showModifyDateModal, setShowModifyDateModal] = useState(false)
   const [modifyingDates, setModifyingDates] = useState(false)
   const [showInvoiceUploadModal, setShowInvoiceUploadModal] = useState(false)
@@ -179,6 +181,47 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
       alert('Erreur lors de l\'envoi de l\'email de paiement')
     } finally {
       setSendingPaymentEmail(false)
+    }
+  }
+
+  async function sendPaymentReminder(invoiceRef: string, paymentDueDate?: string, paymentLink?: string) {
+    if (!quote) return
+
+    setSendingPaymentReminder(true)
+    try {
+      const response = await fetch('/api/admin/quotes/resend-payment-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quoteId: quote.id,
+          invoiceRef,
+          paymentDueDate,
+          paymentLink,
+        }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        
+        // Préparer les données pour la modal de confirmation
+        setPaymentEmailData({
+          recipientEmail: result.recipientEmail,
+          quoteReference: result.quoteReference,
+          invoiceRef,
+        })
+        
+        // Fermer la modal de saisie et ouvrir la modal de confirmation
+        setShowPaymentModal(false)
+        setShowPaymentSentModal(true)
+      } else {
+        const error = await response.json()
+        alert(`Erreur: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi de la relance:', error)
+      alert('Erreur lors de l\'envoi de la relance de paiement')
+    } finally {
+      setSendingPaymentReminder(false)
     }
   }
 
@@ -539,26 +582,43 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
 
                   {canSendPaymentEmail && (
                     <Button
-                      onClick={() => setShowPaymentModal(true)}
-                      disabled={updating}
+                      onClick={() => {
+                        setIsPaymentReminder(false)
+                        setShowPaymentModal(true)
+                      }}
+                      disabled={updating || sendingPaymentEmail}
                       variant="outline"
                       className="w-full justify-start"
                     >
                       <span className="mr-2">💳</span>
-                      Demander le paiement
+                      {sendingPaymentEmail ? 'Envoi...' : 'Demander le paiement'}
                     </Button>
                   )}
 
                   {canMarkPaid && (
-                    <Button
-                      onClick={() => updateStatus('PAID')}
-                      disabled={updating}
-                      variant="outline"
-                      className="w-full justify-start"
-                    >
-                      <span className="mr-2">💰</span>
-                      Paiement reçu
-                    </Button>
+                    <>
+                      <Button
+                        onClick={() => updateStatus('PAID')}
+                        disabled={updating}
+                        variant="outline"
+                        className="w-full justify-start"
+                      >
+                        <span className="mr-2">💰</span>
+                        Paiement reçu
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setIsPaymentReminder(true)
+                          setShowPaymentModal(true)
+                        }}
+                        disabled={updating || sendingPaymentReminder}
+                        variant="outline"
+                        className="w-full justify-start text-orange-600 hover:text-orange-700"
+                      >
+                        <span className="mr-2">🔄</span>
+                        {sendingPaymentReminder ? 'Envoi...' : 'Relancer paiement'}
+                      </Button>
+                    </>
                   )}
 
                   {canInvoice && (
@@ -776,10 +836,11 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
             <PaymentEmailModal
               isOpen={showPaymentModal}
               onClose={() => setShowPaymentModal(false)}
-              onSend={sendPaymentEmail}
-              isLoading={sendingPaymentEmail}
+              onSend={isPaymentReminder ? sendPaymentReminder : sendPaymentEmail}
+              isLoading={isPaymentReminder ? sendingPaymentReminder : sendingPaymentEmail}
               quoteReference={quote.reference}
               rentalStartDate={quote.desiredStart}
+              isReminder={isPaymentReminder}
             />
 
             {paymentEmailData && (
