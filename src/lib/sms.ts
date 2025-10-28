@@ -15,6 +15,15 @@ interface QuoteSignedSMSData {
   signedIp: string
 }
 
+interface LocationReminderSMSData {
+  bookingId: string
+  clientName: string
+  quoteReference: string
+  locationDate: Date
+  locationTime: string
+  background: string
+}
+
 export async function sendQuoteSignedSMS(data: QuoteSignedSMSData) {
   const { quoteReference, clientName, signedAt, signedIp } = data
   
@@ -77,6 +86,82 @@ Studio MAE`
       }
     } catch (error) {
       console.error(`❌ Erreur envoi SMS à ${phoneNumber}:`, error)
+      results.push({ 
+        to: phoneNumber, 
+        success: false, 
+        error: error instanceof Error ? error.message : String(error) 
+      })
+    }
+  }
+
+  return results
+}
+
+export async function sendLocationReminderSMS(data: LocationReminderSMSData) {
+  const { bookingId, clientName, quoteReference, locationDate, locationTime, background } = data
+  
+  // Récupérer les numéros de téléphone des destinataires
+  const recipients = process.env.SMS_ADMIN_NUMBERS?.split(',').map(num => num.trim()) || []
+  
+  if (recipients.length === 0) {
+    console.log('⚠️ Aucun numéro de téléphone configuré pour les SMS de rappel')
+    return []
+  }
+
+  // Formater le message SMS
+  const message = `🎬 RAPPEL LOCATION - Dans 48h !
+
+Studio MAE - ${new Intl.DateTimeFormat('fr-FR', {
+    dateStyle: 'full',
+    timeZone: 'Europe/Paris'
+  }).format(locationDate)} à ${locationTime}
+
+Client: ${clientName}
+Devis: ${quoteReference}
+Fond: ${background}
+
+📞 Confirmer présence si besoin
+
+Studio MAE`
+
+  const results = []
+
+  for (const phoneNumber of recipients) {
+    try {
+      if (isDevelopment || !client) {
+        // Mode développement - afficher le SMS dans la console
+        console.log('\n=== SMS RAPPEL LOCATION (MODE DÉVELOPPEMENT) ===')
+        console.log('À:', phoneNumber)
+        console.log('Message:')
+        console.log(message)
+        console.log('================================================\n')
+        
+        results.push({ 
+          to: phoneNumber, 
+          success: true, 
+          messageId: 'dev-reminder-' + Date.now(),
+          isDevelopment: true 
+        })
+      } else {
+        console.log('📱 Envoi SMS rappel location via Twilio à:', phoneNumber)
+        
+        const smsResult = await client.messages.create({
+          body: message,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          to: phoneNumber
+        })
+        
+        console.log('✅ SMS rappel envoyé avec succès:', smsResult.sid)
+        
+        results.push({ 
+          to: phoneNumber, 
+          success: true, 
+          messageId: smsResult.sid,
+          isDevelopment: false 
+        })
+      }
+    } catch (error) {
+      console.error(`❌ Erreur envoi SMS rappel à ${phoneNumber}:`, error)
       results.push({ 
         to: phoneNumber, 
         success: false, 

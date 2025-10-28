@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { AdminLayout } from '@/components/admin-layout'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -27,6 +27,8 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const [testingReminders, setTestingReminders] = useState(false)
+  const [reminderTestResult, setReminderTestResult] = useState<any>(null)
 
   useEffect(() => {
     fetchSettings()
@@ -72,6 +74,29 @@ export default function SettingsPage() {
       setMessage('Erreur lors de la sauvegarde')
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  async function testReminders() {
+    setTestingReminders(true)
+    setReminderTestResult(null)
+
+    try {
+      const response = await fetch('/api/admin/test-reminders', {
+        method: 'POST',
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setReminderTestResult(data)
+      } else {
+        setReminderTestResult({ error: 'Erreur lors du test des rappels' })
+      }
+    } catch (error) {
+      console.error('Erreur lors du test des rappels:', error)
+      setReminderTestResult({ error: 'Erreur lors du test des rappels' })
+    } finally {
+      setTestingReminders(false)
     }
   }
 
@@ -281,6 +306,49 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
+          {/* Système de rappels SMS */}
+          <Card>
+            <CardHeader>
+              <CardTitle>📱 Rappels SMS automatiques</CardTitle>
+              <CardDescription>Système de rappels 48h avant les locations</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-200">
+                <h4 className="font-medium text-blue-900 mb-2">🤖 Fonctionnement automatique</h4>
+                <p className="text-sm text-blue-800 mb-2">
+                  Chaque jour à 10h00, le système vérifie automatiquement les locations prévues dans 48h et envoie un SMS de rappel.
+                </p>
+                <p className="text-xs text-blue-600">
+                  • SMS envoyés aux numéros configurés dans SMS_ADMIN_NUMBERS<br/>
+                  • Uniquement pour les devis signés/payés/facturés<br/>
+                  • Contient : date, heure, client, référence, type de fond
+                </p>
+              </div>
+              
+              <div>
+                <button
+                  onClick={testReminders}
+                  disabled={testingReminders}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  {testingReminders ? '⏳ Test en cours...' : '🧪 Tester le système de rappels'}
+                </button>
+                <p className="text-xs text-gray-500 mt-1">
+                  Lance manuellement la vérification des locations dans 48h
+                </p>
+              </div>
+              
+              {reminderTestResult && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-md">
+                  <h5 className="font-medium text-gray-900 mb-2">Résultat du test :</h5>
+                  <pre className="text-xs bg-white p-2 rounded border overflow-auto">
+                    {JSON.stringify(reminderTestResult, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Template Email */}
           <Card>
             <CardHeader>
@@ -302,6 +370,49 @@ export default function SettingsPage() {
                   Variables disponibles : {'{'}{'{'} studioName {'}'}{'}'}, {'{'}{'{'} clientName {'}'}{'}'}, {'{'}{'{'} quoteRef {'}'}{'}'}, {'{'}{'{'} validationUrl {'}'}{'}'}
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Système de rappels SMS */}
+          <Card>
+            <CardHeader>
+              <CardTitle>📱 Rappels SMS automatiques</CardTitle>
+              <CardDescription>Système de rappels 48h avant les locations</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-200">
+                <h4 className="font-medium text-blue-900 mb-2">🤖 Fonctionnement automatique</h4>
+                <p className="text-sm text-blue-800 mb-2">
+                  Chaque jour à 10h00, le système vérifie automatiquement les locations prévues dans 48h et envoie un SMS de rappel.
+                </p>
+                <p className="text-xs text-blue-600">
+                  • SMS envoyés aux numéros configurés dans SMS_ADMIN_NUMBERS<br/>
+                  • Uniquement pour les devis signés/payés/facturés<br/>
+                  • Contient : date, heure, client, référence, type de fond
+                </p>
+              </div>
+              
+              <div>
+                <button
+                  onClick={testReminders}
+                  disabled={testingReminders}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  {testingReminders ? '⏳ Test en cours...' : '🧪 Tester le système de rappels'}
+                </button>
+                <p className="text-xs text-gray-500 mt-1">
+                  Lance manuellement la vérification des locations dans 48h
+                </p>
+              </div>
+              
+              {reminderTestResult && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-md">
+                  <h5 className="font-medium text-gray-900 mb-2">Résultat du test :</h5>
+                  <pre className="text-xs bg-white p-2 rounded border overflow-auto">
+                    {JSON.stringify(reminderTestResult, null, 2)}
+                  </pre>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
