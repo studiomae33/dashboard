@@ -189,6 +189,39 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // Récupérer les réservations des mois futurs
+    const upcomingBookingsFutureMonths = await prisma.booking.findMany({
+      where: {
+        AND: [
+          {
+            start: {
+              gte: new Date(now.getFullYear(), now.getMonth() + 1, 1) // Premier jour du mois prochain
+            }
+          }
+        ]
+      },
+      take: 10,
+      include: {
+        quoteRequest: {
+          select: {
+            desiredStart: true,
+            reference: true,
+            status: true,
+            client: {
+              select: {
+                firstName: true,
+                lastName: true,
+                companyName: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        start: 'asc'
+      }
+    })
+
     // Calculer le CA du mois (devis signés et étapes suivantes avec date de location ce mois)
     // Inclure tous les devis confirmés avec une date de location dans le mois
     const confirmedQuotesRevenue = await prisma.quoteRequest.aggregate({
@@ -243,6 +276,7 @@ export async function GET(request: NextRequest) {
       monthlyRevenue: totalMonthlyRevenue,
       recentQuotes,
       upcomingBookings: upcomingBookingsThisMonth,
+      upcomingBookingsFuture: upcomingBookingsFutureMonths,
       invoicesToSendCount,
       quotesNeedingInvoiceDetails,
       monthInfo: {

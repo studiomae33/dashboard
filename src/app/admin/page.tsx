@@ -61,6 +61,23 @@ interface DashboardStats {
       }
     }
   }>
+  upcomingBookingsFuture: Array<{
+    id: string
+    title: string
+    start: string
+    end: string
+    background: string
+    quoteRequest: {
+      desiredStart: string
+      reference: string
+      status: string
+      client: {
+        firstName: string
+        lastName: string
+        companyName?: string
+      }
+    }
+  }>
   monthInfo: {
     startOfMonth: string
     endOfMonth: string
@@ -318,67 +335,76 @@ export default function AdminDashboard() {
           {/* Réservations à venir */}
           <Card>
             <CardHeader>
-              <CardTitle>Réservations ce mois</CardTitle>
-              <CardDescription>Sessions planifiées pour ce mois</CardDescription>
+              <CardTitle>Réservations à venir</CardTitle>
+              <CardDescription>Sessions planifiées par période</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4 max-h-64 overflow-y-auto">
-                {stats?.upcomingBookings?.map((booking) => (
-                  <div key={booking.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">
-                        {booking.quoteRequest?.client?.companyName || 
-                         `${booking.quoteRequest?.client?.firstName} ${booking.quoteRequest?.client?.lastName}` ||
-                         booking.title}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {booking.quoteRequest?.reference} - {booking.background}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Souhaité: {formatDate(new Date(booking.quoteRequest?.desiredStart || booking.start))} - {formatDate(new Date(booking.end))}
-                      </p>
+              {/* Réservations ce mois */}
+              <div className="mb-6">
+                <h4 className="text-md font-semibold text-gray-800 mb-3 border-b pb-2">
+                  Ce mois ({stats?.monthInfo?.currentMonth})
+                </h4>
+                <div className="space-y-4 max-h-64 overflow-y-auto">
+                  {stats?.upcomingBookings?.map((booking) => (
+                    <div key={booking.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border-l-4 border-blue-200">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">
+                          {booking.quoteRequest?.client?.companyName || 
+                           `${booking.quoteRequest?.client?.firstName} ${booking.quoteRequest?.client?.lastName}` ||
+                           booking.title}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {booking.quoteRequest?.reference} - {booking.background}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Souhaité: {formatDate(new Date(booking.quoteRequest?.desiredStart || booking.start))} - {formatDate(new Date(booking.end))}
+                        </p>
+                      </div>
+                      <div className="ml-3">
+                        <StatusBadge status={booking.quoteRequest?.status || 'DRAFT'} />
+                      </div>
                     </div>
-                    <div className="ml-3">
-                      <StatusBadge status={booking.quoteRequest?.status || 'DRAFT'} />
-                    </div>
-                  </div>
-                )) || (
-                  <p className="text-gray-500 text-center py-4">Aucune réservation à venir</p>
-                )}
+                  )) || (
+                    <p className="text-gray-500 text-center py-4 text-sm">Aucune réservation ce mois</p>
+                  )}
+                </div>
               </div>
+
+              {/* Réservations mois futurs */}
+              <div>
+                <h4 className="text-md font-semibold text-gray-800 mb-3 border-b pb-2">
+                  Mois futurs
+                </h4>
+                <div className="space-y-4 max-h-64 overflow-y-auto">
+                  {stats?.upcomingBookingsFuture?.map((booking) => (
+                    <div key={booking.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border-l-4 border-gray-200">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">
+                          {booking.quoteRequest?.client?.companyName || 
+                           `${booking.quoteRequest?.client?.firstName} ${booking.quoteRequest?.client?.lastName}` ||
+                           booking.title}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {booking.quoteRequest?.reference} - {booking.background}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Souhaité: {formatDate(new Date(booking.quoteRequest?.desiredStart || booking.start))} - {formatDate(new Date(booking.end))}
+                        </p>
+                      </div>
+                      <div className="ml-3">
+                        <StatusBadge status={booking.quoteRequest?.status || 'DRAFT'} />
+                      </div>
+                    </div>
+                  )) || (
+                    <p className="text-gray-500 text-center py-4 text-sm">Aucune réservation future</p>
+                  )}
+                </div>
+              </div>
+
               <div className="mt-4 pt-4 border-t">
                 <Link href="/admin/calendar">
                   <Button variant="outline" className="w-full">
                     Voir le calendrier
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Actions rapides */}
-        <div className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Actions rapides</CardTitle>
-              <CardDescription>Raccourcis vers les tâches courantes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Link href="/admin/quotes/new">
-                  <Button className="w-full" variant="default">
-                    📝 Nouveau devis
-                  </Button>
-                </Link>
-                <Link href="/admin/clients/new">
-                  <Button className="w-full" variant="outline">
-                    👤 Nouveau client
-                  </Button>
-                </Link>
-                <Link href="/admin/pipeline">
-                  <Button className="w-full" variant="outline">
-                    📈 Voir le pipeline
                   </Button>
                 </Link>
               </div>

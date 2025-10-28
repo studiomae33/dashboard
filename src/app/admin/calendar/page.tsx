@@ -352,62 +352,149 @@ export default function CalendarPage() {
             <CardTitle className="text-lg">Réservations à venir</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {bookings
-                .filter(booking => booking.start >= new Date())
-                .sort((a, b) => a.start.getTime() - b.start.getTime())
-                .slice(0, 5)
-                .map(booking => {
-                  const getStatusBadge = (status: string) => {
-                    const badges = {
-                      DRAFT: { text: 'Brouillon', color: 'bg-gray-100 text-gray-800' },
-                      READY: { text: 'Prêt', color: 'bg-blue-100 text-blue-800' },
-                      SENT: { text: 'Envoyé', color: 'bg-yellow-100 text-yellow-800' },
-                      SIGNED: { text: 'Signé', color: 'bg-green-100 text-green-800' },
-                      PAID: { text: 'Réglé', color: 'bg-emerald-100 text-emerald-800' },
-                      INVOICED: { text: 'Facturé', color: 'bg-purple-100 text-purple-800' },
-                      CANCELED: { text: 'Annulé', color: 'bg-red-100 text-red-800' }
+            {/* Réservations ce mois */}
+            <div className="mb-6">
+              <h4 className="text-md font-semibold text-gray-800 mb-3 border-b pb-2">
+                Ce mois ({monthNames[new Date().getMonth()]} {new Date().getFullYear()})
+              </h4>
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {bookings
+                  .filter(booking => {
+                    const now = new Date()
+                    const bookingDate = booking.start
+                    return bookingDate >= now && 
+                           bookingDate.getMonth() === now.getMonth() && 
+                           bookingDate.getFullYear() === now.getFullYear()
+                  })
+                  .sort((a, b) => a.start.getTime() - b.start.getTime())
+                  .map(booking => {
+                    const getStatusBadge = (status: string) => {
+                      const badges = {
+                        DRAFT: { text: 'Brouillon', color: 'bg-gray-100 text-gray-800' },
+                        READY: { text: 'Prêt', color: 'bg-blue-100 text-blue-800' },
+                        SENT: { text: 'Envoyé', color: 'bg-yellow-100 text-yellow-800' },
+                        SIGNED: { text: 'Signé', color: 'bg-green-100 text-green-800' },
+                        PAID: { text: 'Réglé', color: 'bg-emerald-100 text-emerald-800' },
+                        INVOICED: { text: 'Facturé', color: 'bg-purple-100 text-purple-800' },
+                        CANCELED: { text: 'Annulé', color: 'bg-red-100 text-red-800' }
+                      }
+                      return badges[status as keyof typeof badges] || { text: status, color: 'bg-gray-100 text-gray-800' }
                     }
-                    return badges[status as keyof typeof badges] || { text: status, color: 'bg-gray-100 text-gray-800' }
-                  }
-                  
-                  const statusBadge = getStatusBadge(booking.quoteRequest.status)
-                  
-                  return (
-                    <div 
-                      key={booking.id} 
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
-                      onClick={() => handleBookingClick(booking)}
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="font-medium text-gray-900">{booking.title}</div>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadge.color}`}>
-                            {statusBadge.text}
-                          </span>
+                    
+                    const statusBadge = getStatusBadge(booking.quoteRequest.status)
+                    
+                    return (
+                      <div 
+                        key={booking.id} 
+                        className="flex items-center justify-between p-3 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors border-l-4 border-blue-200"
+                        onClick={() => handleBookingClick(booking)}
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="font-medium text-gray-900">{booking.title}</div>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadge.color}`}>
+                              {statusBadge.text}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {formatDate(booking.start)} - {booking.background}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Devis: {booking.quoteRequest.reference}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-600">
-                          {formatDate(booking.start)} - {booking.background}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Devis: {booking.quoteRequest.reference}
+                        <div className="text-sm font-medium text-blue-600">
+                          {new Intl.DateTimeFormat('fr-FR', {
+                            timeStyle: 'short',
+                            timeZone: 'Europe/Paris'
+                          }).format(booking.start)}
                         </div>
                       </div>
-                      <div className="text-sm font-medium text-blue-600">
-                        {new Intl.DateTimeFormat('fr-FR', {
-                          timeStyle: 'short',
-                          timeZone: 'Europe/Paris'
-                        }).format(booking.start)}
+                    )
+                  })}
+                
+                {bookings.filter(booking => {
+                  const now = new Date()
+                  const bookingDate = booking.start
+                  return bookingDate >= now && 
+                         bookingDate.getMonth() === now.getMonth() && 
+                         bookingDate.getFullYear() === now.getFullYear()
+                }).length === 0 && (
+                  <p className="text-gray-500 text-center py-4 text-sm">Aucune réservation ce mois</p>
+                )}
+              </div>
+            </div>
+
+            {/* Réservations mois futurs */}
+            <div>
+              <h4 className="text-md font-semibold text-gray-800 mb-3 border-b pb-2">
+                Mois futurs
+              </h4>
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {bookings
+                  .filter(booking => {
+                    const now = new Date()
+                    const bookingDate = booking.start
+                    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+                    return bookingDate >= nextMonth
+                  })
+                  .sort((a, b) => a.start.getTime() - b.start.getTime())
+                  .slice(0, 10)
+                  .map(booking => {
+                    const getStatusBadge = (status: string) => {
+                      const badges = {
+                        DRAFT: { text: 'Brouillon', color: 'bg-gray-100 text-gray-800' },
+                        READY: { text: 'Prêt', color: 'bg-blue-100 text-blue-800' },
+                        SENT: { text: 'Envoyé', color: 'bg-yellow-100 text-yellow-800' },
+                        SIGNED: { text: 'Signé', color: 'bg-green-100 text-green-800' },
+                        PAID: { text: 'Réglé', color: 'bg-emerald-100 text-emerald-800' },
+                        INVOICED: { text: 'Facturé', color: 'bg-purple-100 text-purple-800' },
+                        CANCELED: { text: 'Annulé', color: 'bg-red-100 text-red-800' }
+                      }
+                      return badges[status as keyof typeof badges] || { text: status, color: 'bg-gray-100 text-gray-800' }
+                    }
+                    
+                    const statusBadge = getStatusBadge(booking.quoteRequest.status)
+                    
+                    return (
+                      <div 
+                        key={booking.id} 
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors border-l-4 border-gray-200"
+                        onClick={() => handleBookingClick(booking)}
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="font-medium text-gray-900">{booking.title}</div>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadge.color}`}>
+                              {statusBadge.text}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {formatDate(booking.start)} - {booking.background}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Devis: {booking.quoteRequest.reference}
+                          </div>
+                        </div>
+                        <div className="text-sm font-medium text-blue-600">
+                          {new Intl.DateTimeFormat('fr-FR', {
+                            timeStyle: 'short',
+                            timeZone: 'Europe/Paris'
+                          }).format(booking.start)}
+                        </div>
                       </div>
-                    </div>
-                  )
-                })}
-              
-              {bookings.filter(booking => booking.start >= new Date()).length === 0 && (
-                <div className="text-center text-gray-500 py-8">
-                  Aucune réservation à venir
-                </div>
-              )}
+                    )
+                  })}
+                
+                {bookings.filter(booking => {
+                  const now = new Date()
+                  const bookingDate = booking.start
+                  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+                  return bookingDate >= nextMonth
+                }).length === 0 && (
+                  <p className="text-gray-500 text-center py-4 text-sm">Aucune réservation future</p>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
