@@ -60,11 +60,13 @@ export async function GET(request: NextRequest) {
         desiredStart: 'asc'
       },
       select: {
-        desiredStart: true
+        desiredStart: true,
+        background: true
       }
     })
 
     const nextBookingDate = nextBooking ? nextBooking.desiredStart : null
+    const nextBookingBackground = nextBooking ? nextBooking.background : null
 
     const invoicedQuotesThisMonth = await prisma.quoteRequest.count({
       where: { 
@@ -236,6 +238,7 @@ export async function GET(request: NextRequest) {
       totalQuotes: totalQuotesThisMonth,
       quotesToSend,
       nextBookingDate,
+      nextBookingBackground,
       invoicedQuotes: invoicedQuotesThisMonth,
       monthlyRevenue: totalMonthlyRevenue,
       recentQuotes,

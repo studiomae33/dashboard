@@ -14,6 +14,7 @@ interface DashboardStats {
   totalQuotes: number
   quotesToSend: number
   nextBookingDate: string | null
+  nextBookingBackground: string | null
   invoicedQuotes: number
   invoicesToSendCount: number
   monthlyRevenue: number
@@ -168,14 +169,20 @@ export default function AdminDashboard() {
                   {stats?.nextBookingDate ? (
                     <div>
                       <p className="text-lg font-semibold text-green-600">
-                        {formatDate(new Date(stats.nextBookingDate))}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {new Date(stats.nextBookingDate).toLocaleTimeString('fr-FR', { 
+                        {new Date(stats.nextBookingDate).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        })}, {new Date(stats.nextBookingDate).toLocaleTimeString('fr-FR', { 
                           hour: '2-digit', 
                           minute: '2-digit' 
                         })}
                       </p>
+                      {stats?.nextBookingBackground && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          {stats.nextBookingBackground}
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <p className="text-lg font-semibold text-gray-400">
