@@ -9,9 +9,9 @@ import { cn } from '@/lib/utils'
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: '📊' },
   { name: 'Devis', href: '/admin/quotes', icon: '📋' },
+  { name: 'Factures', href: '/admin/invoices', icon: '🧾' },
   { name: 'Clients', href: '/admin/clients', icon: '👥' },
   { name: 'Calendrier', href: '/admin/calendar', icon: '📅' },
-  { name: 'Pipeline', href: '/admin/pipeline', icon: '📈' },
   { name: 'Loc matériel', href: '/admin/equipment', icon: '📦' },
   { name: 'Paramètres', href: '/admin/settings', icon: '⚙️' },
 ]

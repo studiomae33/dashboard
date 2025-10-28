@@ -78,7 +78,6 @@ export default function QuotesPage() {
 
   // Séparer les devis en cours et les devis passés
   const activeQuotes = quotes.filter(quote => quote.status !== 'INVOICED')
-  const completedQuotes = quotes.filter(quote => quote.status === 'INVOICED')
 
   const filteredActiveQuotes = activeQuotes.filter((quote) => {
     const matchesSearch = 
@@ -91,20 +90,11 @@ export default function QuotesPage() {
     const matchesStatus = !statusFilter || quote.status === statusFilter
 
     return matchesSearch && matchesStatus
-  })
-
-  const filteredCompletedQuotes = completedQuotes.filter((quote) => {
-    const matchesSearch = 
-      quote.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      quote.client.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      quote.client.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (quote.client.companyName && quote.client.companyName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      quote.client.email.toLowerCase().includes(searchTerm.toLowerCase())
-
-    // Pour les devis passés, on affiche tous si pas de filtre ou si le filtre est INVOICED
-    const matchesStatus = !statusFilter || statusFilter === 'INVOICED'
-
-    return matchesSearch && matchesStatus
+  }).sort((a, b) => {
+    // Trier par date de location la plus proche
+    const dateA = new Date(a.desiredStart)
+    const dateB = new Date(b.desiredStart)
+    return dateA.getTime() - dateB.getTime()
   })
 
   if (status === 'loading' || loading) {
@@ -252,11 +242,18 @@ export default function QuotesPage() {
             <h1 className="text-2xl font-semibold text-gray-900">Devis</h1>
             <p className="text-gray-600">Gérez vos demandes de devis et leur statut</p>
           </div>
-          <Link href="/admin/quotes/new">
-            <Button>
-              📝 Nouveau devis
-            </Button>
-          </Link>
+          <div className="flex items-center space-x-4">
+            <Link href="/admin/invoices">
+              <Button variant="outline">
+                📋 Voir les factures
+              </Button>
+            </Link>
+            <Link href="/admin/quotes/new">
+              <Button>
+                📝 Nouveau devis
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Section Devis en cours */}
@@ -305,33 +302,6 @@ export default function QuotesPage() {
               </div>
             ) : (
               renderQuotesTable(filteredActiveQuotes, true)
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Section Devis passés (clôturés) */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span className="text-purple-600">📋</span>
-              Devis passés (facturés)
-              <span className="text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-normal">
-                {filteredCompletedQuotes.length}
-              </span>
-            </CardTitle>
-            <p className="text-sm text-gray-600">
-              Locations terminées et facturées
-            </p>
-          </CardHeader>
-          <CardContent>
-            {filteredCompletedQuotes.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">
-                  {searchTerm ? 'Aucun devis passé trouvé pour cette recherche' : 'Aucun devis passé'}
-                </p>
-              </div>
-            ) : (
-              renderQuotesTable(filteredCompletedQuotes, false)
             )}
           </CardContent>
         </Card>
