@@ -54,7 +54,7 @@ export default function LoginPage() {
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
+                Identifiant
               </label>
               <Input
                 id="email"
@@ -63,7 +63,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="mt-1"
-                placeholder="admin@studiomae.fr"
+                placeholder="Votre identifiant"
               />
             </div>
             <div>
