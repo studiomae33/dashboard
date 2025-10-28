@@ -818,10 +818,6 @@ export async function sendDateChangeNotification(quoteId: string, oldStartDate: 
     throw new Error('Paramètres non trouvés')
   }
 
-  if (!settings.resendApiKey || !settings.senderEmail) {
-    throw new Error('Configuration email manquante')
-  }
-
   // Générer le contenu HTML
   const htmlContent = renderDateChangeEmailHTML({
     quote: {
@@ -863,7 +859,8 @@ export async function sendDateChangeNotification(quoteId: string, oldStartDate: 
     hasResend: !!resend,
     NODE_ENV: process.env.NODE_ENV,
     RESEND_API_KEY_EXISTS: !!process.env.RESEND_API_KEY,
-    RESEND_API_KEY_LENGTH: process.env.RESEND_API_KEY?.length
+    RESEND_API_KEY_LENGTH: process.env.RESEND_API_KEY?.length,
+    senderEmail: settings.senderEmail
   })
 
   if (isDevelopment) {

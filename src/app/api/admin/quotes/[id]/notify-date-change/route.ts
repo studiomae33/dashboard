@@ -46,7 +46,18 @@ export async function POST(
     })
 
   } catch (error) {
-    console.error('Erreur envoi email modification:', error)
+    console.error('❌ Erreur envoi email modification:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      quoteId: params.id,
+      timestamp: new Date().toISOString(),
+      env: {
+        hasResendKey: !!process.env.RESEND_API_KEY,
+        nodeEnv: process.env.NODE_ENV,
+        resendKeyLength: process.env.RESEND_API_KEY?.length
+      }
+    })
+    
     return NextResponse.json({ 
       error: 'Erreur lors de l\'envoi de l\'email',
       details: error instanceof Error ? error.message : 'Erreur inconnue'
