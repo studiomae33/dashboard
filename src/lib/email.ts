@@ -471,6 +471,7 @@ export async function sendEquipmentRequestEmail(equipmentRequestId: string) {
   const emailOptions: any = {
     from: `${settings.studioName} <devis@mail.studiomae.fr>`,
     to: 'contact@studiomae.fr', // Email fixe du loueur
+    replyTo: settings.studioEmail, // Rediriger les réponses vers l'email principal du studio
     subject: `📦 Demande de location matériel - ${equipmentRequest.quoteRequest.reference}`,
     html: htmlContent,
   }
@@ -580,6 +581,7 @@ export async function sendQuoteEmail(quoteId: string, pdfPath?: string) {
   const emailOptions: any = {
     from: `${settings.studioName} <${settings.senderEmail}>`,
     to: quote.client.email,
+    replyTo: settings.studioEmail, // Rediriger les réponses vers l'email principal du studio
     subject: `Devis ${quote.reference} - ${settings.studioName}`,
     html: htmlContent,
   }
@@ -728,6 +730,7 @@ export async function sendPaymentEmail(quoteId: string, invoiceRef: string, paym
   const emailOptions: any = {
     from: `${settings.studioName} <${settings.senderEmail}>`,
     to: quote.client.email,
+    replyTo: settings.studioEmail, // Rediriger les réponses vers l'email principal du studio
     subject: `Instructions de paiement - Devis ${quote.reference} - ${settings.studioName}`,
     html: htmlContent,
   }
@@ -827,6 +830,7 @@ export async function sendPaymentReminderEmail(quoteId: string, invoiceRef: stri
   const emailOptions: any = {
     from: `${settings.studioName} <${settings.senderEmail}>`,
     to: quote.client.email,
+    replyTo: settings.studioEmail, // Rediriger les réponses vers l'email principal du studio
     subject: `🔄 Rappel de paiement - Devis ${quote.reference} - ${settings.studioName}`,
     html: htmlContent,
   }
@@ -938,6 +942,7 @@ export async function sendDateChangeNotification(quoteId: string, oldStartDate: 
   const emailOptions = {
     from: settings.senderEmail,
     to: quote.client.email,
+    replyTo: settings.studioEmail, // Rediriger les réponses vers l'email principal du studio
     subject: `📅 Modification confirmée - Réservation ${quote.reference}`,
     html: htmlContent,
   }
@@ -1069,6 +1074,10 @@ ${paymentDueDate ? `
 </div>
 
 <p style="color: #333 !important;">Si vous avez des questions concernant votre paiement, n'hésitez pas à nous contacter.<br><br>Cordialement,<br><strong>L'équipe ${settings.studioName}</strong></p>
+
+<div style="margin: 20px 0; padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 12px; color: #666;">
+💡 <strong>Vous pouvez répondre directement à cet email</strong> - vos messages seront reçus par notre équipe.
+</div>
 </td>
 </tr>
 <tr>
@@ -1141,6 +1150,10 @@ ${paymentDueDate ? `
 </div>
 
 <p style="color: #333 !important;">À très bientôt au studio !<br><strong>L'équipe ${settings.studioName}</strong></p>
+
+<div style="margin: 20px 0; padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 12px; color: #666;">
+💡 <strong>Vous pouvez répondre directement à cet email</strong> - vos messages seront reçus par notre équipe.
+</div>
 </td>
 </tr>
 <tr>
@@ -1267,6 +1280,7 @@ export async function sendInvoiceEmail({
   const emailOptions: any = {
     from: `${settings.studioName} <${settings.senderEmail}>`,
     to: client.email,
+    replyTo: settings.studioEmail, // Rediriger les réponses vers l'email principal du studio
     subject: `Facture ${invoiceRef} - ${settings.studioName}`,
     html: htmlContent,
   }
