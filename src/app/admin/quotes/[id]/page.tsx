@@ -11,6 +11,7 @@ import { formatDate, formatCurrency } from '@/lib/utils'
 import { PaymentEmailModal } from '@/components/PaymentEmailModal'
 import { PaymentEmailSentModal } from '@/components/PaymentEmailSentModal'
 import { ModifyDateModal } from '@/components/ModifyDateModal'
+import { ModifyBackgroundModal } from '@/components/ModifyBackgroundModal'
 import { InvoiceUploadModal } from '@/components/InvoiceUploadModal'
 import { InvoiceSentModal } from '@/components/InvoiceSentModal'
 import Link from 'next/link'
@@ -67,6 +68,8 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
   const [isPaymentReminder, setIsPaymentReminder] = useState(false)
   const [showModifyDateModal, setShowModifyDateModal] = useState(false)
   const [modifyingDates, setModifyingDates] = useState(false)
+  const [showModifyBackgroundModal, setShowModifyBackgroundModal] = useState(false)
+  const [modifyingBackground, setModifyingBackground] = useState(false)
   const [showInvoiceUploadModal, setShowInvoiceUploadModal] = useState(false)
   const [showInvoiceSentModal, setShowInvoiceSentModal] = useState(false)
   const [sendingInvoice, setSendingInvoice] = useState(false)
@@ -325,6 +328,37 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
     }
   }
 
+  async function modifyBackground(newBackground: string) {
+    if (!quote) return
+
+    setModifyingBackground(true)
+    try {
+      const response = await fetch(`/api/admin/quotes/${quote.id}/modify-background`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          background: newBackground,
+        }),
+      })
+
+      if (response.ok) {
+        const updatedQuote = await response.json()
+        setQuote(updatedQuote)
+        alert('Type de fond modifié avec succès !')
+      } else {
+        const error = await response.json()
+        alert(`Erreur: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Erreur lors de la modification du type de fond:', error)
+      alert('Erreur lors de la modification du type de fond')
+    } finally {
+      setModifyingBackground(false)
+    }
+  }
+
   async function sendInvoice(file: File, invoiceRef: string) {
     if (!quote) return
 
@@ -467,7 +501,18 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Type de fond</label>
-                    <p className="text-sm text-gray-900">{quote.background}</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-gray-900">{quote.background}</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowModifyBackgroundModal(true)}
+                        disabled={updating || modifyingBackground}
+                        className="text-xs ml-2"
+                      >
+                        🎨 Modifier
+                      </Button>
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Créé le</label>
@@ -658,6 +703,19 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                       Modifier les dates
                     </Button>
                   )}
+
+                  {/* Action pour modifier le type de fond - disponible après l'envoi */}
+                  {['SENT', 'SIGNED', 'PAYMENT_PENDING', 'PAID', 'INVOICED'].includes(quote.status) && (
+                    <Button
+                      onClick={() => setShowModifyBackgroundModal(true)}
+                      disabled={updating || modifyingBackground}
+                      variant="outline"
+                      className="w-full justify-start"
+                    >
+                      <span className="mr-2">🎨</span>
+                      Modifier le type de fond
+                    </Button>
+                  )}
                 </div>
 
                 {/* Actions secondaires */}
@@ -719,6 +777,11 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                         actionDisplay = 'Dates modifiées'
                         actionColor = 'text-orange-700'
                         break
+                      case 'BACKGROUND_MODIFIED':
+                        actionIcon = '🎨'
+                        actionDisplay = 'Type de fond modifié'
+                        actionColor = 'text-purple-700'
+                        break
                       case 'DATE_CHANGE_EMAIL_SENT':
                         actionIcon = '📧'
                         actionDisplay = 'Client notifié du changement de dates'
@@ -756,6 +819,9 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                                   return `${formatDate(new Date(payload.oldStart))} → ${formatDate(new Date(payload.newStart))}`
                                 }
                                 if (log.action === 'STATUS_CHANGED') {
+                                  return `${payload.from} → ${payload.to}`
+                                }
+                                if (log.action === 'BACKGROUND_MODIFIED') {
                                   return `${payload.from} → ${payload.to}`
                                 }
                                 return JSON.stringify(payload, null, 2)
@@ -878,6 +944,15 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
               quoteReference={quote.reference}
               clientEmail={quote.client.email}
               isLoading={modifyingDates}
+            />
+
+            <ModifyBackgroundModal
+              isOpen={showModifyBackgroundModal}
+              onClose={() => setShowModifyBackgroundModal(false)}
+              onSave={modifyBackground}
+              currentBackground={quote.background}
+              quoteReference={quote.reference}
+              isLoading={modifyingBackground}
             />
           </>
         )}
