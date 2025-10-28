@@ -13,7 +13,7 @@ import Link from 'next/link'
 interface DashboardStats {
   totalQuotes: number
   quotesToSend: number
-  signedQuotes: number
+  nextBookingDate: string | null
   invoicedQuotes: number
   invoicesToSendCount: number
   monthlyRevenue: number
@@ -130,13 +130,13 @@ export default function AdminDashboard() {
         </div>
 
         {/* Statistiques mensuelles */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="text-2xl">📋</div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Devis ce mois</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="h-full">
+            <CardContent className="p-6 h-full flex items-center justify-center">
+              <div className="flex items-center space-x-4 w-full">
+                <div className="text-3xl flex-shrink-0">📋</div>
+                <div className="flex-1 text-center">
+                  <p className="text-sm font-medium text-gray-600 mb-1">Devis ce mois</p>
                   <p className="text-2xl font-semibold text-gray-900">
                     {stats?.totalQuotes || 0}
                   </p>
@@ -145,12 +145,12 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="text-2xl">📤</div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">À envoyer</p>
+          <Card className="h-full">
+            <CardContent className="p-6 h-full flex items-center justify-center">
+              <div className="flex items-center space-x-4 w-full">
+                <div className="text-3xl flex-shrink-0">📤</div>
+                <div className="flex-1 text-center">
+                  <p className="text-sm font-medium text-gray-600 mb-1">À envoyer</p>
                   <p className="text-2xl font-semibold text-blue-600">
                     {stats?.quotesToSend || 0}
                   </p>
@@ -159,54 +159,40 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="text-2xl">✅</div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Signés ce mois</p>
-                  <p className="text-2xl font-semibold text-green-600">
-                    {stats?.signedQuotes || 0}
-                  </p>
+          <Card className="h-full">
+            <CardContent className="p-6 h-full flex items-center justify-center">
+              <div className="flex items-center space-x-4 w-full">
+                <div className="text-3xl flex-shrink-0">📅</div>
+                <div className="flex-1 text-center">
+                  <p className="text-sm font-medium text-gray-600 mb-1">Prochaine location</p>
+                  {stats?.nextBookingDate ? (
+                    <div>
+                      <p className="text-lg font-semibold text-green-600">
+                        {formatDate(new Date(stats.nextBookingDate))}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {new Date(stats.nextBookingDate).toLocaleTimeString('fr-FR', { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-lg font-semibold text-gray-400">
+                      Aucune
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="text-2xl">📄</div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Factures à envoyer</p>
-                  <p className="text-2xl font-semibold text-orange-600">
-                    {stats?.invoicesToSendCount || 0}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="text-2xl">🏁</div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Facturés ce mois</p>
-                  <p className="text-2xl font-semibold text-purple-600">
-                    {stats?.invoicedQuotes || 0}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="text-2xl">💰</div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">CA ce mois (HT)</p>
+          <Card className="h-full">
+            <CardContent className="p-6 h-full flex items-center justify-center">
+              <div className="flex items-center space-x-4 w-full">
+                <div className="text-3xl flex-shrink-0">💰</div>
+                <div className="flex-1 text-center">
+                  <p className="text-sm font-medium text-gray-600 mb-1">CA ce mois (HT)</p>
                   <p className="text-2xl font-semibold text-emerald-600">
                     {formatCurrency((stats?.monthlyRevenue || 0) / 1.20)}
                   </p>

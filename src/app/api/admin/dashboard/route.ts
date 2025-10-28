@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     // Récupérer les statistiques du mois actuel
     const totalQuotesThisMonth = await prisma.quoteRequest.count({
       where: {
-        createdAt: {
+        desiredStart: {
           gte: startOfMonth,
           lte: endOfMonth
         }
@@ -33,22 +33,38 @@ export async function GET(request: NextRequest) {
     const quotesToSend = await prisma.quoteRequest.count({
       where: { 
         status: 'READY',
-        createdAt: {
+        desiredStart: {
           gte: startOfMonth,
           lte: endOfMonth
         }
       }
     })
 
-    const signedQuotesThisMonth = await prisma.quoteRequest.count({
-      where: { 
-        status: 'SIGNED',
-        createdAt: {
-          gte: startOfMonth,
-          lte: endOfMonth
-        }
+    // Récupérer la prochaine location
+    const nextBooking = await prisma.quoteRequest.findFirst({
+      where: {
+        AND: [
+          {
+            desiredStart: {
+              gte: new Date()
+            }
+          },
+          {
+            status: {
+              in: ['SIGNED', 'PAYMENT_PENDING', 'PAID']
+            }
+          }
+        ]
+      },
+      orderBy: {
+        desiredStart: 'asc'
+      },
+      select: {
+        desiredStart: true
       }
     })
+
+    const nextBookingDate = nextBooking ? nextBooking.desiredStart : null
 
     const invoicedQuotesThisMonth = await prisma.quoteRequest.count({
       where: { 
@@ -171,8 +187,8 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Calculer le CA du mois (devis signés, en attente de paiement, payés et facturés ce mois)
-    // Inclure tous les devis confirmés avec leur montant TTC
+    // Calculer le CA du mois (devis signés et étapes suivantes avec date de location ce mois)
+    // Inclure tous les devis confirmés avec une date de location dans le mois
     const confirmedQuotesRevenue = await prisma.quoteRequest.aggregate({
       where: {
         AND: [
@@ -182,7 +198,7 @@ export async function GET(request: NextRequest) {
             }
           },
           {
-            createdAt: {
+            desiredStart: {
               gte: startOfMonth,
               lte: endOfMonth
             }
@@ -201,7 +217,7 @@ export async function GET(request: NextRequest) {
             status: 'INVOICED'
           },
           {
-            createdAt: {
+            desiredStart: {
               gte: startOfMonth,
               lte: endOfMonth
             }
@@ -219,7 +235,7 @@ export async function GET(request: NextRequest) {
     const stats = {
       totalQuotes: totalQuotesThisMonth,
       quotesToSend,
-      signedQuotes: signedQuotesThisMonth,
+      nextBookingDate,
       invoicedQuotes: invoicedQuotesThisMonth,
       monthlyRevenue: totalMonthlyRevenue,
       recentQuotes,
