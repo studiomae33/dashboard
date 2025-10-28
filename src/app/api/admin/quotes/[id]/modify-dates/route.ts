@@ -65,6 +65,20 @@ export async function PATCH(
       )
     }
 
+    // Si le devis est payé, vérifier qu'il ne nécessite pas encore une facture
+    if (quote.status === 'PAID') {
+      const endDate = new Date(quote.desiredEnd)
+      const now = new Date()
+      const oneHourAfterEnd = new Date(endDate.getTime() + (60 * 60 * 1000)) // +1 heure
+      
+      if (now > oneHourAfterEnd) {
+        return NextResponse.json(
+          { error: 'Les dates ne peuvent plus être modifiées car ce devis nécessite une facture' },
+          { status: 400 }
+        )
+      }
+    }
+
     // Vérifier les conflits avec d'autres réservations
     const conflictingBookings = await prisma.booking.findMany({
       where: {

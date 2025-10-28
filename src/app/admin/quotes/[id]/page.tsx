@@ -471,6 +471,18 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
   const canMarkPaid = quote.status === 'PAYMENT_PENDING'
   const canInvoice = quote.status === 'PAID'
 
+  // Fonction pour vérifier si un devis nécessite une facture
+  const needsInvoice = (quote: QuoteDetails) => {
+    if (quote.status !== 'PAID') return false
+    const endDate = new Date(quote.desiredEnd)
+    const now = new Date()
+    const oneHourAfterEnd = new Date(endDate.getTime() + (60 * 60 * 1000)) // +1 heure
+    return now > oneHourAfterEnd
+  }
+
+  // Vérifier si les modifications sont autorisées
+  const canModify = !needsInvoice(quote) && quote.status !== 'INVOICED'
+
   return (
     <AdminLayout>
       <div className="p-6">
@@ -546,15 +558,17 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                     <label className="text-sm font-medium text-gray-500">Type de fond</label>
                     <div className="flex items-center justify-between">
                       <p className="text-sm text-gray-900">{quote.background}</p>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setShowModifyBackgroundModal(true)}
-                        disabled={updating || modifyingBackground}
-                        className="text-xs ml-2"
-                      >
-                        🎨 Modifier
-                      </Button>
+                      {canModify && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setShowModifyBackgroundModal(true)}
+                          disabled={updating || modifyingBackground}
+                          className="text-xs ml-2"
+                        >
+                          🎨 Modifier
+                        </Button>
+                      )}
                     </div>
                   </div>
                   <div>
@@ -807,7 +821,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                   )}
 
                   {/* Action pour modifier les dates - disponible pour les devis signés */}
-                  {['SIGNED', 'PAYMENT_PENDING', 'PAID'].includes(quote.status) && (
+                  {['SIGNED', 'PAYMENT_PENDING', 'PAID'].includes(quote.status) && canModify && (
                     <Button
                       onClick={() => setShowModifyDateModal(true)}
                       disabled={updating || modifyingDates}
@@ -820,7 +834,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                   )}
 
                   {/* Action pour modifier le type de fond - disponible après l'envoi */}
-                  {['SENT', 'SIGNED', 'PAYMENT_PENDING', 'PAID', 'INVOICED'].includes(quote.status) && (
+                  {['SENT', 'SIGNED', 'PAYMENT_PENDING', 'PAID', 'INVOICED'].includes(quote.status) && canModify && (
                     <Button
                       onClick={() => setShowModifyBackgroundModal(true)}
                       disabled={updating || modifyingBackground}

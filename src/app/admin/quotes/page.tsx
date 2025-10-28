@@ -134,6 +134,15 @@ export default function QuotesPage() {
       )
     }
 
+    const handleRowClick = (quoteId: string, event: React.MouseEvent) => {
+      // Éviter la navigation si on clique sur un bouton ou un lien
+      const target = event.target as HTMLElement
+      if (target.closest('button') || target.closest('a')) {
+        return
+      }
+      router.push(`/admin/quotes/${quoteId}`)
+    }
+
     return (
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
@@ -166,7 +175,11 @@ export default function QuotesPage() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {quotesToRender.map((quote) => (
-              <tr key={quote.id} className="hover:bg-gray-50">
+              <tr 
+                key={quote.id} 
+                className="hover:bg-gray-50 cursor-pointer transition-colors duration-150"
+                onClick={(e) => handleRowClick(quote.id, e)}
+              >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
                     {quote.reference}
@@ -213,11 +226,6 @@ export default function QuotesPage() {
                 {showActions && (
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
-                      <Link href={`/admin/quotes/${quote.id}`}>
-                        <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
-                          👁️ Voir
-                        </Button>
-                      </Link>
                       {quote.status === 'READY' && (
                         <Link href={`/admin/quotes/${quote.id}/email`}>
                           <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">

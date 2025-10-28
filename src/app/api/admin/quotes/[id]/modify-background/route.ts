@@ -35,6 +35,21 @@ export async function PATCH(
       return NextResponse.json({ error: 'Devis non trouvé' }, { status: 404 })
     }
 
+    // Vérifier que le devis peut être modifié
+    // Si le devis est payé, vérifier qu'il ne nécessite pas encore une facture
+    if (quote.status === 'PAID') {
+      const endDate = new Date(quote.desiredEnd)
+      const now = new Date()
+      const oneHourAfterEnd = new Date(endDate.getTime() + (60 * 60 * 1000)) // +1 heure
+      
+      if (now > oneHourAfterEnd) {
+        return NextResponse.json(
+          { error: 'Le type de fond ne peut plus être modifié car ce devis nécessite une facture' },
+          { status: 400 }
+        )
+      }
+    }
+
     const oldBackground = quote.background
 
     // Mettre à jour le type de fond
