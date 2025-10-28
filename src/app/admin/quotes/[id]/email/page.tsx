@@ -356,7 +356,7 @@ export default function QuoteEmailPage({ params }: { params: { id: string } }) {
 
                 {quote.message && (
                   <div className="pt-3 mt-3 border-t border-gray-100">
-                    <p className="text-xs text-gray-500 mb-2">Besoins spécifiques :</p>
+                    <p className="text-xs text-gray-500 mb-2">Besoins spécifiques (privé - non envoyé au client) :</p>
                     <p className="text-sm text-gray-700 bg-blue-50 p-3 rounded-lg border-l-3 border-blue-300">
                       {quote.message}
                     </p>

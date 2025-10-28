@@ -39,7 +39,17 @@ export async function GET(
     }
 
     return NextResponse.json({
-      quote,
+      quote: {
+        id: quote.id,
+        reference: quote.reference,
+        status: quote.status,
+        desiredStart: quote.desiredStart,
+        desiredEnd: quote.desiredEnd,
+        background: quote.background,
+        amountTTC: quote.amountTTC,
+        createdAt: quote.createdAt,
+        pdfPath: quote.pdfPath
+      },
       client: quote.client,
       settings
     })

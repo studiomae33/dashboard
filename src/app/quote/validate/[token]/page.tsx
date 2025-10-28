@@ -385,13 +385,6 @@ export default function ValidateQuotePage() {
                   )}
                 </div>
 
-                {/* Message si présent */}
-                {quote.message && (
-                  <div className="bg-blue-50 p-3 rounded border-l-4 border-blue-400">
-                    <p className="text-sm text-gray-700 italic">{quote.message}</p>
-                  </div>
-                )}
-
                 {/* Bouton de validation */}
                 {quote.status === 'SENT' && (
                   <div className="pt-3 border-t">

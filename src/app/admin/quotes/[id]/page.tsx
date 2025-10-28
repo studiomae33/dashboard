@@ -603,7 +603,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
 
                 {quote.message && (
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Message et besoins</label>
+                    <label className="text-sm font-medium text-gray-500">Message et besoins (privé)</label>
                     <p className="text-sm text-gray-900 mt-1 p-3 bg-gray-50 rounded-md">
                       {quote.message}
                     </p>

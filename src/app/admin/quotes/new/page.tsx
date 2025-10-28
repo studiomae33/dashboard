@@ -516,16 +516,19 @@ export default function NewQuotePage() {
 
                 <div>
                   <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-                    Message et besoins détaillés
+                    Message et besoins détaillés (privé)
                   </label>
                   <Textarea
                     id="message"
                     name="message"
                     value={formData.message}
                     onChange={handleInputChange}
-                    placeholder="Décrivez les besoins spécifiques du client (nombre de personnes, type de photos, etc.)"
+                    placeholder="Décrivez les besoins spécifiques du client (nombre de personnes, type de photos, etc.) - Information privée, non visible par le client"
                     rows={4}
                   />
+                  <p className="text-sm text-gray-500 mt-1">
+                    ℹ️ Ces informations sont privées et ne seront pas transmises au client
+                  </p>
                 </div>
 
                 <div>
