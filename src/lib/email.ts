@@ -470,7 +470,7 @@ export async function sendEquipmentRequestEmail(equipmentRequestId: string) {
 
   const emailOptions: any = {
     from: `${settings.studioName} <devis@mail.studiomae.fr>`,
-    to: 'contact@studiomae.fr', // Email fixe du loueur
+    to: 'david.poirout@prise2son.fr', // Email du loueur
     replyTo: settings.studioEmail, // Rediriger les réponses vers l'email principal du studio
     subject: `📦 Demande de location matériel - ${equipmentRequest.quoteRequest.reference}`,
     html: htmlContent,
