@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
       data: {
         status: 'INVOICED',
         invoiceRef,
+        invoiceAmountTTC: quote.amountTTC, // Copier le montant pour le calcul du CA
       },
     })
 

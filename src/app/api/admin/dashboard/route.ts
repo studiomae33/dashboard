@@ -260,12 +260,15 @@ export async function GET(request: NextRequest) {
         ]
       },
       _sum: {
-        invoiceAmountTTC: true
+        invoiceAmountTTC: true,
+        amountTTC: true
       }
     })
 
     // Calculer le CA total du mois
-    const totalMonthlyRevenue = (confirmedQuotesRevenue._sum.amountTTC || 0) + (invoicedQuotesRevenue._sum.invoiceAmountTTC || 0)
+    // Pour les devis facturés, utiliser invoiceAmountTTC ou amountTTC en fallback
+    const invoicedRevenue = (invoicedQuotesRevenue._sum.invoiceAmountTTC || invoicedQuotesRevenue._sum.amountTTC || 0)
+    const totalMonthlyRevenue = (confirmedQuotesRevenue._sum.amountTTC || 0) + invoicedRevenue
 
     const stats = {
       totalQuotes: totalQuotesThisMonth,
