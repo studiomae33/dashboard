@@ -21,7 +21,7 @@ export function InvoiceSentModal({
 }: InvoiceSentModalProps) {
   const handleGoogleReview = () => {
     // Ouvrir le lien vers les avis Google
-    window.open('https://g.page/r/YOUR_GOOGLE_BUSINESS_ID/review', '_blank')
+    window.open('https://g.page/r/CYD6Q8RA1VRQEAI/review', '_blank')
   }
 
   return (

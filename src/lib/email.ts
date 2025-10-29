@@ -1519,7 +1519,7 @@ export function renderInvoiceEmailHTML(data: QuoteEmailData & {
                                                     <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
                                                         <tr>
                                                             <td style="background-color: #f59e0b; border-radius: 6px; text-align: center;">
-                                                                <a href="https://g.page/r/YOUR_GOOGLE_BUSINESS_ID/review" 
+                                                                <a href="https://g.page/r/CYD6Q8RA1VRQEAI/review" 
                                                                    target="_blank" 
                                                                    style="display: inline-block; padding: 12px 24px; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 16px;">
                                                                     ⭐ Laisser un avis Google
