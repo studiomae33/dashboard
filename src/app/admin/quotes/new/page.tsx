@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { createFrenchDate } from '@/lib/utils'
 import Link from 'next/link'
 
 interface Client {
@@ -89,12 +90,12 @@ export default function NewQuotePage() {
         return
       }
 
-      // Combiner date et heure pour créer les DateTime
-      const desiredStart = `${formData.startDate}T${formData.startTime}:00`
-      const desiredEnd = `${formData.endDate}T${formData.endTime}:00`
+      // Combiner date et heure pour créer les DateTime en spécifiant la timezone française
+      const startDateTime = createFrenchDate(formData.startDate, formData.startTime)
+      const endDateTime = createFrenchDate(formData.endDate, formData.endTime)
 
       // Vérifier que la fin est après le début
-      if (new Date(desiredEnd) <= new Date(desiredStart)) {
+      if (endDateTime <= startDateTime) {
         setError('La date/heure de fin doit être postérieure à celle de début')
         setIsLoading(false)
         return
@@ -149,8 +150,8 @@ export default function NewQuotePage() {
       const formDataToSend = new FormData()
       formDataToSend.append('clientId', formData.clientId)
       formDataToSend.append('reference', formData.reference.trim())
-      formDataToSend.append('desiredStart', desiredStart)
-      formDataToSend.append('desiredEnd', desiredEnd)
+      formDataToSend.append('desiredStart', startDateTime.toISOString())
+      formDataToSend.append('desiredEnd', endDateTime.toISOString())
       formDataToSend.append('background', backgroundDescription)
       formDataToSend.append('amountTTC', amountValue.toString())
       formDataToSend.append('message', formData.message)

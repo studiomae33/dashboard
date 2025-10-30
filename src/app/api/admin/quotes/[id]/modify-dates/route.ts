@@ -25,6 +25,7 @@ export async function PATCH(
       )
     }
 
+    // Créer les dates en gérant correctement la timezone
     const start = new Date(startDate)
     const end = new Date(endDate)
     const now = new Date()

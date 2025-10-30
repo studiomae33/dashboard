@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog } from '@/components/ui/dialog'
+import { formatDateForInput, createFrenchDate } from '@/lib/utils'
 
 interface ModifyDateModalProps {
   isOpen: boolean
@@ -26,17 +27,17 @@ export function ModifyDateModal({
   clientEmail,
   isLoading = false
 }: ModifyDateModalProps) {
-  const [startDate, setStartDate] = useState(currentStartDate.slice(0, 16))
-  const [endDate, setEndDate] = useState(currentEndDate.slice(0, 16))
+  const [startDate, setStartDate] = useState(formatDateForInput(currentStartDate))
+  const [endDate, setEndDate] = useState(formatDateForInput(currentEndDate))
   const [notifyClient, setNotifyClient] = useState(true)
   const [error, setError] = useState('')
 
   const handleSave = async () => {
     setError('')
     
-    // Validation des dates
-    const start = new Date(startDate)
-    const end = new Date(endDate)
+    // Validation des dates avec timezone française
+    const start = createFrenchDate(startDate)
+    const end = createFrenchDate(endDate)
     const now = new Date()
     
     if (start >= end) {
@@ -50,7 +51,8 @@ export function ModifyDateModal({
     }
     
     try {
-      await onSave(startDate, endDate, notifyClient)
+      // Passer les dates au format ISO avec timezone
+      await onSave(start.toISOString(), end.toISOString(), notifyClient)
       onClose()
     } catch (error) {
       setError('Erreur lors de la modification des dates')

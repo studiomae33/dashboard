@@ -32,6 +32,57 @@ export function generateReference(prefix: string, counter: number, year?: number
 }
 
 /**
+ * Crée une date en tenant compte de la timezone française
+ * Détecte automatiquement l'heure d'été/hiver
+ */
+export function createFrenchDate(dateString: string, timeString?: string): Date {
+  if (timeString) {
+    // Si on a date et heure séparées, les combiner
+    const combined = `${dateString}T${timeString}:00`
+    return createFrenchDate(combined)
+  }
+  
+  // Vérifier si la date contient déjà une timezone
+  if (dateString.includes('+') || dateString.includes('Z')) {
+    return new Date(dateString)
+  }
+  
+  // Créer une date temporaire pour déterminer si on est en heure d'été ou d'hiver
+  const tempDate = new Date(dateString)
+  
+  // Détection automatique de l'heure d'été/hiver en France
+  // L'heure d'été va du dernier dimanche de mars au dernier dimanche d'octobre
+  const year = tempDate.getFullYear()
+  
+  // Dernier dimanche de mars
+  const lastSundayMarch = new Date(year, 2, 31) // 31 mars
+  lastSundayMarch.setDate(31 - lastSundayMarch.getDay()) // Reculer au dimanche
+  
+  // Dernier dimanche d'octobre
+  const lastSundayOctober = new Date(year, 9, 31) // 31 octobre
+  lastSundayOctober.setDate(31 - lastSundayOctober.getDay()) // Reculer au dimanche
+  
+  // Déterminer si on est en heure d'été (UTC+2) ou d'hiver (UTC+1)
+  const isDST = tempDate >= lastSundayMarch && tempDate < lastSundayOctober
+  const offset = isDST ? '+02:00' : '+01:00'
+  
+  return new Date(dateString + offset)
+}
+
+/**
+ * Formate une date pour les inputs datetime-local en tenant compte de la timezone française
+ */
+export function formatDateForInput(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date
+  
+  // Convertir en heure française pour l'affichage dans l'input
+  const frenchDate = new Date(d.toLocaleString('sv-SE', { timeZone: 'Europe/Paris' }))
+  
+  // Retourner au format datetime-local (YYYY-MM-DDTHH:MM)
+  return frenchDate.toISOString().slice(0, 16)
+}
+
+/**
  * Détermine si un devis payé nécessite l'envoi d'une facture
  * Un devis nécessite une facture si :
  * - Il est dans le statut PAID
