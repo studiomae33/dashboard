@@ -122,11 +122,19 @@ export default function CalendarPage() {
 
   function getBookingsForDate(date: Date) {
     return bookings.filter(booking => {
-      const bookingDate = new Date(booking.start)
+      // Normaliser les dates à minuit pour éviter les problèmes d'heures
+      const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+      const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1)
+      
+      const bookingStart = new Date(booking.start)
+      const bookingEnd = new Date(booking.end)
+      
+      // Une réservation est visible sur un jour si :
+      // - Elle commence ce jour-là, OU
+      // - Elle se termine ce jour-là, OU  
+      // - Elle englobe entièrement ce jour (commence avant et finit après)
       return (
-        bookingDate.getDate() === date.getDate() &&
-        bookingDate.getMonth() === date.getMonth() &&
-        bookingDate.getFullYear() === date.getFullYear()
+        (bookingStart < dayEnd && bookingEnd >= dayStart)
       )
     })
   }
@@ -317,14 +325,34 @@ export default function CalendarPage() {
                           }
                           const statusColor = statusColors[booking.quoteRequest.status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'
                           
+                          // Déterminer la position du jour dans la réservation
+                          const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+                          const bookingStart = new Date(booking.start.getFullYear(), booking.start.getMonth(), booking.start.getDate())
+                          const bookingEnd = new Date(booking.end.getFullYear(), booking.end.getMonth(), booking.end.getDate())
+                          
+                          const isFirstDay = dayStart.getTime() === bookingStart.getTime()
+                          const isLastDay = dayStart.getTime() === bookingEnd.getTime()
+                          const isMultiDay = bookingStart.getTime() !== bookingEnd.getTime()
+                          
+                          let dayIndicator = ''
+                          if (isMultiDay) {
+                            if (isFirstDay) dayIndicator = '▶️ '
+                            else if (isLastDay) dayIndicator = '◀️ '
+                            else dayIndicator = '⬜ '
+                          }
+                          
                           return (
                             <div
                               key={booking.id}
-                              className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-colors ${statusColor}`}
-                              title={`${booking.title} - ${booking.background} (${booking.quoteRequest.status})`}
+                              className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-colors ${statusColor} ${
+                                isMultiDay && !isFirstDay && !isLastDay ? 'border-l-2 border-r-2 border-gray-400' : ''
+                              }`}
+                              title={`${booking.title} - ${booking.background} (${booking.quoteRequest.status})${
+                                isMultiDay ? ` - ${isFirstDay ? 'Début' : isLastDay ? 'Fin' : 'Milieu'} de réservation` : ''
+                              }`}
                               onClick={() => handleBookingClick(booking)}
                             >
-                              <div className="font-medium truncate">{booking.title}</div>
+                              <div className="font-medium truncate">{dayIndicator}{booking.title}</div>
                               <div className="text-xs opacity-75">{booking.background}</div>
                               <div className="text-xs font-semibold opacity-90">
                                 {booking.quoteRequest.status === 'PAID' ? 'Réglé' : 
