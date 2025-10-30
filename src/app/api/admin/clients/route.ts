@@ -15,7 +15,15 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
       include: {
         _count: {
-          select: { quoteRequests: true }
+          select: { 
+            quoteRequests: {
+              where: {
+                status: {
+                  not: 'INVOICED'
+                }
+              }
+            }
+          }
         }
       }
     })
