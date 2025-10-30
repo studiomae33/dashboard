@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendLocationReminderSMS } from '@/lib/sms'
+import { sendLocationReminderEmail } from '@/lib/email'
 
 // Cron job quotidien pour envoyer les rappels 48h avant les locations
 export async function GET(request: NextRequest) {
@@ -65,6 +66,7 @@ export async function GET(request: NextRequest) {
     console.log(`📋 ${upcomingBookings.length} location(s) trouvée(s) pour dans 48h`)
     
     let smssSent = 0
+    let emailsSent = 0
     let errors = 0
     
     for (const booking of upcomingBookings) {
@@ -112,6 +114,23 @@ export async function GET(request: NextRequest) {
         
         console.log(`✅ ${successfulSms} SMS envoyé(s) pour ${booking.quoteRequest.reference}`)
         
+        // Envoyer l'email au client
+        console.log(`📧 Envoi email de rappel au client: ${booking.quoteRequest.client.email}`)
+        
+        try {
+          const emailResult = await sendLocationReminderEmail(booking.id)
+          
+          if (emailResult.success) {
+            emailsSent++
+            console.log(`✅ Email de rappel envoyé au client ${clientName} - ${booking.quoteRequest.reference}`)
+          } else {
+            console.warn(`⚠️ Échec envoi email au client ${clientName}`)
+          }
+        } catch (emailError) {
+          console.error(`❌ Erreur envoi email au client ${clientName}:`, emailError)
+          // Ne pas faire échouer tout le process pour une erreur d'email
+        }
+        
       } catch (error) {
         console.error(`❌ Erreur pour la location ${booking.id}:`, error)
         errors++
@@ -124,6 +143,7 @@ export async function GET(request: NextRequest) {
       targetDate: targetDate.toISOString(),
       bookingsFound: upcomingBookings.length,
       smssSent,
+      emailsSent,
       errors,
       details: upcomingBookings.map(b => ({
         bookingId: b.id,

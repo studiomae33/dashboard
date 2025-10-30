@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 import { prisma } from './prisma'
-import { generateValidationToken } from './token'
+import { generateValidationToken, generateBookingInfoToken } from './token'
 
 // Initialize Resend only if API key is available
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
@@ -46,6 +46,33 @@ interface EquipmentRequestEmailData {
     desiredEnd: Date
     background: string
     message?: string | null
+    amountTTC?: number | null
+  }
+  client: {
+    firstName: string
+    lastName: string
+    companyName?: string | null
+    email: string
+  }
+  settings: {
+    studioName: string
+    studioAddress: string
+    studioPhone: string
+    studioEmail: string
+    senderEmail: string
+  }
+}
+
+interface LocationReminderEmailData {
+  booking: {
+    id: string
+    start: Date
+    end: Date
+    background: string
+  }
+  quote: {
+    id: string
+    reference: string
     amountTTC?: number | null
   }
   client: {
@@ -1572,4 +1599,218 @@ export function renderInvoiceEmailHTML(data: QuoteEmailData & {
     </table>
 </body>
 </html>`
+}
+
+export async function renderLocationReminderEmailHTML(data: LocationReminderEmailData): Promise<string> {
+  const { booking, quote, client, settings } = data
+  const clientName = client.companyName || `${client.firstName} ${client.lastName}`
+  
+  // Générer un token pour la page d'informations
+  const infoToken = await generateBookingInfoToken(booking.id)
+  
+  // S'assurer qu'on a une URL de base valide
+  let baseUrl = process.env.NEXTAUTH_URL
+  
+  if (!baseUrl) {
+    // Utiliser l'URL de production Vercel directement
+    baseUrl = 'https://dashboard-gamma-smoky-61.vercel.app'
+  }
+  
+  const infoUrl = `${baseUrl}/location-info/${infoToken}`
+  
+  // Formatage des dates
+  const startDate = new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'Europe/Paris'
+  }).format(booking.start)
+
+  const startTime = new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Paris'
+  }).format(booking.start)
+
+  const endTime = new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Paris'
+  }).format(booking.end)
+
+  // Calculer le nombre d'heures jusqu'à la location
+  const hoursUntil = Math.round((booking.start.getTime() - new Date().getTime()) / (1000 * 60 * 60))
+
+  return `
+<table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333 !important;">
+<tbody>
+<tr>
+<td style="background-color: #060c20 !important; padding: 20px; text-align: center;"><img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio"></td>
+</tr>
+<tr>
+<td style="padding: 20px;">
+<h2 style="margin-top: 0; color: #060c20 !important;">Bonjour ${clientName} !</h2>
+
+<p style="color: #333 !important;">Votre location au Studio MAE approche ! Dans environ ${hoursUntil}h, vous aurez rendez-vous avec nous pour votre séance.</p>
+
+<div style="text-align: center; margin: 32px 0; padding: 24px; background: #fef3cd; border-radius: 8px; border: 1px solid #fbbf24;">
+<h3 style="margin-bottom: 16px; color: #92400e; font-weight: 600;">🎬 Rappel de votre location</h3>
+<div style="background: white; border-radius: 6px; padding: 16px; margin: 16px 0;">
+<h4 style="color: #1f2937; margin-bottom: 8px; font-size: 18px;">${startDate}</h4>
+<p style="color: #4b5563; margin: 0; font-size: 16px; font-weight: 600;">${startTime} - ${endTime}</p>
+</div>
+<a href="${infoUrl}" style="display: inline-block; background: #3b82f6; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin-top: 8px;">📋 Informations pratiques & FAQ</a>
+<p style="margin-top: 16px; color: #92400e; font-size: 14px;">Adresse, parking, matériel, conseils...</p>
+</div>
+
+<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; margin: 20px 0;">
+<div style="display: flex; align-items: flex-start; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
+<div style="font-size: 20px; margin-right: 12px; min-width: 32px;">🎨</div>
+<div>
+<h4 style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 16px;">Configuration studio</h4>
+<p style="color: #4a5568; margin: 0; font-size: 15px;">${booking.background}</p>
+</div>
+</div>
+
+<div style="display: flex; align-items: flex-start; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
+<div style="font-size: 20px; margin-right: 12px; min-width: 32px;">📄</div>
+<div>
+<h4 style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 16px;">Référence de votre réservation</h4>
+<p style="color: #4a5568; margin: 0; font-size: 15px; font-family: 'Courier New', monospace;">${quote.reference}</p>
+</div>
+</div>
+
+<div style="display: flex; align-items: flex-start;">
+<div style="font-size: 20px; margin-right: 12px; min-width: 32px;">📍</div>
+<div>
+<h4 style="font-weight: 600; color: #2d3748; margin-bottom: 4px; font-size: 16px;">Adresse</h4>
+<p style="color: #4a5568; margin: 0; font-size: 15px;">${settings.studioAddress}</p>
+</div>
+</div>
+</div>
+
+<div style="background: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 20px; border-radius: 0 8px 8px 0; margin: 24px 0;">
+<p style="margin: 0; color: #0c4a6e; font-weight: 500;"><strong>💡 Tout est prêt pour vous accueillir !</strong><br>
+Consultez la page d'informations pratiques ci-dessus pour tous les détails : accès, parking, matériel inclus, et nos conseils pour réussir votre séance.</p>
+</div>
+
+<div style="background: #f0fff4; border-left: 4px solid #10b981; padding: 20px; border-radius: 0 8px 8px 0; margin: 32px 0;">
+<p style="margin: 0; color: #059669; font-weight: 500;"><strong>📞 Besoin d'aide ?</strong><br>
+Notre équipe reste à votre disposition : ${settings.studioPhone} • ${settings.studioEmail}</p>
+</div>
+
+<div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #e2e8f0;">
+<p style="color: #4a5568; font-weight: 500;">
+À très bientôt au studio !<br>
+<strong>L'équipe ${settings.studioName}</strong>
+</p>
+</div>
+</td>
+</tr>
+<tr>
+<td style="background: #f9f9f9 !important; padding: 15px; font-size: 12px; text-align: center; color: #777 !important;"><strong>${settings.studioName}</strong><br>${settings.studioAddress}<br>📞 ${settings.studioPhone} • ✉️ ${settings.studioEmail}</td>
+</tr>
+</tbody>
+</table>`
+}
+
+export async function sendLocationReminderEmail(bookingId: string) {
+  console.log('📧 Préparation email de rappel pour booking:', bookingId)
+  
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { 
+      quoteRequest: {
+        include: { client: true }
+      }
+    }
+  })
+
+  if (!booking) {
+    throw new Error('Réservation non trouvée')
+  }
+
+  const settings = await prisma.settings.findUnique({
+    where: { id: 'singleton' }
+  })
+
+  if (!settings) {
+    throw new Error('Configuration manquante')
+  }
+
+  const emailData = {
+    booking,
+    quote: booking.quoteRequest,
+    client: booking.quoteRequest.client,
+    settings
+  }
+
+  const htmlContent = await renderLocationReminderEmailHTML(emailData)
+
+  const emailOptions: any = {
+    from: `${settings.studioName} <${settings.senderEmail}>`,
+    to: booking.quoteRequest.client.email,
+    reply_to: settings.studioEmail,
+    subject: `Rappel : Votre location au ${settings.studioName} dans 48h - ${booking.quoteRequest.reference}`,
+    html: htmlContent,
+  }
+
+  let result
+  
+  console.log('📧 Préparation envoi email rappel:', {
+    from: emailOptions.from,
+    to: emailOptions.to,
+    subject: emailOptions.subject,
+    isDevelopment,
+    hasResend: !!resend
+  })
+
+  if (isDevelopment) {
+    console.log('🔧 Mode développement - Email de rappel non envoyé')
+    console.log('📧 Destinataire:', emailOptions.to)
+    console.log('📋 Sujet:', emailOptions.subject)
+    console.log('📝 Contenu HTML généré avec succès')
+    
+    result = {
+      success: true,
+      messageId: 'dev-mode-' + Date.now(),
+      isDevelopment: true
+    }
+  } else {
+    if (!resend) {
+      throw new Error('Service email non configuré (RESEND_API_KEY manquante)')
+    }
+
+    try {
+      const emailResult = await resend.emails.send(emailOptions)
+      console.log('✅ Email de rappel envoyé avec succès:', emailResult.data)
+      
+      result = {
+        success: true,
+        messageId: emailResult.data?.id,
+        isDevelopment: false
+      }
+    } catch (error) {
+      console.error('❌ Erreur envoi email de rappel:', error)
+      throw error
+    }
+  }
+
+  // Log de l'événement
+  await prisma.eventLog.create({
+    data: {
+      entityType: 'BOOKING',
+      entityId: bookingId,
+      action: 'REMINDER_EMAIL_SENT',
+      payload: JSON.stringify({ 
+        to: emailOptions.to,
+        subject: emailOptions.subject,
+        success: result.success,
+        messageId: result.messageId
+      })
+    }
+  })
+
+  return result
 }

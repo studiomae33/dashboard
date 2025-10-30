@@ -29,6 +29,8 @@ export default function SettingsPage() {
   const [message, setMessage] = useState('')
   const [testingReminders, setTestingReminders] = useState(false)
   const [reminderTestResult, setReminderTestResult] = useState<any>(null)
+  const [testingEmailReminder, setTestingEmailReminder] = useState(false)
+  const [emailReminderTestResult, setEmailReminderTestResult] = useState<any>(null)
 
   useEffect(() => {
     fetchSettings()
@@ -97,6 +99,37 @@ export default function SettingsPage() {
       setReminderTestResult({ error: 'Erreur lors du test SMS' })
     } finally {
       setTestingReminders(false)
+    }
+  }
+
+  async function testEmailReminder() {
+    setTestingEmailReminder(true)
+    setEmailReminderTestResult(null)
+
+    try {
+      const response = await fetch('/api/admin/test-location-reminder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          testEmail: 'contact@studiomae.fr',
+          testKey: 'dev-test'
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setEmailReminderTestResult(data)
+      } else {
+        const error = await response.json()
+        setEmailReminderTestResult({ error: error.error || 'Erreur lors du test email' })
+      }
+    } catch (error) {
+      console.error('Erreur lors du test email:', error)
+      setEmailReminderTestResult({ error: 'Erreur lors du test email' })
+    } finally {
+      setTestingEmailReminder(false)
     }
   }
 
@@ -343,6 +376,49 @@ export default function SettingsPage() {
                   <h5 className="font-medium text-gray-900 mb-2">Résultat du test :</h5>
                   <pre className="text-xs bg-white p-2 rounded border overflow-auto">
                     {JSON.stringify(reminderTestResult, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Système de rappels Email clients */}
+          <Card>
+            <CardHeader>
+              <CardTitle>📧 Rappels Email automatiques</CardTitle>
+              <CardDescription>Emails de rappel aux clients 48h avant leur location</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-200">
+                <h4 className="font-medium text-green-900 mb-2">📬 Fonctionnement automatique</h4>
+                <p className="text-sm text-green-800 mb-2">
+                  En même temps que les SMS admin, le système envoie automatiquement un email de rappel aux clients.
+                </p>
+                <p className="text-xs text-green-600">
+                  • Email envoyé directement au client<br/>
+                  • Contient : date, heure, configuration, lien vers infos pratiques<br/>
+                  • Page d'infos avec FAQ, adresse, parking, matériel inclus
+                </p>
+              </div>
+              
+              <div>
+                <button
+                  onClick={testEmailReminder}
+                  disabled={testingEmailReminder}
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  {testingEmailReminder ? '⏳ Envoi en cours...' : '📧 Tester l\'email de rappel'}
+                </button>
+                <p className="text-xs text-gray-500 mt-1">
+                  Envoie un email de test à contact@studiomae.fr avec une réservation fictive
+                </p>
+              </div>
+              
+              {emailReminderTestResult && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-md">
+                  <h5 className="font-medium text-gray-900 mb-2">Résultat du test :</h5>
+                  <pre className="text-xs bg-white p-2 rounded border overflow-auto">
+                    {JSON.stringify(emailReminderTestResult, null, 2)}
                   </pre>
                 </div>
               )}
