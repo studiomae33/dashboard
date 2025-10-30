@@ -279,7 +279,7 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => handleInputChange('phone', e.target.value)}
-                        placeholder="01 23 45 67 89"
+                        placeholder="05.54.54.70.93"
                       />
                     </div>
                   </div>

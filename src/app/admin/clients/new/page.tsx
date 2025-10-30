@@ -172,7 +172,7 @@ export default function NewClientPage() {
                       type="tel"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      placeholder="01 23 45 67 89"
+                      placeholder="05.54.54.70.93"
                     />
                   </div>
                 </div>

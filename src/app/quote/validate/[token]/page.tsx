@@ -78,6 +78,7 @@ export default function ValidateQuotePage() {
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null)
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [pdfError, setPdfError] = useState(false)
+  const [cglAccepted, setCglAccepted] = useState(false)
 
   useEffect(() => {
     fetchQuoteData()
@@ -139,6 +140,8 @@ export default function ValidateQuotePage() {
 
   const handleCancelValidation = () => {
     setShowConfirmation(false)
+    // Optionnellement, on peut aussi réinitialiser les CGL si on veut forcer une nouvelle validation
+    // setCglAccepted(false)
   }
 
   if (loading) {
@@ -387,10 +390,50 @@ export default function ValidateQuotePage() {
 
                 {/* Bouton de validation */}
                 {quote.status === 'SENT' && (
-                  <div className="pt-3 border-t">
-                    {!showConfirmation ? (
-                      // Premier bouton - Afficher les conditions
+                  <div className="pt-3 border-t space-y-3">
+                    {/* Validation des CGL */}
+                    {!cglAccepted ? (
+                      <div className="space-y-3">
+                        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 sm:p-4">
+                          <h4 className="font-semibold text-blue-800 mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
+                            <FileText className="h-4 w-4 mr-2 flex-shrink-0" />
+                            Conditions Générales de Location
+                          </h4>
+                          <p className="text-xs sm:text-sm text-blue-700 mb-3">
+                            Avant de valider votre devis, vous devez prendre connaissance et accepter nos Conditions Générales de Location.
+                          </p>
+                          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                            <a
+                              href="/CGL/CGL STUDIO MAE .pdf"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center px-3 py-2 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex-1 sm:flex-initial"
+                            >
+                              <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                              Consulter les CGL
+                            </a>
+                            <Button
+                              onClick={() => setCglAccepted(true)}
+                              variant="outline"
+                              className="flex-1 sm:flex-initial text-xs sm:text-sm border-blue-300 text-blue-700 hover:bg-blue-50"
+                            >
+                              ✓ J'ai lu et j'accepte les CGL
+                            </Button>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500 text-center">
+                          Veuillez d'abord consulter et accepter les CGL pour continuer
+                        </p>
+                      </div>
+                    ) : !showConfirmation ? (
+                      // Premier bouton - Afficher les conditions après CGL
                       <>
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-2 mb-3">
+                          <p className="text-xs text-green-700 flex items-center">
+                            <CheckCircle className="h-3 w-3 mr-2" />
+                            CGL acceptées ✓
+                          </p>
+                        </div>
                         <Button 
                           onClick={handleValidateQuote}
                           className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-sm sm:text-base"
@@ -403,8 +446,14 @@ export default function ValidateQuotePage() {
                         </p>
                       </>
                     ) : (
-                      // Affichage des conditions et bouton de confirmation
+                      // Affichage des conditions et bouton de confirmation final
                       <div className="space-y-3 sm:space-y-4">
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-2">
+                          <p className="text-xs text-green-700 flex items-center">
+                            <CheckCircle className="h-3 w-3 mr-2" />
+                            CGL acceptées ✓
+                          </p>
+                        </div>
                         <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-3 sm:p-4">
                           <h4 className="font-semibold text-orange-800 mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
                             <Shield className="h-4 w-4 mr-2 flex-shrink-0" />

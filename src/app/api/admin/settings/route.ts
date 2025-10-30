@@ -13,8 +13,8 @@ export async function GET() {
         data: {
           id: 'singleton',
           studioName: 'Studio MAE',
-          studioAddress: '123 Rue de la Photographie, 75001 Paris',
-          studioPhone: '01 23 45 67 89',
+          studioAddress: '46 rue Promis, 33100 Bordeaux',
+          studioPhone: '05.54.54.70.93',
           studioEmail: 'contact@studiomae.fr',
           senderEmail: 'devis@mail.studiomae.fr',
         }
