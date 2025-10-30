@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { StatusBadge } from '@/components/ui/badge'
-import { formatDate, formatCurrency } from '@/lib/utils'
+import { formatDate, formatCurrency, isDateInCurrentMonth } from '@/lib/utils'
 import Link from 'next/link'
 
 interface QuoteRequest {
@@ -189,10 +189,10 @@ export default function QuotesPage() {
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
+                  <div className={`text-sm ${isDateInCurrentMonth(new Date(quote.desiredStart)) ? 'text-blue-600 font-semibold' : 'text-gray-900'}`}>
                     {formatDate(new Date(quote.desiredStart))}
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className={`text-sm ${isDateInCurrentMonth(new Date(quote.desiredEnd)) ? 'text-blue-600 font-semibold' : 'text-gray-500'}`}>
                     {formatDate(new Date(quote.desiredEnd))}
                   </div>
                 </td>

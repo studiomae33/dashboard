@@ -31,6 +31,12 @@ export function generateReference(prefix: string, counter: number, year?: number
   return `${prefix}${currentYear}${counter.toString().padStart(4, '0')}`
 }
 
+export function isDateInCurrentMonth(date: Date): boolean {
+  const now = new Date()
+  return date.getFullYear() === now.getFullYear() && 
+         date.getMonth() === now.getMonth()
+}
+
 /**
  * Crée une date en tenant compte de la timezone française
  * Détecte automatiquement l'heure d'été/hiver
