@@ -276,7 +276,7 @@ export default function ValidateQuotePage() {
                       1
                     </div>
                     <p className="text-gray-700 text-xs sm:text-sm">
-                      Vous recevrez un email de confirmation dans les prochaines minutes
+                      Nous avons bien reçu votre devis signé, celui-ci est désormais validé
                     </p>
                   </div>
                   
@@ -285,7 +285,7 @@ export default function ValidateQuotePage() {
                       2
                     </div>
                     <p className="text-gray-700 text-xs sm:text-sm">
-                      Notre équipe vous contactera pour finaliser les derniers détails de votre séance
+                      La prochaine étape est le paiement, le mail avec les infos sera envoyé dès que nécessaire
                     </p>
                   </div>
                   
@@ -294,7 +294,10 @@ export default function ValidateQuotePage() {
                       3
                     </div>
                     <p className="text-gray-700 text-xs sm:text-sm">
-                      Rendez-vous le jour J pour votre séance photo !
+                      En attendant, retrouvez le studio sur Instagram : 
+                      <a href="https://instagram.com/std.mae" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-medium ml-1">
+                        @std.mae
+                      </a>
                     </p>
                   </div>
                 </div>
