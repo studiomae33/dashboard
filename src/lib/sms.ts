@@ -111,18 +111,16 @@ export async function sendQuoteSignedSMS(data: QuoteSignedSMSData) {
     return
   }
 
-  // Formater le message SMS
-  const message = `🎉 DEVIS SIGNÉ !
-Référence: ${quoteReference}
+  // Formater le message SMS (max 149 caractères pour 1 SMS)
+  const message = `DEVIS SIGNE !
+Ref: ${quoteReference}
 Client: ${clientName}
-Signé le: ${new Intl.DateTimeFormat('fr-FR', {
+Signe le: ${new Intl.DateTimeFormat('fr-FR', {
     dateStyle: 'short',
     timeStyle: 'short',
     timeZone: 'Europe/Paris'
   }).format(signedAt)}
-IP: ${signedIp}
-
-Studio MAE`
+`
 
   const results = []
 
@@ -180,21 +178,17 @@ export async function sendLocationReminderSMS(data: LocationReminderSMSData) {
     return []
   }
 
-  // Formater le message SMS
-  const message = `🎬 RAPPEL LOCATION - Dans 48h !
-
+  // Formater le message SMS (max 149 caractères pour 1 SMS)
+  const message = `RAPPEL LOCATION - Dans 48h !
 Studio MAE - ${new Intl.DateTimeFormat('fr-FR', {
-    dateStyle: 'full',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
     timeZone: 'Europe/Paris'
-  }).format(locationDate)} à ${locationTime}
-
+  }).format(locationDate)} ${locationTime}
 Client: ${clientName}
-Devis: ${quoteReference}
 Fond: ${background}
-
-📞 Confirmer présence si besoin
-
-Studio MAE`
+`
 
   const results = []
 
