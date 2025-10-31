@@ -360,6 +360,8 @@ export default function CalendarPage() {
                                  booking.quoteRequest.status === 'SIGNED' ? 'Signé' :
                                  booking.quoteRequest.status === 'SENT' ? 'Envoyé' :
                                  booking.quoteRequest.status === 'CANCELED' ? 'Annulé' : 
+                                 booking.quoteRequest.status === 'PAYMENT_PENDING' ? 'Paiement demandé' :
+                                 booking.quoteRequest.status === 'ONSITE_PAYMENT' ? 'Paiement sur place' :
                                  booking.quoteRequest.status === 'READY' ? 'Prêt' : 'Brouillon'}
                               </div>
                             </div>
@@ -402,6 +404,8 @@ export default function CalendarPage() {
                         READY: { text: 'Prêt', color: 'bg-blue-100 text-blue-800' },
                         SENT: { text: 'Envoyé', color: 'bg-yellow-100 text-yellow-800' },
                         SIGNED: { text: 'Signé', color: 'bg-green-100 text-green-800' },
+                        PAYMENT_PENDING: { text: 'Paiement demandé', color: 'bg-orange-100 text-orange-800' },
+                        ONSITE_PAYMENT: { text: 'Paiement sur place', color: 'bg-orange-100 text-orange-800' },
                         PAID: { text: 'Réglé', color: 'bg-emerald-100 text-emerald-800' },
                         INVOICED: { text: 'Facturé', color: 'bg-purple-100 text-purple-800' },
                         CANCELED: { text: 'Annulé', color: 'bg-red-100 text-red-800' }
@@ -475,6 +479,8 @@ export default function CalendarPage() {
                         READY: { text: 'Prêt', color: 'bg-blue-100 text-blue-800' },
                         SENT: { text: 'Envoyé', color: 'bg-yellow-100 text-yellow-800' },
                         SIGNED: { text: 'Signé', color: 'bg-green-100 text-green-800' },
+                        PAYMENT_PENDING: { text: 'Paiement demandé', color: 'bg-orange-100 text-orange-800' },
+                        ONSITE_PAYMENT: { text: 'Paiement sur place', color: 'bg-orange-100 text-orange-800' },
                         PAID: { text: 'Réglé', color: 'bg-emerald-100 text-emerald-800' },
                         INVOICED: { text: 'Facturé', color: 'bg-purple-100 text-purple-800' },
                         CANCELED: { text: 'Annulé', color: 'bg-red-100 text-red-800' }
