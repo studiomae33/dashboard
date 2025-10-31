@@ -21,8 +21,26 @@ function generateSignature(method: string, query: string, body: string, timestam
 
 // Fonction pour envoyer un SMS via OVH
 async function sendOVHSMS(to: string, message: string) {
+  console.log('🔍 Début sendOVHSMS - Destinataire:', to)
+  console.log('🔍 Configuration OVH:', {
+    hasApplicationKey: !!OVH_CONFIG.applicationKey,
+    hasApplicationSecret: !!OVH_CONFIG.applicationSecret,
+    hasConsumerKey: !!OVH_CONFIG.consumerKey,
+    hasServiceName: !!OVH_CONFIG.serviceName,
+    serviceName: OVH_CONFIG.serviceName,
+    endpoint: OVH_CONFIG.endpoint
+  })
+
   if (!OVH_CONFIG.applicationKey || !OVH_CONFIG.applicationSecret || !OVH_CONFIG.consumerKey || !OVH_CONFIG.serviceName) {
-    throw new Error('Configuration OVH manquante')
+    const missingFields = []
+    if (!OVH_CONFIG.applicationKey) missingFields.push('OVH_APPLICATION_KEY')
+    if (!OVH_CONFIG.applicationSecret) missingFields.push('OVH_APPLICATION_SECRET')
+    if (!OVH_CONFIG.consumerKey) missingFields.push('OVH_CONSUMER_KEY')
+    if (!OVH_CONFIG.serviceName) missingFields.push('OVH_SMS_SERVICE_NAME')
+    
+    const error = `Configuration OVH manquante: ${missingFields.join(', ')}`
+    console.error('❌', error)
+    throw new Error(error)
   }
 
   const timestamp = Math.floor(Date.now() / 1000)
@@ -36,25 +54,80 @@ async function sendOVHSMS(to: string, message: string) {
     priority: 'high'
   })
 
-  const signature = generateSignature(method, query, body, timestamp)
-
-  const response = await fetch(query, {
+  console.log('🔍 Préparation requête OVH:', {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Ovh-Application': OVH_CONFIG.applicationKey,
-      'X-Ovh-Consumer': OVH_CONFIG.consumerKey,
-      'X-Ovh-Signature': signature,
-      'X-Ovh-Timestamp': timestamp.toString(),
-    },
-    body,
+    query,
+    bodyLength: body.length,
+    timestamp
   })
 
+  let signature: string
+  try {
+    signature = generateSignature(method, query, body, timestamp)
+    console.log('✅ Signature générée avec succès')
+  } catch (signError) {
+    console.error('❌ Erreur génération signature:', signError)
+    throw new Error(`Erreur de signature: ${signError instanceof Error ? signError.message : String(signError)}`)
+  }
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Ovh-Application': OVH_CONFIG.applicationKey,
+    'X-Ovh-Consumer': OVH_CONFIG.consumerKey,
+    'X-Ovh-Signature': signature,
+    'X-Ovh-Timestamp': timestamp.toString(),
+  }
+
+  console.log('🔍 Headers de la requête:', {
+    'Content-Type': headers['Content-Type'],
+    'X-Ovh-Application': headers['X-Ovh-Application']?.substring(0, 8) + '...',
+    'X-Ovh-Consumer': headers['X-Ovh-Consumer']?.substring(0, 8) + '...',
+    'X-Ovh-Signature': headers['X-Ovh-Signature']?.substring(0, 10) + '...',
+    'X-Ovh-Timestamp': headers['X-Ovh-Timestamp']
+  })
+
+  let response: Response
+  try {
+    console.log('🚀 Envoi requête vers OVH...')
+    response = await fetch(query, {
+      method,
+      headers,
+      body,
+    })
+    console.log('📡 Réponse reçue:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries())
+    })
+  } catch (fetchError) {
+    console.error('❌ Erreur réseau vers OVH:', fetchError)
+    throw new Error(`Erreur réseau: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`)
+  }
+
   if (!response.ok) {
-    const error = await response.text()
+    let errorDetails: any = {}
+    let errorText = ''
+    
+    try {
+      errorText = await response.text()
+      console.log('❌ Réponse d\'erreur OVH (texte brut):', errorText)
+      
+      // Essayer de parser en JSON si possible
+      try {
+        errorDetails = JSON.parse(errorText)
+        console.log('❌ Réponse d\'erreur OVH (JSON):', errorDetails)
+      } catch {
+        // Pas du JSON, garder le texte brut
+        errorDetails = { rawError: errorText }
+      }
+    } catch (readError) {
+      console.error('❌ Impossible de lire la réponse d\'erreur:', readError)
+      errorText = 'Impossible de lire la réponse d\'erreur'
+    }
     
     // Si c'est une erreur de service non trouvé, on liste les services disponibles
-    if (response.status === 404 && error.includes('does not exist')) {
+    if (response.status === 404 && errorText.includes('does not exist')) {
+      console.log('🔍 Service SMS non trouvé, tentative de listage des services...')
       try {
         const servicesQuery = `${OVH_CONFIG.endpoint}/sms`
         const servicesSignature = generateSignature('GET', servicesQuery, '', timestamp + 1)
@@ -71,17 +144,41 @@ async function sendOVHSMS(to: string, message: string) {
         if (servicesResponse.ok) {
           const services = await servicesResponse.json()
           console.log('📋 Services SMS OVH disponibles:', services)
-          throw new Error(`Service SMS '${OVH_CONFIG.serviceName}' non trouvé. Services disponibles: ${services.join(', ')}`)
+          throw new Error(`Service SMS '${OVH_CONFIG.serviceName}' non trouvé. Services disponibles: ${services.join(', ')}. Erreur OVH: ${response.status} - ${errorText}`)
+        } else {
+          const servicesError = await servicesResponse.text()
+          console.log('❌ Impossible de lister les services SMS:', servicesError)
         }
       } catch (listError) {
-        console.log('Impossible de lister les services:', listError)
+        console.log('❌ Erreur lors du listage des services:', listError)
       }
     }
     
-    throw new Error(`Erreur OVH SMS: ${response.status} - ${error}`)
+    const finalError = `Erreur OVH SMS: ${response.status} - ${errorText}`
+    console.error('❌ Erreur finale:', finalError)
+    console.error('❌ Détails complets:', { 
+      status: response.status, 
+      statusText: response.statusText,
+      errorDetails,
+      config: {
+        serviceName: OVH_CONFIG.serviceName,
+        endpoint: OVH_CONFIG.endpoint
+      }
+    })
+    
+    throw new Error(finalError)
   }
 
-  return await response.json()
+  let result: any
+  try {
+    result = await response.json()
+    console.log('✅ SMS envoyé avec succès - Réponse OVH:', result)
+  } catch (parseError) {
+    console.error('❌ Erreur parsing réponse JSON:', parseError)
+    throw new Error('Réponse OVH invalide')
+  }
+
+  return result
 }
 
 interface QuoteSignedSMSData {

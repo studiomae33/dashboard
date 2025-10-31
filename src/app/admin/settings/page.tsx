@@ -31,6 +31,12 @@ export default function SettingsPage() {
   const [reminderTestResult, setReminderTestResult] = useState<any>(null)
   const [testingEmailReminder, setTestingEmailReminder] = useState(false)
   const [emailReminderTestResult, setEmailReminderTestResult] = useState<any>(null)
+  
+  // États pour le diagnostic SMS
+  const [testingSMSDiagnostic, setTestingSMSDiagnostic] = useState(false)
+  const [smsDiagnosticResult, setSMSDiagnosticResult] = useState<any>(null)
+  const [testingSMSSend, setTestingSMSSend] = useState(false)
+  const [smsSendResult, setSMSSendResult] = useState<any>(null)
 
   useEffect(() => {
     fetchSettings()
@@ -130,6 +136,71 @@ export default function SettingsPage() {
       setEmailReminderTestResult({ error: 'Erreur lors du test email' })
     } finally {
       setTestingEmailReminder(false)
+    }
+  }
+
+  async function testEmailReminders() {
+    setTestingEmailReminder(true)
+    setEmailReminderTestResult(null)
+    
+    try {
+      const response = await fetch('/api/admin/test-reminders', {
+        method: 'POST'
+      })
+      
+      const result = await response.json()
+      setEmailReminderTestResult(result)
+    } catch (error) {
+      setEmailReminderTestResult({
+        success: false,
+        error: 'Erreur lors du test des rappels email'
+      })
+    } finally {
+      setTestingEmailReminder(false)
+    }
+  }
+
+  // Fonction pour tester le diagnostic SMS
+  async function testSMSDiagnostic() {
+    setTestingSMSDiagnostic(true)
+    setSMSDiagnosticResult(null)
+    
+    try {
+      const response = await fetch('/api/admin/sms-diagnostic', {
+        method: 'POST'
+      })
+      
+      const result = await response.json()
+      setSMSDiagnosticResult(result)
+    } catch (error) {
+      setSMSDiagnosticResult({
+        success: false,
+        error: 'Erreur lors du diagnostic SMS'
+      })
+    } finally {
+      setTestingSMSDiagnostic(false)
+    }
+  }
+
+  // Fonction pour tester l'envoi SMS
+  async function testSMSSend() {
+    setTestingSMSSend(true)
+    setSMSSendResult(null)
+    
+    try {
+      const response = await fetch('/api/admin/test-sms', {
+        method: 'POST'
+      })
+      
+      const result = await response.json()
+      setSMSSendResult(result)
+    } catch (error) {
+      setSMSSendResult({
+        success: false,
+        error: 'Erreur lors du test d\'envoi SMS'
+      })
+    } finally {
+      setTestingSMSSend(false)
     }
   }
 
@@ -376,6 +447,74 @@ export default function SettingsPage() {
                   <h5 className="font-medium text-gray-900 mb-2">Résultat du test :</h5>
                   <pre className="text-xs bg-white p-2 rounded border overflow-auto">
                     {JSON.stringify(reminderTestResult, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Système de rappels Email clients */}
+          <Card>
+            <CardHeader>
+              <CardTitle>📱 Diagnostic SMS</CardTitle>
+              <CardDescription>Diagnostic et test du système SMS OVH</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-200">
+                <h4 className="font-medium text-blue-900 mb-2">🔍 Diagnostic complet</h4>
+                <p className="text-sm text-blue-800 mb-2">
+                  Vérification de la configuration OVH, connectivité API, services SMS disponibles
+                </p>
+                <p className="text-xs text-blue-600">
+                  • Variables d'environnement<br/>
+                  • Authentification OVH<br/>
+                  • Services SMS actifs<br/>
+                  • Test de connectivité
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <button
+                    onClick={testSMSDiagnostic}
+                    disabled={testingSMSDiagnostic}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    {testingSMSDiagnostic ? '⏳ Diagnostic...' : '🔍 Diagnostic SMS'}
+                  </button>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Vérification complète de la config OVH
+                  </p>
+                </div>
+                
+                <div>
+                  <button
+                    onClick={testSMSSend}
+                    disabled={testingSMSSend}
+                    className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    {testingSMSSend ? '⏳ Envoi...' : '📱 Test envoi SMS'}
+                  </button>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Envoi d'un SMS de test réel
+                  </p>
+                </div>
+              </div>
+              
+              {smsDiagnosticResult && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-md">
+                  <h5 className="font-medium text-gray-900 mb-2">Résultat du diagnostic :</h5>
+                  <pre className="text-xs bg-white p-2 rounded border overflow-auto max-h-64">
+                    {JSON.stringify(smsDiagnosticResult, null, 2)}
+                  </pre>
+                </div>
+              )}
+              
+              {smsSendResult && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-md">
+                  <h5 className="font-medium text-gray-900 mb-2">Résultat de l'envoi SMS :</h5>
+                  <pre className="text-xs bg-white p-2 rounded border overflow-auto max-h-64">
+                    {JSON.stringify(smsSendResult, null, 2)}
                   </pre>
                 </div>
               )}
