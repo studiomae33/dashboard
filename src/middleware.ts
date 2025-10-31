@@ -15,6 +15,7 @@ export default withAuth(
           '/location-info/',      // Rappel location
           '/payment/',           // Pages de paiement
           '/login',              // Page de connexion
+          '/CGL/',               // Fichiers CGL (Conditions Générales de Location)
           '/api/quote/validate/', // API validation devis
           '/api/location-info/',  // API rappel location
         ]
