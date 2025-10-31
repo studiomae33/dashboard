@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/badge'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { PaymentEmailModal } from '@/components/PaymentEmailModal'
+import { PaymentChoiceModal } from '@/components/PaymentChoiceModal'
 import { PaymentEmailSentModal } from '@/components/PaymentEmailSentModal'
 import { ModifyDateModal } from '@/components/ModifyDateModal'
 import { ModifyBackgroundModal } from '@/components/ModifyBackgroundModal'
@@ -63,8 +64,10 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [showPaymentChoiceModal, setShowPaymentChoiceModal] = useState(false)
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false)
   const [sendingPaymentEmail, setSendingPaymentEmail] = useState(false)
+  const [sendingOnsitePaymentEmail, setSendingOnsitePaymentEmail] = useState(false)
   const [sendingPaymentReminder, setSendingPaymentReminder] = useState(false)
   const [isPaymentReminder, setIsPaymentReminder] = useState(false)
   const [showModifyDateModal, setShowModifyDateModal] = useState(false)
@@ -191,6 +194,47 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
       alert('Erreur lors de l\'envoi de l\'email de paiement')
     } finally {
       setSendingPaymentEmail(false)
+    }
+  }
+
+  async function sendOnsitePaymentEmail() {
+    if (!quote) return
+
+    setSendingOnsitePaymentEmail(true)
+    try {
+      const response = await fetch('/api/admin/quotes/send-onsite-payment-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quoteId: quote.id,
+        }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        
+        // Mettre à jour le statut du devis
+        setQuote(prev => prev ? { ...prev, status: 'PAYMENT_PENDING' } : null)
+        
+        // Préparer les données pour la modal de confirmation
+        setPaymentEmailData({
+          recipientEmail: result.recipientEmail,
+          quoteReference: result.quoteReference,
+          invoiceRef: 'Paiement sur place', // Valeur par défaut pour l'affichage
+        })
+        
+        // Fermer la modal de choix et ouvrir la modal de confirmation
+        setShowPaymentChoiceModal(false)
+        setShowPaymentSentModal(true)
+      } else {
+        const error = await response.json()
+        alert(`Erreur: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi:', error)
+      alert('Erreur lors de l\'envoi de l\'email de paiement sur place')
+    } finally {
+      setSendingOnsitePaymentEmail(false)
     }
   }
 
@@ -805,15 +849,14 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                   {canSendPaymentEmail && (
                     <Button
                       onClick={() => {
-                        setIsPaymentReminder(false)
-                        setShowPaymentModal(true)
+                        setShowPaymentChoiceModal(true)
                       }}
-                      disabled={updating || sendingPaymentEmail}
+                      disabled={updating || sendingPaymentEmail || sendingOnsitePaymentEmail}
                       variant="outline"
                       className="w-full justify-start"
                     >
                       <span className="mr-2">💳</span>
-                      {sendingPaymentEmail ? 'Envoi...' : 'Demander le paiement'}
+                      {(sendingPaymentEmail || sendingOnsitePaymentEmail) ? 'Envoi...' : 'Demander le paiement'}
                     </Button>
                   )}
 
@@ -1084,6 +1127,18 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                 invoiceRef={invoiceSentData.invoiceRef}
               />
             )}
+
+            <PaymentChoiceModal
+              isOpen={showPaymentChoiceModal}
+              onClose={() => setShowPaymentChoiceModal(false)}
+              onOnlinePayment={() => {
+                setShowPaymentChoiceModal(false)
+                setIsPaymentReminder(false)
+                setShowPaymentModal(true)
+              }}
+              onOnsitePayment={sendOnsitePaymentEmail}
+              quoteReference={quote.reference}
+            />
 
             <PaymentEmailModal
               isOpen={showPaymentModal}

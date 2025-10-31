@@ -824,6 +824,326 @@ export async function sendPaymentEmail(quoteId: string, invoiceRef: string, paym
   return result?.data || { id: 'fallback-' + Date.now() }
 }
 
+export async function sendOnsitePaymentEmail(quoteId: string) {
+  const quote = await prisma.quoteRequest.findUnique({
+    where: { id: quoteId },
+    include: { client: true }
+  })
+
+  if (!quote) {
+    throw new Error('Devis non trouvé')
+  }
+
+  const settings = await prisma.settings.findUnique({
+    where: { id: 'singleton' }
+  })
+
+  if (!settings) {
+    throw new Error('Configuration manquante')
+  }
+
+  const emailData = {
+    quote,
+    client: quote.client,
+    settings
+  }
+
+  const htmlContent = renderOnsitePaymentEmailHTML(emailData)
+
+  const emailOptions: any = {
+    from: `${settings.studioName} <${settings.senderEmail}>`,
+    to: quote.client.email,
+    replyTo: settings.studioEmail,
+    subject: `Instructions de paiement sur place - Devis ${quote.reference} - ${settings.studioName}`,
+    html: htmlContent,
+  }
+
+  let result
+  
+  console.log('📧 Préparation envoi email de paiement sur place:', {
+    from: emailOptions.from,
+    to: emailOptions.to,
+    subject: emailOptions.subject,
+    isDevelopment,
+    hasResend: !!resend,
+    NODE_ENV: process.env.NODE_ENV,
+    RESEND_API_KEY_EXISTS: !!process.env.RESEND_API_KEY,
+    RESEND_API_KEY_LENGTH: process.env.RESEND_API_KEY?.length
+  })
+
+  if (isDevelopment) {
+    // Mode développement - afficher l'email dans la console
+    console.log('\n=== EMAIL DE PAIEMENT SUR PLACE (MODE DÉVELOPPEMENT) ===')
+    console.log('De:', emailOptions.from)
+    console.log('À:', emailOptions.to)
+    console.log('Sujet:', emailOptions.subject)
+    console.log('HTML Content:')
+    console.log(htmlContent.substring(0, 500) + '...')
+    console.log('=======================================================\n')
+    
+    // Simuler une réponse réussie
+    result = { data: { id: 'dev-onsite-' + Date.now() } }
+  } else if (!resend) {
+    // Production mais pas de clé API Resend
+    console.error('❌ ERREUR: Pas de clé API Resend pour email de paiement sur place!')
+    throw new Error('Configuration email manquante en production')
+  } else {
+    console.log('🚀 Envoi email de paiement sur place via Resend API...')
+    result = await resend.emails.send(emailOptions)
+    console.log('✅ Réponse Resend:', result)
+  }
+
+  // Mettre à jour le statut du devis pour indiquer qu'un email de paiement a été envoyé
+  await prisma.quoteRequest.update({
+    where: { id: quoteId },
+    data: {
+      status: 'PAYMENT_PENDING',
+    }
+  })
+
+  // Log de l'événement
+  await prisma.eventLog.create({
+    data: {
+      entityType: 'QUOTE',
+      entityId: quoteId,
+      action: 'ONSITE_PAYMENT_EMAIL_SENT',
+      payload: JSON.stringify({ 
+        sentAt: new Date().toISOString(),
+        recipientEmail: quote.client.email
+      }),
+    }
+  })
+
+  console.log('✅ Email de paiement sur place envoyé avec succès')
+  return result?.data || { id: 'fallback-onsite-' + Date.now() }
+}
+
+export function renderPaymentEmailHTML(data: QuoteEmailData & { 
+  invoiceRef: string
+  paymentDueDate?: string
+  paymentLink?: string
+}): string {
+  const { quote, client, settings, invoiceRef, paymentDueDate, paymentLink } = data
+  const clientName = client.companyName || `${client.firstName} ${client.lastName}`
+  
+  // Formatage des dates
+  const startDate = new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }).format(quote.desiredStart)
+
+  const startTime = new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(quote.desiredStart)
+
+  const endTime = new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(quote.desiredEnd)
+
+  const amountFormatted = quote.amountTTC 
+    ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(quote.amountTTC)
+    : '450,00 €'
+
+  return `
+<table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333 !important;">
+<tbody>
+<tr>
+<td style="background-color: #060c20 !important; padding: 20px; text-align: center;"><img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio"></td>
+</tr>
+<tr>
+<td style="padding: 20px;">
+<h2 style="margin-top: 0; color: #060c20 !important;">Instructions de paiement</h2>
+
+<p style="color: #333 !important;">Bonjour <strong>${clientName}</strong>,<br><br>Merci d'avoir validé votre devis ! Pour finaliser votre réservation au studio, voici les informations nécessaires pour effectuer votre paiement.</p>
+
+<div style="text-align: center; margin: 32px 0; padding: 24px; background: #48bb78; border-radius: 8px; color: white;">
+<div style="font-size: 16px; margin-bottom: 8px;">Montant à régler</div>
+<div style="font-size: 32px; font-weight: 700; margin: 0;">${amountFormatted}</div>
+</div>
+
+${paymentDueDate ? `
+<div style="background: #fff8e1 !important; border-left: 4px solid #ffc107 !important; padding: 12px; margin: 20px 0;">
+<p style="margin: 0; color: #333 !important;"><strong>⚠️ Date limite de paiement : ${paymentDueDate}</strong><br>Merci de procéder au paiement avant cette date pour confirmer votre réservation.</p>
+</div>
+` : ''}
+
+<div style="text-align: center; margin: 32px 0;">
+<a href="${paymentLink}" style="display: inline-block; background: #48bb78; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">💳 Payer la location</a>
+<p style="margin-top: 16px; font-size: 14px; color: #666;">Paiement sécurisé par SumUp</p>
+</div>
+
+<div style="margin: 25px 0; background: #f1f1f1; border-left: 4px solid #3853ea; padding: 15px;">
+<p style="margin: 0; color: #333 !important;"><strong>💡 Pour finaliser votre réservation :</strong><br>Cliquez sur le bouton "Payer la location" ci-dessus pour accéder au paiement sécurisé. Votre réservation sera automatiquement confirmée après validation du paiement.</p>
+</div>
+
+<p style="color: #333 !important;">À très bientôt au studio !<br><strong>L'équipe ${settings.studioName}</strong></p>
+
+<div style="margin: 20px 0; padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 12px; color: #666;">
+💡 <strong>Vous pouvez répondre directement à cet email</strong> - vos messages seront reçus par notre équipe.
+</div>
+</td>
+</tr>
+<tr>
+<td style="background: #f9f9f9 !important; padding: 15px; font-size: 12px; text-align: center; color: #777 !important;"><strong>${settings.studioName}</strong><br>${settings.studioAddress}<br>📞 ${settings.studioPhone} • 📧 ${settings.studioEmail}</td>
+</tr>
+</tbody>
+</table>`
+}
+
+export function renderOnsitePaymentEmailHTML(data: QuoteEmailData): string {
+  const { quote, client, settings } = data
+  const clientName = client.companyName || `${client.firstName} ${client.lastName}`
+  
+  // Formatage des dates
+  const startDate = new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }).format(quote.desiredStart)
+
+  const startTime = new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(quote.desiredStart)
+
+  const endTime = new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(quote.desiredEnd)
+
+  const amountFormatted = quote.amountTTC 
+    ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(quote.amountTTC)
+    : '450,00 €'
+
+  return `
+<table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333 !important;">
+<tbody>
+<tr>
+<td style="background-color: #060c20 !important; padding: 20px; text-align: center;"><img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio"></td>
+</tr>
+<tr>
+<td style="padding: 20px;">
+<h2 style="margin-top: 0; color: #060c20 !important;">Instructions de paiement</h2>
+
+<p style="color: #333 !important;">Bonjour <strong>${clientName}</strong>,<br><br>Merci d'avoir validé votre devis ! Votre réservation au studio est confirmée.</p>
+
+<div style="text-align: center; margin: 32px 0; padding: 24px; background: #48bb78; border-radius: 8px; color: white;">
+<div style="font-size: 16px; margin-bottom: 8px;">Montant à régler</div>
+<div style="font-size: 32px; font-weight: 700; margin: 0;">${amountFormatted}</div>
+</div>
+
+<div style="margin: 25px 0; background: #f1f1f1; border-left: 4px solid #f59e0b; padding: 15px;">
+<p style="margin: 0; color: #333 !important;"><strong>💳 Mode de paiement :</strong><br>Le paiement devra être effectué sur place le jour de la location par carte bancaire. Aucun paiement à l'avance n'est requis.</p>
+</div>
+
+<div style="margin: 25px 0; background: #e1f5fe; border-left: 4px solid #3853ea; padding: 15px;">
+<p style="margin: 0; color: #333 !important;"><strong>📅 Rappel de votre réservation :</strong><br>
+<strong>Date :</strong> ${startDate}<br>
+<strong>Horaires :</strong> ${startTime} - ${endTime}<br>
+<strong>Devis :</strong> ${quote.reference}<br>
+<strong>Montant :</strong> ${amountFormatted}</p>
+</div>
+
+<p style="color: #333 !important;">Nous vous attendons avec plaisir au studio !<br><strong>L'équipe ${settings.studioName}</strong></p>
+
+<div style="margin: 20px 0; padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 12px; color: #666;">
+💡 <strong>Vous pouvez répondre directement à cet email</strong> - vos messages seront reçus par notre équipe.
+</div>
+</td>
+</tr>
+<tr>
+<td style="background: #f9f9f9 !important; padding: 15px; font-size: 12px; text-align: center; color: #777 !important;"><strong>${settings.studioName}</strong><br>${settings.studioAddress}<br>📞 ${settings.studioPhone} • 📧 ${settings.studioEmail}</td>
+</tr>
+</tbody>
+</table>`
+}
+
+export function renderDateChangeEmailHTML(data: QuoteEmailData & {
+  oldStartDate: Date
+  oldEndDate: Date
+  newStartDate: Date
+  newEndDate: Date
+}): string {
+  const { quote, client, settings, oldStartDate, oldEndDate, newStartDate, newEndDate } = data
+  const clientName = client.companyName || `${client.firstName} ${client.lastName}`
+
+  // Formatage des dates
+  const formatDateTime = (date: Date) => {
+    return new Intl.DateTimeFormat('fr-FR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Paris'
+    }).format(date)
+  }
+
+  const oldStartFormatted = formatDateTime(oldStartDate)
+  const oldEndFormatted = formatDateTime(oldEndDate)
+  const newStartFormatted = formatDateTime(newStartDate)
+  const newEndFormatted = formatDateTime(newEndDate)
+
+  return `
+<table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333 !important;">
+<tbody>
+<tr>
+<td style="background-color: #060c20 !important; padding: 20px; text-align: center;"><img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio"></td>
+</tr>
+<tr>
+<td style="padding: 20px;">
+<h2 style="margin-top: 0; color: #060c20 !important;">📅 Modification de réservation</h2>
+<p style="margin: 5px 0 20px 0; color: #666; font-size: 14px;">Référence ${quote.reference}</p>
+
+<h3 style="color: #060c20 !important;">Bonjour ${client.firstName},</h3>
+
+<p style="color: #333 !important;">Nous vous confirmons que nous avons bien pris en compte votre demande de modification des dates pour votre réservation <strong>${quote.reference}</strong>.</p>
+
+<div style="background: #f0fff4; border-left: 4px solid #10b981; padding: 20px; border-radius: 0 8px 8px 0; margin: 32px 0; text-align: center;">
+<h3 style="color: #059669; font-size: 20px; font-weight: 600; margin-bottom: 8px;">✅ Modification confirmée</h3>
+<p style="color: #047857; font-size: 16px; margin: 0;">Vos nouvelles dates sont maintenant réservées et confirmées dans notre planning.</p>
+</div>
+
+<div style="background: #f7fafc; border-radius: 8px; padding: 24px; margin: 32px 0; border: 1px solid #e2e8f0;">
+<div style="font-size: 18px; font-weight: 600; color: #2d3748; margin-bottom: 24px; text-align: center;">Récapitulatif des modifications</div>
+
+<div style="padding: 20px; border-radius: 8px; text-align: center; background: #fef2f2; border: 1px solid #fecaca; margin-bottom: 16px;">
+<div style="font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; color: #dc2626;">❌ Anciennes dates</div>
+<div style="font-size: 16px; font-weight: 500; margin-bottom: 4px; color: #2d3748;">${oldStartFormatted}</div>
+<div style="font-size: 14px; color: #4a5568;">au ${oldEndFormatted}</div>
+</div>
+
+<div style="text-align: center; margin: 16px 0;">
+<div style="font-size: 24px; color: #ed8936;">⬇️</div>
+</div>
+
+<div style="padding: 20px; border-radius: 8px; text-align: center; background: #f0fdf4; border: 1px solid #bbf7d0;">
+<div style="font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; color: #16a34a;">✅ Nouvelles dates confirmées</div>
+<div style="font-size: 16px; font-weight: 500; margin-bottom: 4px; color: #2d3748;">${newStartFormatted}</div>
+<div style="font-size: 14px; color: #4a5568;">au ${newEndFormatted}</div>
+</div>
+</div>
+
+<p style="margin-top: 32px; text-align: center; color: #333 !important;">
+Merci pour votre confiance,<br>
+<strong>L'équipe ${settings.studioName}</strong>
+</p>
+</td>
+</tr>
+<tr>
+<td style="background: #f9f9f9 !important; padding: 15px; font-size: 12px; text-align: center; color: #777 !important;"><strong>${settings.studioName}</strong><br>${settings.studioAddress}<br>📞 ${settings.studioPhone} • ✉️ ${settings.studioEmail}</td>
+</tr>
+</tbody>
+</table>
+  `
+}
+
 export async function sendPaymentReminderEmail(quoteId: string, invoiceRef: string, paymentDueDate?: string, paymentLink?: string) {
   const quote = await prisma.quoteRequest.findUnique({
     where: { id: quoteId },
@@ -1112,163 +1432,6 @@ ${paymentDueDate ? `
 </tr>
 </tbody>
 </table>`
-}
-
-export function renderPaymentEmailHTML(data: QuoteEmailData & { 
-  invoiceRef: string
-  paymentDueDate?: string
-  paymentLink?: string
-}): string {
-  const { quote, client, settings, invoiceRef, paymentDueDate, paymentLink } = data
-  const clientName = client.companyName || `${client.firstName} ${client.lastName}`
-  
-  // Formatage des dates
-  const startDate = new Intl.DateTimeFormat('fr-FR', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }).format(quote.desiredStart)
-
-  const startTime = new Intl.DateTimeFormat('fr-FR', {
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(quote.desiredStart)
-
-  const endTime = new Intl.DateTimeFormat('fr-FR', {
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(quote.desiredEnd)
-
-  const amountFormatted = quote.amountTTC 
-    ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(quote.amountTTC)
-    : '450,00 €'
-
-  return `
-<table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333 !important;">
-<tbody>
-<tr>
-<td style="background-color: #060c20 !important; padding: 20px; text-align: center;"><img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio"></td>
-</tr>
-<tr>
-<td style="padding: 20px;">
-<h2 style="margin-top: 0; color: #060c20 !important;">Instructions de paiement</h2>
-
-<p style="color: #333 !important;">Bonjour <strong>${clientName}</strong>,<br><br>Merci d'avoir validé votre devis ! Pour finaliser votre réservation au studio, voici les informations nécessaires pour effectuer votre paiement.</p>
-
-<div style="text-align: center; margin: 32px 0; padding: 24px; background: #48bb78; border-radius: 8px; color: white;">
-<div style="font-size: 16px; margin-bottom: 8px;">Montant à régler</div>
-<div style="font-size: 32px; font-weight: 700; margin: 0;">${amountFormatted}</div>
-</div>
-
-${paymentDueDate ? `
-<div style="background: #fff8e1 !important; border-left: 4px solid #ffc107 !important; padding: 12px; margin: 20px 0;">
-<p style="margin: 0; color: #333 !important;"><strong>⚠️ Date limite de paiement : ${paymentDueDate}</strong><br>Merci de procéder au paiement avant cette date pour confirmer votre réservation.</p>
-</div>
-` : ''}
-
-<div style="text-align: center; margin: 32px 0;">
-<a href="${paymentLink}" style="display: inline-block; background: #48bb78; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">💳 Payer la location</a>
-<p style="margin-top: 16px; font-size: 14px; color: #666;">Paiement sécurisé par SumUp</p>
-</div>
-
-<div style="margin: 25px 0; background: #f1f1f1; border-left: 4px solid #3853ea; padding: 15px;">
-<p style="margin: 0; color: #333 !important;"><strong>💡 Pour finaliser votre réservation :</strong><br>Cliquez sur le bouton "Payer la location" ci-dessus pour accéder au paiement sécurisé. Votre réservation sera automatiquement confirmée après validation du paiement.</p>
-</div>
-
-<p style="color: #333 !important;">À très bientôt au studio !<br><strong>L'équipe ${settings.studioName}</strong></p>
-
-<div style="margin: 20px 0; padding: 12px; background: #f8f9fa; border-radius: 6px; font-size: 12px; color: #666;">
-💡 <strong>Vous pouvez répondre directement à cet email</strong> - vos messages seront reçus par notre équipe.
-</div>
-</td>
-</tr>
-<tr>
-<td style="background: #f9f9f9 !important; padding: 15px; font-size: 12px; text-align: center; color: #777 !important;"><strong>${settings.studioName}</strong><br>${settings.studioAddress}<br>📞 ${settings.studioPhone} • 📧 ${settings.studioEmail}</td>
-</tr>
-</tbody>
-</table>`
-}
-
-export function renderDateChangeEmailHTML(data: QuoteEmailData & {
-  oldStartDate: Date
-  oldEndDate: Date
-  newStartDate: Date
-  newEndDate: Date
-}): string {
-  const { quote, client, settings, oldStartDate, oldEndDate, newStartDate, newEndDate } = data
-  const clientName = client.companyName || `${client.firstName} ${client.lastName}`
-
-  // Formatage des dates
-  const formatDateTime = (date: Date) => {
-    return new Intl.DateTimeFormat('fr-FR', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Europe/Paris'
-    }).format(date)
-  }
-
-  const oldStartFormatted = formatDateTime(oldStartDate)
-  const oldEndFormatted = formatDateTime(oldEndDate)
-  const newStartFormatted = formatDateTime(newStartDate)
-  const newEndFormatted = formatDateTime(newEndDate)
-
-  return `
-<table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333 !important;">
-<tbody>
-<tr>
-<td style="background-color: #060c20 !important; padding: 20px; text-align: center;"><img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio"></td>
-</tr>
-<tr>
-<td style="padding: 20px;">
-<h2 style="margin-top: 0; color: #060c20 !important;">📅 Modification de réservation</h2>
-<p style="margin: 5px 0 20px 0; color: #666; font-size: 14px;">Référence ${quote.reference}</p>
-
-<h3 style="color: #060c20 !important;">Bonjour ${client.firstName},</h3>
-
-<p style="color: #333 !important;">Nous vous confirmons que nous avons bien pris en compte votre demande de modification des dates pour votre réservation <strong>${quote.reference}</strong>.</p>
-
-<div style="background: #f0fff4; border-left: 4px solid #10b981; padding: 20px; border-radius: 0 8px 8px 0; margin: 32px 0; text-align: center;">
-<h3 style="color: #059669; font-size: 20px; font-weight: 600; margin-bottom: 8px;">✅ Modification confirmée</h3>
-<p style="color: #047857; font-size: 16px; margin: 0;">Vos nouvelles dates sont maintenant réservées et confirmées dans notre planning.</p>
-</div>
-
-<div style="background: #f7fafc; border-radius: 8px; padding: 24px; margin: 32px 0; border: 1px solid #e2e8f0;">
-<div style="font-size: 18px; font-weight: 600; color: #2d3748; margin-bottom: 24px; text-align: center;">Récapitulatif des modifications</div>
-
-<div style="padding: 20px; border-radius: 8px; text-align: center; background: #fef2f2; border: 1px solid #fecaca; margin-bottom: 16px;">
-<div style="font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; color: #dc2626;">❌ Anciennes dates</div>
-<div style="font-size: 16px; font-weight: 500; margin-bottom: 4px; color: #2d3748;">${oldStartFormatted}</div>
-<div style="font-size: 14px; color: #4a5568;">au ${oldEndFormatted}</div>
-</div>
-
-<div style="text-align: center; margin: 16px 0;">
-<div style="font-size: 24px; color: #ed8936;">⬇️</div>
-</div>
-
-<div style="padding: 20px; border-radius: 8px; text-align: center; background: #f0fdf4; border: 1px solid #bbf7d0;">
-<div style="font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; color: #16a34a;">✅ Nouvelles dates confirmées</div>
-<div style="font-size: 16px; font-weight: 500; margin-bottom: 4px; color: #2d3748;">${newStartFormatted}</div>
-<div style="font-size: 14px; color: #4a5568;">au ${newEndFormatted}</div>
-</div>
-</div>
-
-<p style="margin-top: 32px; text-align: center; color: #333 !important;">
-Merci pour votre confiance,<br>
-<strong>L'équipe ${settings.studioName}</strong>
-</p>
-</td>
-</tr>
-<tr>
-<td style="background: #f9f9f9 !important; padding: 15px; font-size: 12px; text-align: center; color: #777 !important;"><strong>${settings.studioName}</strong><br>${settings.studioAddress}<br>📞 ${settings.studioPhone} • ✉️ ${settings.studioEmail}</td>
-</tr>
-</tbody>
-</table>
-  `
 }
 
 export async function sendInvoiceEmail({
