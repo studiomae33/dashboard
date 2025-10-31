@@ -59,7 +59,7 @@ export async function PATCH(
     }
 
     // Vérifier que le devis est dans un état où il peut être modifié
-    if (!['SIGNED', 'PAYMENT_PENDING', 'PAID'].includes(quote.status)) {
+    if (!['SIGNED', 'PAYMENT_PENDING', 'ONSITE_PAYMENT', 'PAID'].includes(quote.status)) {
       return NextResponse.json(
         { error: 'Les dates ne peuvent être modifiées que pour les devis signés' },
         { status: 400 }
@@ -124,7 +124,7 @@ export async function PATCH(
 
     // Filtrer les conflits pour ne garder que les bookings de devis confirmés
     const activeConflicts = conflictingBookings.filter(booking => 
-      ['SIGNED', 'PAYMENT_PENDING', 'PAID', 'INVOICED'].includes(booking.quoteRequest.status)
+      ['SIGNED', 'PAYMENT_PENDING', 'ONSITE_PAYMENT', 'PAID', 'INVOICED'].includes(booking.quoteRequest.status)
     )
 
     if (activeConflicts.length > 0) {

@@ -214,7 +214,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
         const result = await response.json()
         
         // Mettre à jour le statut du devis
-        setQuote(prev => prev ? { ...prev, status: 'PAYMENT_PENDING' } : null)
+        setQuote(prev => prev ? { ...prev, status: 'ONSITE_PAYMENT' } : null)
         
         // Préparer les données pour la modal de confirmation
         setPaymentEmailData({
@@ -547,7 +547,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
   const canSend = quote.status === 'READY'
   const canSign = quote.status === 'SENT'
   const canSendPaymentEmail = quote.status === 'SIGNED'
-  const canMarkPaid = quote.status === 'PAYMENT_PENDING'
+  const canMarkPaid = ['PAYMENT_PENDING', 'ONSITE_PAYMENT'].includes(quote.status)
   const canInvoice = quote.status === 'PAID'
 
   // Fonction pour vérifier si un devis nécessite une facture
@@ -899,7 +899,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                   )}
 
                   {/* Action pour modifier les dates - disponible pour les devis signés */}
-                  {['SIGNED', 'PAYMENT_PENDING', 'PAID'].includes(quote.status) && canModify && (
+                  {['SIGNED', 'PAYMENT_PENDING', 'ONSITE_PAYMENT', 'PAID'].includes(quote.status) && canModify && (
                     <Button
                       onClick={() => setShowModifyDateModal(true)}
                       disabled={updating || modifyingDates}
@@ -912,7 +912,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                   )}
 
                   {/* Action pour modifier le type de fond - disponible après l'envoi */}
-                  {['SENT', 'SIGNED', 'PAYMENT_PENDING', 'PAID', 'INVOICED'].includes(quote.status) && canModify && (
+                  {['SENT', 'SIGNED', 'PAYMENT_PENDING', 'ONSITE_PAYMENT', 'PAID', 'INVOICED'].includes(quote.status) && canModify && (
                     <Button
                       onClick={() => setShowModifyBackgroundModal(true)}
                       disabled={updating || modifyingBackground}
@@ -999,6 +999,11 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                         actionDisplay = 'Email de paiement envoyé'
                         actionColor = 'text-purple-700'
                         break
+                      case 'ONSITE_PAYMENT_EMAIL_SENT':
+                        actionIcon = '🏪'
+                        actionDisplay = 'Email paiement sur place envoyé'
+                        actionColor = 'text-orange-700'
+                        break
                       case 'COMMENTS_UPDATED':
                         actionIcon = '📝'
                         actionDisplay = 'Commentaires modifiés'
@@ -1061,7 +1066,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span>Réservation</span>
-                    {['SIGNED', 'PAYMENT_PENDING', 'PAID'].includes(quote.status) && (
+                    {['SIGNED', 'PAYMENT_PENDING', 'ONSITE_PAYMENT', 'PAID'].includes(quote.status) && (
                       <Button
                         size="sm"
                         variant="outline"

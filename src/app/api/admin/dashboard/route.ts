@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
           },
           {
             status: {
-              in: ['SIGNED', 'PAYMENT_PENDING', 'PAID']
+              in: ['SIGNED', 'PAYMENT_PENDING', 'ONSITE_PAYMENT', 'PAID']
             }
           }
         ]
@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
           },
           {
             status: {
-              notIn: ['PAYMENT_PENDING', 'PAID', 'INVOICED', 'CANCELED']
+              notIn: ['PAYMENT_PENDING', 'ONSITE_PAYMENT', 'PAID', 'INVOICED', 'CANCELED']
             }
           }
         ]
@@ -223,13 +223,13 @@ export async function GET(request: NextRequest) {
     })
 
     // Calculer le CA du mois (devis signés et étapes suivantes avec date de location ce mois)
-    // Inclure tous les devis confirmés (SIGNED, PAYMENT_PENDING, PAID, INVOICED) avec date de location ce mois
+    // Inclure tous les devis confirmés (SIGNED, PAYMENT_PENDING, ONSITE_PAYMENT, PAID, INVOICED) avec date de location ce mois
     const monthlyRevenue = await prisma.quoteRequest.aggregate({
       where: {
         AND: [
           {
             status: {
-              in: ['SIGNED', 'PAYMENT_PENDING', 'PAID', 'INVOICED']
+              in: ['SIGNED', 'PAYMENT_PENDING', 'ONSITE_PAYMENT', 'PAID', 'INVOICED']
             }
           },
           {

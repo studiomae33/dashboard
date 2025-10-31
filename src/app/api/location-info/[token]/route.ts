@@ -46,7 +46,7 @@ export async function GET(
     }
 
     // Vérifier que la réservation est confirmée
-    const validStatuses = ['SIGNED', 'PAYMENT_PENDING', 'PAID', 'INVOICED']
+    const validStatuses = ['SIGNED', 'PAYMENT_PENDING', 'ONSITE_PAYMENT', 'PAID', 'INVOICED']
     if (!validStatuses.includes(booking.quoteRequest.status)) {
       return NextResponse.json({ error: 'Réservation non confirmée' }, { status: 403 })
     }

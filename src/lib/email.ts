@@ -897,7 +897,7 @@ export async function sendOnsitePaymentEmail(quoteId: string) {
   await prisma.quoteRequest.update({
     where: { id: quoteId },
     data: {
-      status: 'PAYMENT_PENDING',
+      status: 'ONSITE_PAYMENT',
     }
   })
 

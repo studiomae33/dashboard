@@ -40,6 +40,7 @@ const statusFilters = [
   { value: 'SENT', label: 'Envoyé' },
   { value: 'SIGNED', label: 'Signé' },
   { value: 'PAYMENT_PENDING', label: 'Paiement demandé' },
+  { value: 'ONSITE_PAYMENT', label: 'Paiement sur place' },
   { value: 'INVOICED', label: 'Facturé' },
 ]
 

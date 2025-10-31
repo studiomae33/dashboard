@@ -40,6 +40,7 @@ function StatusBadge({ status, quote }: StatusBadgeProps) {
     SENT: { label: 'Envoyé', variant: 'outline' as const },
     SIGNED: { label: 'Signé', variant: 'secondary' as const },
     PAYMENT_PENDING: { label: 'Paiement demandé', variant: 'secondary' as const },
+    ONSITE_PAYMENT: { label: 'Paiement sur place', variant: 'default' as const },
     PAID: { label: 'Réglé', variant: 'secondary' as const },
     NEEDS_INVOICE: { label: 'Facture à envoyer', variant: 'destructive' as const },
     INVOICED: { label: 'Facturé', variant: 'secondary' as const },

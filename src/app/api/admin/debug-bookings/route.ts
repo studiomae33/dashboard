@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
           {
             quoteRequest: {
               status: {
-                in: ['SIGNED', 'PAYMENT_PENDING', 'PAID', 'INVOICED']
+                in: ['SIGNED', 'PAYMENT_PENDING', 'ONSITE_PAYMENT', 'PAID', 'INVOICED']
               }
             }
           }
