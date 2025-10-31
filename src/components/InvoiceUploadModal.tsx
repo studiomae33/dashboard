@@ -11,24 +11,28 @@ interface Invoice {
   file: File | null
   invoiceRef: string
   label: string
+  newTotalAmount?: number // Nouveau montant TTC pour la facture d'options
 }
 
 interface InvoiceUploadModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (invoices: Invoice[]) => void
+  onSubmit: (invoices: Invoice[], newTotalAmount?: number) => void
   loading?: boolean
+  currentAmount?: number // Montant TTC actuel du devis
 }
 
 export function InvoiceUploadModal({ 
   isOpen, 
   onClose, 
   onSubmit, 
-  loading = false 
+  loading = false,
+  currentAmount = 0
 }: InvoiceUploadModalProps) {
   const [invoices, setInvoices] = useState<Invoice[]>([
     { id: '1', file: null, invoiceRef: '', label: 'Facture principale' }
   ])
+  const [newTotalAmount, setNewTotalAmount] = useState<string>('')
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({})
 
   const handleFileSelect = (invoiceId: string, event: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,7 +77,17 @@ export function InvoiceUploadModal({
       return
     }
 
-    onSubmit(validInvoices)
+    // Si il y a une facture d'options, valider le nouveau montant
+    if (invoices.length > 1) {
+      const newAmount = parseFloat(newTotalAmount.replace(',', '.'))
+      if (!newTotalAmount.trim() || isNaN(newAmount) || newAmount < currentAmount) {
+        alert(`Le nouveau montant TTC doit être supérieur ou égal au montant initial de ${currentAmount.toFixed(2)} €`)
+        return
+      }
+      onSubmit(validInvoices, newAmount)
+    } else {
+      onSubmit(validInvoices)
+    }
   }
 
   // Vérifier si la facture principale est complète
@@ -85,6 +99,7 @@ export function InvoiceUploadModal({
   const handleClose = () => {
     if (!loading) {
       setInvoices([{ id: '1', file: null, invoiceRef: '', label: 'Facture principale' }])
+      setNewTotalAmount('')
       onClose()
     }
   }
@@ -249,6 +264,39 @@ export function InvoiceUploadModal({
                       disabled={invoice.id === '2' && !isMainInvoiceComplete()}
                     />
                   </div>
+
+                  {/* Champ montant TTC pour la facture d'options */}
+                  {invoice.id === '2' && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Nouveau montant TTC total *
+                      </label>
+                      <div className="space-y-2">
+                        <Input
+                          type="text"
+                          value={newTotalAmount}
+                          onChange={(e) => setNewTotalAmount(e.target.value)}
+                          placeholder={`Ex: ${(currentAmount + 100).toFixed(2)}`}
+                          disabled={loading || !isMainInvoiceComplete()}
+                          className={`w-full ${!isMainInvoiceComplete() ? 'opacity-50' : ''}`}
+                        />
+                        <div className="text-xs space-y-1">
+                          <div className="flex justify-between text-gray-600">
+                            <span>💰 Montant initial :</span>
+                            <span className="font-medium">{currentAmount.toFixed(2)} €</span>
+                          </div>
+                          {newTotalAmount && !isNaN(parseFloat(newTotalAmount.replace(',', '.'))) && (
+                            <div className="flex justify-between">
+                              <span className="text-green-600">📈 Augmentation :</span>
+                              <span className="font-medium text-green-600">
+                                +{Math.max(0, parseFloat(newTotalAmount.replace(',', '.')) - currentAmount).toFixed(2)} €
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -282,7 +330,11 @@ export function InvoiceUploadModal({
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={loading || invoices.filter(inv => inv.file && inv.invoiceRef.trim()).length === 0}
+              disabled={
+                loading || 
+                invoices.filter(inv => inv.file && inv.invoiceRef.trim()).length === 0 ||
+                (invoices.length > 1 && (!newTotalAmount.trim() || isNaN(parseFloat(newTotalAmount.replace(',', '.'))) || parseFloat(newTotalAmount.replace(',', '.')) < currentAmount))
+              }
               className="flex-1"
             >
               {loading ? 'Envoi en cours...' : `Envoyer ${invoices.filter(inv => inv.file && inv.invoiceRef.trim()).length > 1 ? 'les factures' : 'la facture'}`}

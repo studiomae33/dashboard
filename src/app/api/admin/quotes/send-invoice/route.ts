@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const quoteId = formData.get('quoteId') as string
     const invoiceCount = parseInt(formData.get('invoiceCount') as string) || 1
+    const newTotalAmount = formData.get('newTotalAmount') as string
 
     if (!quoteId) {
       return NextResponse.json({ error: 'ID du devis manquant' }, { status: 400 })
@@ -90,13 +91,24 @@ export async function POST(request: NextRequest) {
     // Combiner toutes les références de factures
     const allRefs = uploadedInvoices.map(inv => inv.invoiceRef).join(' | ')
 
+    // Déterminer le montant TTC à utiliser pour la facturation
+    let finalAmountTTC = quote.amountTTC || 0
+    if (newTotalAmount && invoices.length > 1) {
+      const parsedNewAmount = parseFloat(newTotalAmount.replace(',', '.'))
+      if (!isNaN(parsedNewAmount) && parsedNewAmount >= finalAmountTTC) {
+        finalAmountTTC = parsedNewAmount
+      }
+    }
+
     // Mettre à jour le devis avec les informations de facturation
     const updatedQuote = await prisma.quoteRequest.update({
       where: { id: quoteId },
       data: {
         status: 'INVOICED',
         invoiceRef: allRefs,
-        invoiceAmountTTC: quote.amountTTC, // Copier le montant pour le calcul du CA
+        invoiceAmountTTC: finalAmountTTC, // Utiliser le nouveau montant si fourni
+        // Mettre à jour le montant TTC du devis si une facture d'options augmente le total
+        ...(finalAmountTTC !== (quote.amountTTC || 0) && { amountTTC: finalAmountTTC })
       },
     })
 

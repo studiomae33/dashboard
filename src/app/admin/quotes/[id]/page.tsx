@@ -365,7 +365,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
     }
   }
 
-  async function sendInvoice(invoices: Array<{id: string, file: File | null, invoiceRef: string, label: string}>) {
+  async function sendInvoice(invoices: Array<{id: string, file: File | null, invoiceRef: string, label: string}>, newTotalAmount?: number) {
     if (!quote) return
 
     // Filtrer les factures valides (avec fichier)
@@ -391,6 +391,11 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
       })
       
       formData.append('invoiceCount', validInvoices.length.toString())
+      
+      // Ajouter le nouveau montant TTC si présent
+      if (newTotalAmount) {
+        formData.append('newTotalAmount', newTotalAmount.toString())
+      }
 
       const response = await fetch('/api/admin/quotes/send-invoice', {
         method: 'POST',
@@ -402,7 +407,19 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
         
         // Mettre à jour le devis avec le statut INVOICED et toutes les références
         const allRefs = validInvoices.map(inv => inv.invoiceRef).join(' | ')
-        setQuote(prev => prev ? { ...prev, status: 'INVOICED', invoiceRef: allRefs } : null)
+        setQuote(prev => {
+          if (!prev) return null
+          const currentAmount = prev.amountTTC || 0
+          const finalAmount = newTotalAmount ? parseFloat(newTotalAmount.toString().replace(',', '.')) : currentAmount
+          return { 
+            ...prev, 
+            status: 'INVOICED', 
+            invoiceRef: allRefs,
+            invoiceAmountTTC: finalAmount,
+            // Mettre à jour aussi le montant TTC du devis si augmenté par les options
+            amountTTC: finalAmount > currentAmount ? finalAmount : prev.amountTTC
+          }
+        })
         
         // Préparer les données pour la modal de confirmation
         setInvoiceSentData({
@@ -1051,6 +1068,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
               onClose={() => setShowInvoiceUploadModal(false)}
               onSubmit={sendInvoice}
               loading={sendingInvoice}
+              currentAmount={quote.amountTTC || 0}
             />
 
             {/* Modal de confirmation d'envoi de facture */}
