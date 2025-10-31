@@ -16,21 +16,35 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData()
     const quoteId = formData.get('quoteId') as string
-    const invoiceRef = formData.get('invoiceRef') as string
-    const file = formData.get('invoiceFile') as File
+    const invoiceCount = parseInt(formData.get('invoiceCount') as string) || 1
 
-    if (!quoteId || !invoiceRef || !file) {
-      return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
+    if (!quoteId) {
+      return NextResponse.json({ error: 'ID du devis manquant' }, { status: 400 })
     }
 
-    // Vérifier que le fichier est un PDF
-    if (file.type !== 'application/pdf') {
-      return NextResponse.json({ error: 'Le fichier doit être un PDF' }, { status: 400 })
-    }
+    // Récupérer toutes les factures depuis le FormData
+    const invoices: Array<{file: File, invoiceRef: string, label: string}> = []
+    
+    for (let i = 0; i < invoiceCount; i++) {
+      const file = formData.get(`invoiceFile_${i}`) as File
+      const invoiceRef = formData.get(`invoiceRef_${i}`) as string
+      const label = formData.get(`invoiceLabel_${i}`) as string
 
-    // Vérifier la taille du fichier (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: 'Le fichier ne peut pas dépasser 10MB' }, { status: 400 })
+      if (!file || !invoiceRef) {
+        return NextResponse.json({ error: `Données manquantes pour la facture ${i + 1}` }, { status: 400 })
+      }
+
+      // Vérifier que le fichier est un PDF
+      if (file.type !== 'application/pdf') {
+        return NextResponse.json({ error: `Le fichier ${i + 1} doit être un PDF` }, { status: 400 })
+      }
+
+      // Vérifier la taille du fichier (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        return NextResponse.json({ error: `Le fichier ${i + 1} ne peut pas dépasser 10MB` }, { status: 400 })
+      }
+
+      invoices.push({ file, invoiceRef, label })
     }
 
     // Récupérer le devis
@@ -45,39 +59,53 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Devis non trouvé' }, { status: 404 })
     }
 
-    // Créer le nom de fichier obfusqué et sécurisé
-    const fileName = generateObfuscatedFileName(invoiceRef)
-    
-    // Upload vers Vercel Blob avec accès privé
-    const blob = await put(fileName, file, {
-      access: 'public', // On garde public mais on obfusque les noms
-    })
+    // Uploader chaque facture vers Vercel Blob
+    const uploadedInvoices: Array<{invoiceRef: string, label: string, secureUrl: string, blobUrl: string}> = []
 
-    // Générer une URL sécurisée avec expiration (72h)
-    const secureDownloadUrl = generateSecureDownloadUrl(
-      blob.url,
-      quote.client.email,
-      invoiceRef,
-      72 // 72 heures
-    )
+    for (const invoice of invoices) {
+      // Créer le nom de fichier obfusqué et sécurisé
+      const fileName = generateObfuscatedFileName(invoice.invoiceRef)
+      
+      // Upload vers Vercel Blob avec accès privé
+      const blob = await put(fileName, invoice.file, {
+        access: 'public', // On garde public mais on obfusque les noms
+      })
+
+      // Générer une URL sécurisée avec expiration (72h)
+      const secureDownloadUrl = generateSecureDownloadUrl(
+        blob.url,
+        quote.client.email,
+        invoice.invoiceRef,
+        72 // 72 heures
+      )
+
+      uploadedInvoices.push({
+        invoiceRef: invoice.invoiceRef,
+        label: invoice.label,
+        secureUrl: secureDownloadUrl,
+        blobUrl: blob.url
+      })
+    }
+
+    // Combiner toutes les références de factures
+    const allRefs = uploadedInvoices.map(inv => inv.invoiceRef).join(' | ')
 
     // Mettre à jour le devis avec les informations de facturation
     const updatedQuote = await prisma.quoteRequest.update({
       where: { id: quoteId },
       data: {
         status: 'INVOICED',
-        invoiceRef,
+        invoiceRef: allRefs,
         invoiceAmountTTC: quote.amountTTC, // Copier le montant pour le calcul du CA
       },
     })
 
-    // Envoyer l'email de facture avec URL sécurisée
+    // Envoyer l'email de facture avec toutes les URLs sécurisées
     try {
       await sendInvoiceEmail({
         quote: updatedQuote,
         client: quote.client,
-        invoiceFileUrl: secureDownloadUrl, // URL sécurisée au lieu de l'URL directe
-        invoiceRef,
+        invoices: uploadedInvoices, // Passer le tableau complet
       })
     } catch (emailError) {
       console.error('Erreur lors de l\'envoi de l\'email:', emailError)
@@ -91,11 +119,13 @@ export async function POST(request: NextRequest) {
         entityType: 'QuoteRequest',
         entityId: quoteId,
         payload: JSON.stringify({ 
-          invoiceRef,
-          fileName: fileName.split('/')[1], // Enlever le préfixe "invoices/"
+          invoices: uploadedInvoices.map(inv => ({
+            invoiceRef: inv.invoiceRef,
+            label: inv.label,
+            fileName: generateObfuscatedFileName(inv.invoiceRef).split('/')[1]
+          })),
           recipientEmail: quote.client.email,
-          secureUrl: true, // Indiquer que c'est une URL sécurisée
-          blobUrl: blob.url // Garder l'URL originale pour référence interne
+          secureUrls: true
         }),
       },
     })
@@ -104,7 +134,7 @@ export async function POST(request: NextRequest) {
       success: true,
       recipientEmail: quote.client.email,
       quoteReference: quote.reference,
-      invoiceRef,
+      invoiceRef: allRefs,
     })
 
   } catch (error) {

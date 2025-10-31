@@ -1274,13 +1274,11 @@ Merci pour votre confiance,<br>
 export async function sendInvoiceEmail({
   quote,
   client,
-  invoiceFileUrl,
-  invoiceRef
+  invoices
 }: {
   quote: any
   client: any
-  invoiceFileUrl: string
-  invoiceRef: string
+  invoices: Array<{invoiceRef: string, label: string, secureUrl: string, blobUrl: string}>
 }) {
   console.log('📧 Début envoi email de facture...')
   
@@ -1296,19 +1294,17 @@ export async function sendInvoiceEmail({
     quote,
     client,
     settings,
-    invoiceRef,
-    invoiceFileUrl
+    invoices
   })
 
-  // Pour Vercel Blob, nous utilisons l'URL directement dans l'email
-  // Pas besoin d'attacher le fichier, on fournit le lien de téléchargement
-  console.log('✅ URL de la facture PDF:', invoiceFileUrl)
+  // Pour Vercel Blob, nous utilisons les URLs directement dans l'email
+  console.log('✅ URLs des factures PDF:', invoices.map(inv => `${inv.label}: ${inv.secureUrl}`))
 
   const emailOptions: any = {
     from: `${settings.studioName} <${settings.senderEmail}>`,
     to: client.email,
     replyTo: settings.studioEmail, // Rediriger les réponses vers l'email principal du studio
-    subject: `Facture ${invoiceRef} - ${settings.studioName}`,
+    subject: `Facture${invoices.length > 1 ? 's' : ''} ${invoices.map(inv => inv.invoiceRef).join(' & ')} - ${settings.studioName}`,
     html: htmlContent,
   }
 
@@ -1318,7 +1314,7 @@ export async function sendInvoiceEmail({
     from: emailOptions.from,
     to: emailOptions.to,
     subject: emailOptions.subject,
-    invoiceUrl: invoiceFileUrl,
+    invoiceCount: invoices.length,
     isDevelopment,
     hasResend: !!resend
   })
@@ -1328,7 +1324,7 @@ export async function sendInvoiceEmail({
     console.log('De:', emailOptions.from)
     console.log('À:', emailOptions.to)
     console.log('Sujet:', emailOptions.subject)
-    console.log('URL Facture:', invoiceFileUrl)
+    console.log('Factures:', invoices.map(inv => `${inv.label}: ${inv.secureUrl}`))
     console.log('HTML Content:')
     console.log(htmlContent.substring(0, 500) + '...')
     console.log('============================================\n')
@@ -1348,10 +1344,9 @@ export async function sendInvoiceEmail({
 }
 
 export function renderInvoiceEmailHTML(data: QuoteEmailData & { 
-  invoiceRef: string,
-  invoiceFileUrl?: string
+  invoices: Array<{invoiceRef: string, label: string, secureUrl: string, blobUrl: string}>
 }): string {
-  const { quote, client, settings, invoiceRef, invoiceFileUrl } = data
+  const { quote, client, settings, invoices } = data
   const clientName = client.companyName || `${client.firstName} ${client.lastName}`
   
   // Formatage des dates
@@ -1382,7 +1377,7 @@ export function renderInvoiceEmailHTML(data: QuoteEmailData & {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facture ${invoiceRef} - ${settings.studioName}</title>
+    <title>Facture${invoices.length > 1 ? 's' : ''} ${invoices.map(inv => inv.invoiceRef).join(' & ')} - ${settings.studioName}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f5f5f5;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5;">
@@ -1435,7 +1430,7 @@ export function renderInvoiceEmailHTML(data: QuoteEmailData & {
                                             <tr>
                                                 <td style="text-align: center; padding: 24px 20px;">
                                                     <div style="font-size: 24px; font-weight: bold; color: #2563eb; font-family: 'Courier New', monospace;">
-                                                        Facture ${invoiceRef}
+                                                        Facture${invoices.length > 1 ? 's' : ''} ${invoices.map(inv => inv.invoiceRef).join(' & ')}
                                                     </div>
                                                     <div style="color: #64748b; font-size: 14px; margin-top: 4px;">
                                                         Émise le ${new Intl.DateTimeFormat('fr-FR', {
@@ -1499,36 +1494,36 @@ export function renderInvoiceEmailHTML(data: QuoteEmailData & {
                                 </tr>
                                 
                                 <!-- Download Section -->
-                                ${invoiceFileUrl ? `
                                 <tr>
                                     <td style="padding-bottom: 32px;">
                                         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #dbeafe; border: 2px solid #3b82f6; border-radius: 8px;">
                                             <tr>
                                                 <td style="padding: 24px; text-align: center;">
                                                     <div style="color: #1e40af; font-weight: bold; font-size: 18px; margin-bottom: 16px;">
-                                                        📄 Votre facture
+                                                        📄 Vos factures
                                                     </div>
                                                     <div style="color: #1e40af; margin-bottom: 20px; line-height: 1.6;">
-                                                        Votre facture ${invoiceRef} est prête ! Cliquez sur le bouton ci-dessous pour la télécharger au format PDF.
+                                                        ${invoices.length > 1 ? 'Vos factures sont prêtes !' : 'Votre facture est prête !'} Cliquez sur ${invoices.length > 1 ? 'les boutons ci-dessous' : 'le bouton ci-dessous'} pour télécharger ${invoices.length > 1 ? 'vos documents' : 'votre document'} au format PDF.
                                                     </div>
-                                                    <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+                                                    ${invoices.map(invoice => `
+                                                    <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto 12px auto;">
                                                         <tr>
                                                             <td style="background-color: #3b82f6; border-radius: 6px; text-align: center;">
-                                                                <a href="${invoiceFileUrl}" 
+                                                                <a href="${invoice.secureUrl}" 
                                                                    target="_blank" 
-                                                                   download="facture-${invoiceRef}.pdf"
+                                                                   download="facture-${invoice.invoiceRef}.pdf"
                                                                    style="display: inline-block; padding: 14px 28px; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 16px;">
-                                                                    📥 Télécharger la facture PDF
+                                                                    📥 ${invoice.label} (${invoice.invoiceRef})
                                                                 </a>
                                                             </td>
                                                         </tr>
                                                     </table>
+                                                    `).join('')}
                                                 </td>
                                             </tr>
                                         </table>
                                     </td>
                                 </tr>
-                                ` : ''}
                                 
                                 <!-- Google Review Section -->
                                 <tr>

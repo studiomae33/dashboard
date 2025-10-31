@@ -3,13 +3,20 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { X, Upload, FileText } from 'lucide-react'
+import { X, Upload, FileText, Plus, Trash2 } from 'lucide-react'
 import { useState, useRef } from 'react'
+
+interface Invoice {
+  id: string
+  file: File | null
+  invoiceRef: string
+  label: string
+}
 
 interface InvoiceUploadModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (file: File, invoiceRef: string) => void
+  onSubmit: (invoices: Invoice[]) => void
   loading?: boolean
 }
 
@@ -19,31 +26,65 @@ export function InvoiceUploadModal({
   onSubmit, 
   loading = false 
 }: InvoiceUploadModalProps) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [invoiceRef, setInvoiceRef] = useState('')
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [invoices, setInvoices] = useState<Invoice[]>([
+    { id: '1', file: null, invoiceRef: '', label: 'Facture principale' }
+  ])
+  const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({})
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (invoiceId: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file && file.type === 'application/pdf') {
-      setSelectedFile(file)
+      setInvoices(prev => prev.map(inv => 
+        inv.id === invoiceId ? { ...inv, file } : inv
+      ))
     } else {
       alert('Veuillez sélectionner un fichier PDF valide')
     }
   }
 
+  const handleInvoiceRefChange = (invoiceId: string, value: string) => {
+    setInvoices(prev => prev.map(inv => 
+      inv.id === invoiceId ? { ...inv, invoiceRef: value } : inv
+    ))
+  }
+
+  const addSecondInvoice = () => {
+    if (invoices.length < 2) {
+      setInvoices(prev => [...prev, { 
+        id: '2', 
+        file: null, 
+        invoiceRef: '', 
+        label: 'Facture d\'options' 
+      }])
+    }
+  }
+
+  const removeInvoice = (invoiceId: string) => {
+    if (invoiceId !== '1') { // Ne pas supprimer la facture principale
+      setInvoices(prev => prev.filter(inv => inv.id !== invoiceId))
+    }
+  }
+
   const handleSubmit = () => {
-    if (!selectedFile || !invoiceRef.trim()) {
-      alert('Veuillez renseigner la référence de facture et joindre le fichier PDF')
+    const validInvoices = invoices.filter(inv => inv.file && inv.invoiceRef.trim())
+    
+    if (validInvoices.length === 0) {
+      alert('Veuillez renseigner au moins une facture avec son fichier PDF et sa référence')
       return
     }
-    onSubmit(selectedFile, invoiceRef.trim())
+
+    onSubmit(validInvoices)
+  }
+
+  // Vérifier si la facture principale est complète
+  const isMainInvoiceComplete = () => {
+    const mainInvoice = invoices.find(inv => inv.id === '1')
+    return mainInvoice && mainInvoice.file && mainInvoice.invoiceRef.trim()
   }
 
   const handleClose = () => {
     if (!loading) {
-      setSelectedFile(null)
-      setInvoiceRef('')
+      setInvoices([{ id: '1', file: null, invoiceRef: '', label: 'Facture principale' }])
       onClose()
     }
   }
@@ -69,87 +110,165 @@ export function InvoiceUploadModal({
         </DialogHeader>
         
         <div className="space-y-6 pt-2">
-          {/* Référence de facture */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Référence de la facture *
-            </label>
-            <Input
-              type="text"
-              value={invoiceRef}
-              onChange={(e) => setInvoiceRef(e.target.value)}
-              placeholder="Ex: FAC-2024-001"
-              disabled={loading}
-              className="w-full"
-            />
-          </div>
-
-          {/* Upload de fichier */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Fichier PDF de la facture *
-            </label>
-            
-            <div 
-              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                selectedFile 
-                  ? 'border-green-300 bg-green-50' 
-                  : 'border-slate-300 hover:border-slate-400'
-              }`}
-            >
-              {selectedFile ? (
-                <div className="space-y-2">
-                  <FileText className="h-8 w-8 text-green-600 mx-auto" />
-                  <div>
-                    <p className="text-sm font-medium text-green-700">
-                      {selectedFile.name}
-                    </p>
-                    <p className="text-xs text-green-600">
-                      {(selectedFile.size / 1024 / 1024).toFixed(1)} MB
-                    </p>
-                  </div>
+          {/* Section pour chaque facture */}
+          {invoices.map((invoice) => (
+            <div key={invoice.id} className="border rounded-lg p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-slate-900">{invoice.label}</h3>
+                {invoice.id !== '1' && (
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    onClick={() => setSelectedFile(null)}
+                    onClick={() => removeInvoice(invoice.id)}
                     disabled={loading}
-                    className="text-xs"
+                    className="text-red-600 hover:text-red-700"
                   >
-                    Changer le fichier
+                    <Trash2 className="h-4 w-4" />
                   </Button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Upload className="h-8 w-8 text-slate-400 mx-auto" />
-                  <div>
-                    <p className="text-sm text-slate-600">
-                      Glissez-déposez votre fichier PDF ou
-                    </p>
+                )}
+              </div>
+
+              {/* Si c'est la facture principale ET qu'il y a une 2ème facture, afficher en mode compact */}
+              {invoice.id === '1' && invoices.length > 1 && invoice.file && invoice.invoiceRef ? (
+                <div className="bg-green-50 border border-green-200 rounded p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="text-sm font-medium text-green-700">{invoice.invoiceRef}</p>
+                        <p className="text-xs text-green-600">{invoice.file.name}</p>
+                      </div>
+                    </div>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => fileInputRef.current?.click()}
+                      onClick={() => {
+                        setInvoices(prev => prev.map(inv => 
+                          inv.id === invoice.id ? { ...inv, file: null, invoiceRef: '' } : inv
+                        ))
+                      }}
                       disabled={loading}
-                      className="mt-2"
+                      className="text-xs"
                     >
-                      Parcourir les fichiers
+                      Modifier
                     </Button>
                   </div>
-                  <p className="text-xs text-slate-500">
-                    Format PDF uniquement, taille max 10MB
-                  </p>
                 </div>
+              ) : (
+                <>
+                  {/* Référence de facture */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Référence de la facture *
+                    </label>
+                    <Input
+                      type="text"
+                      value={invoice.invoiceRef}
+                      onChange={(e) => handleInvoiceRefChange(invoice.id, e.target.value)}
+                      placeholder={`Ex: ${invoice.id === '1' ? 'FAC-2024-001' : 'FAC-2024-001-OPT'}`}
+                      disabled={loading || (invoice.id === '2' && !isMainInvoiceComplete())}
+                      className={`w-full ${invoice.id === '2' && !isMainInvoiceComplete() ? 'opacity-50' : ''}`}
+                    />
+                  </div>
+
+                  {/* Upload de fichier */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Fichier PDF de la facture *
+                    </label>
+                    
+                    <div 
+                      className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                        invoice.file 
+                          ? 'border-green-300 bg-green-50' 
+                          : invoice.id === '2' && !isMainInvoiceComplete()
+                          ? 'border-gray-200 bg-gray-50 opacity-50'
+                          : 'border-slate-300 hover:border-slate-400'
+                      }`}
+                    >
+                      {invoice.file ? (
+                        <div className="space-y-2">
+                          <FileText className="h-8 w-8 text-green-600 mx-auto" />
+                          <div>
+                            <p className="text-sm font-medium text-green-700">
+                              {invoice.file.name}
+                            </p>
+                            <p className="text-xs text-green-600">
+                              {(invoice.file.size / 1024 / 1024).toFixed(1)} MB
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setInvoices(prev => prev.map(inv => 
+                                inv.id === invoice.id ? { ...inv, file: null } : inv
+                              ))
+                            }}
+                            disabled={loading}
+                            className="text-xs"
+                          >
+                            Changer le fichier
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Upload className="h-8 w-8 text-slate-400 mx-auto" />
+                          <div>
+                            <p className={`text-sm ${invoice.id === '2' && !isMainInvoiceComplete() ? 'text-gray-400' : 'text-slate-600'}`}>
+                              {invoice.id === '2' && !isMainInvoiceComplete() 
+                                ? 'Complétez d\'abord la facture principale'
+                                : 'Glissez-déposez votre fichier PDF ou'
+                              }
+                            </p>
+                            {(invoice.id === '1' || isMainInvoiceComplete()) && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => fileInputRefs.current[invoice.id]?.click()}
+                                disabled={loading || (invoice.id === '2' && !isMainInvoiceComplete())}
+                                className="mt-2"
+                              >
+                                Parcourir les fichiers
+                              </Button>
+                            )}
+                          </div>
+                          <p className={`text-xs ${invoice.id === '2' && !isMainInvoiceComplete() ? 'text-gray-400' : 'text-slate-500'}`}>
+                            Format PDF uniquement, taille max 10MB
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <input
+                      ref={(el) => { fileInputRefs.current[invoice.id] = el }}
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => handleFileSelect(invoice.id, e)}
+                      className="hidden"
+                      disabled={invoice.id === '2' && !isMainInvoiceComplete()}
+                    />
+                  </div>
+                </>
               )}
             </div>
+          ))}
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-          </div>
+          {/* Bouton pour ajouter une deuxième facture */}
+          {invoices.length === 1 && (
+            <Button
+              variant="outline"
+              onClick={addSecondInvoice}
+              disabled={loading || !isMainInvoiceComplete()}
+              className={`w-full flex items-center justify-center gap-2 border-dashed ${
+                !isMainInvoiceComplete() ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+              title={!isMainInvoiceComplete() ? 'Complétez d\'abord la facture principale' : ''}
+            >
+              <Plus className="h-4 w-4" />
+              Ajouter une facture d'options
+            </Button>
+          )}
 
           {/* Actions */}
           <div className="flex gap-3 pt-4 border-t">
@@ -163,10 +282,10 @@ export function InvoiceUploadModal({
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={loading || !selectedFile || !invoiceRef.trim()}
+              disabled={loading || invoices.filter(inv => inv.file && inv.invoiceRef.trim()).length === 0}
               className="flex-1"
             >
-              {loading ? 'Envoi en cours...' : 'Envoyer la facture'}
+              {loading ? 'Envoi en cours...' : `Envoyer ${invoices.filter(inv => inv.file && inv.invoiceRef.trim()).length > 1 ? 'les factures' : 'la facture'}`}
             </Button>
           </div>
         </div>

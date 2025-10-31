@@ -365,15 +365,32 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
     }
   }
 
-  async function sendInvoice(file: File, invoiceRef: string) {
+  async function sendInvoice(invoices: Array<{id: string, file: File | null, invoiceRef: string, label: string}>) {
     if (!quote) return
+
+    // Filtrer les factures valides (avec fichier)
+    const validInvoices = invoices.filter((inv): inv is {id: string, file: File, invoiceRef: string, label: string} => 
+      inv.file !== null && inv.invoiceRef.trim() !== ''
+    )
+
+    if (validInvoices.length === 0) {
+      alert('Aucune facture valide à envoyer')
+      return
+    }
 
     setSendingInvoice(true)
     try {
       const formData = new FormData()
       formData.append('quoteId', quote.id)
-      formData.append('invoiceRef', invoiceRef)
-      formData.append('invoiceFile', file)
+      
+      // Ajouter chaque facture avec un index
+      validInvoices.forEach((invoice, index) => {
+        formData.append(`invoiceFile_${index}`, invoice.file)
+        formData.append(`invoiceRef_${index}`, invoice.invoiceRef)
+        formData.append(`invoiceLabel_${index}`, invoice.label)
+      })
+      
+      formData.append('invoiceCount', validInvoices.length.toString())
 
       const response = await fetch('/api/admin/quotes/send-invoice', {
         method: 'POST',
@@ -383,14 +400,15 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
       if (response.ok) {
         const result = await response.json()
         
-        // Mettre à jour le devis avec le statut INVOICED
-        setQuote(prev => prev ? { ...prev, status: 'INVOICED', invoiceRef } : null)
+        // Mettre à jour le devis avec le statut INVOICED et toutes les références
+        const allRefs = validInvoices.map(inv => inv.invoiceRef).join(' | ')
+        setQuote(prev => prev ? { ...prev, status: 'INVOICED', invoiceRef: allRefs } : null)
         
         // Préparer les données pour la modal de confirmation
         setInvoiceSentData({
           recipientEmail: result.recipientEmail,
           quoteReference: result.quoteReference,
-          invoiceRef,
+          invoiceRef: allRefs,
         })
         
         // Fermer la modal d'upload et ouvrir la modal de confirmation
