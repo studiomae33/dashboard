@@ -223,13 +223,13 @@ export async function GET(request: NextRequest) {
     })
 
     // Calculer le CA du mois (devis signés et étapes suivantes avec date de location ce mois)
-    // Inclure tous les devis confirmés avec une date de location dans le mois
-    const confirmedQuotesRevenue = await prisma.quoteRequest.aggregate({
+    // Inclure tous les devis confirmés (SIGNED, PAYMENT_PENDING, PAID, INVOICED) avec date de location ce mois
+    const monthlyRevenue = await prisma.quoteRequest.aggregate({
       where: {
         AND: [
           {
             status: {
-              in: ['SIGNED', 'PAYMENT_PENDING', 'PAID']
+              in: ['SIGNED', 'PAYMENT_PENDING', 'PAID', 'INVOICED']
             }
           },
           {
@@ -245,30 +245,7 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    const invoicedQuotesRevenue = await prisma.quoteRequest.aggregate({
-      where: {
-        AND: [
-          {
-            status: 'INVOICED'
-          },
-          {
-            desiredStart: {
-              gte: startOfMonth,
-              lte: endOfMonth
-            }
-          }
-        ]
-      },
-      _sum: {
-        invoiceAmountTTC: true,
-        amountTTC: true
-      }
-    })
-
-    // Calculer le CA total du mois
-    // Pour les devis facturés, utiliser invoiceAmountTTC ou amountTTC en fallback
-    const invoicedRevenue = (invoicedQuotesRevenue._sum.invoiceAmountTTC || invoicedQuotesRevenue._sum.amountTTC || 0)
-    const totalMonthlyRevenue = (confirmedQuotesRevenue._sum.amountTTC || 0) + invoicedRevenue
+    const totalMonthlyRevenue = monthlyRevenue._sum.amountTTC || 0
 
     const stats = {
       totalQuotes: totalQuotesThisMonth,
