@@ -37,6 +37,10 @@ export default function SettingsPage() {
   const [smsDiagnosticResult, setSMSDiagnosticResult] = useState<any>(null)
   const [testingSMSSend, setTestingSMSSend] = useState(false)
   const [smsSendResult, setSMSSendResult] = useState<any>(null)
+  
+  // États pour le test de rappel avec token
+  const [testingReminderWithToken, setTestingReminderWithToken] = useState(false)
+  const [reminderWithTokenResult, setReminderWithTokenResult] = useState<any>(null)
 
   useEffect(() => {
     fetchSettings()
@@ -157,6 +161,34 @@ export default function SettingsPage() {
       })
     } finally {
       setTestingEmailReminder(false)
+    }
+  }
+
+  // Fonction pour tester le rappel avec vrai token
+  async function testLocationReminderWithToken() {
+    setTestingReminderWithToken(true)
+    setReminderWithTokenResult(null)
+    
+    try {
+      const response = await fetch('/api/admin/test-location-reminder-with-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          testEmail: 'contact@studiomae.fr'
+        }),
+      })
+      
+      const result = await response.json()
+      setReminderWithTokenResult(result)
+    } catch (error) {
+      setReminderWithTokenResult({
+        success: false,
+        error: 'Erreur lors du test avec token'
+      })
+    } finally {
+      setTestingReminderWithToken(false)
     }
   }
 
@@ -544,12 +576,23 @@ export default function SettingsPage() {
                 <button
                   onClick={testEmailReminder}
                   disabled={testingEmailReminder}
-                  className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed mb-2"
                 >
                   {testingEmailReminder ? '⏳ Envoi en cours...' : '📧 Tester l\'email de rappel'}
                 </button>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 mb-3">
                   Envoie un email de test à contact@studiomae.fr avec une réservation fictive
+                </p>
+                
+                <button
+                  onClick={testLocationReminderWithToken}
+                  disabled={testingReminderWithToken}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  {testingReminderWithToken ? '⏳ Création en cours...' : '🔐 Test avec vrai token + BDD'}
+                </button>
+                <p className="text-xs text-gray-500 mt-1">
+                  Crée une vraie réservation temporaire avec token valide pour tester la page FAQ
                 </p>
               </div>
               
@@ -559,6 +602,25 @@ export default function SettingsPage() {
                   <pre className="text-xs bg-white p-2 rounded border overflow-auto">
                     {JSON.stringify(emailReminderTestResult, null, 2)}
                   </pre>
+                </div>
+              )}
+              
+              {reminderWithTokenResult && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                  <h5 className="font-medium text-blue-900 mb-2">Résultat du test avec token :</h5>
+                  <pre className="text-xs bg-white p-2 rounded border overflow-auto">
+                    {JSON.stringify(reminderWithTokenResult, null, 2)}
+                  </pre>
+                  {reminderWithTokenResult.success && reminderWithTokenResult.result && (
+                    <div className="mt-2 p-2 bg-green-100 rounded text-sm">
+                      <p className="text-green-800">
+                        ✅ <strong>Email envoyé avec succès !</strong><br/>
+                        📋 Réservation créée : {reminderWithTokenResult.result.bookingId}<br/>
+                        📧 Email envoyé à : {reminderWithTokenResult.result.clientEmail}<br/>
+                        🔗 L'email contient un lien fonctionnel vers la page d'infos pratiques
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
