@@ -189,13 +189,25 @@ export function BookingDetailModal({ booking, isOpen, onClose, onRefresh }: Book
               <div className="text-base font-medium text-slate-700">
                 {(() => {
                   const diffMs = booking.end.getTime() - booking.start.getTime()
-                  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
-                  const diffHours = Math.ceil(diffMs / (1000 * 60 * 60))
+                  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+                  const remainingMs = diffMs % (1000 * 60 * 60 * 24)
+                  const diffHours = Math.floor(remainingMs / (1000 * 60 * 60))
+                  const diffMinutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60))
                   
-                  if (diffDays > 1) {
-                    return `${diffDays} jour${diffDays > 1 ? 's' : ''}`
+                  if (diffDays > 0) {
+                    // Si plus d'un jour, afficher jours + heures si nécessaire
+                    if (diffHours > 0) {
+                      return `${diffDays} jour${diffDays > 1 ? 's' : ''} et ${diffHours}h${diffMinutes > 0 ? diffMinutes.toString().padStart(2, '0') : ''}`
+                    } else {
+                      return `${diffDays} jour${diffDays > 1 ? 's' : ''}`
+                    }
                   } else {
-                    return `${diffHours} heure${diffHours > 1 ? 's' : ''}`
+                    // Moins d'un jour, afficher heures et minutes
+                    if (diffMinutes > 0) {
+                      return `${diffHours}h${diffMinutes.toString().padStart(2, '0')}`
+                    } else {
+                      return `${diffHours} heure${diffHours > 1 ? 's' : ''}`
+                    }
                   }
                 })()}
               </div>

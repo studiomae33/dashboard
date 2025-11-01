@@ -35,6 +35,23 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
     }
   }, [open])
 
+  // Gestion de la touche Échap
+  React.useEffect(() => {
+    if (!open) return
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onOpenChange(false)
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [open, onOpenChange])
+
   if (!open) return null
 
   return (
@@ -43,8 +60,13 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
         className="fixed inset-0 bg-black/50" 
         onClick={() => onOpenChange(false)}
       />
-      <div className="relative z-50 w-full max-h-[90vh] overflow-y-auto flex items-center justify-center">
-        {children}
+      <div className="relative z-50 w-full max-h-[90vh] overflow-y-auto flex items-center justify-center pointer-events-none">
+        <div 
+          className="pointer-events-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {children}
+        </div>
       </div>
     </div>
   )
