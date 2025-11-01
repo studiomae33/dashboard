@@ -876,9 +876,14 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                           setIsPaymentReminder(true)
                           setShowPaymentModal(true)
                         }}
-                        disabled={updating || sendingPaymentReminder}
+                        disabled={updating || sendingPaymentReminder || quote.status === 'ONSITE_PAYMENT'}
                         variant="outline"
-                        className="w-full justify-start text-orange-600 hover:text-orange-700"
+                        className={`w-full justify-start ${
+                          quote.status === 'ONSITE_PAYMENT' 
+                            ? 'text-gray-400 hover:text-gray-400 cursor-not-allowed' 
+                            : 'text-orange-600 hover:text-orange-700'
+                        }`}
+                        title={quote.status === 'ONSITE_PAYMENT' ? 'Relance non disponible pour les paiements sur place' : ''}
                       >
                         <span className="mr-2">🔄</span>
                         {sendingPaymentReminder ? 'Envoi...' : 'Relancer paiement'}
