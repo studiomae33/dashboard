@@ -133,6 +133,11 @@ export async function renderDevisEmailHTML(data: QuoteEmailData): Promise<string
 <table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333 !important;">
 <tbody>
 <tr>
+<td style="background-color: #f8f9fa; padding: 10px; text-align: center; font-size: 12px; color: #6c757d; border-bottom: 1px solid #e0e0e0;">
+📧 Mail automatique - Pour toute question, contactez <strong>contact@studiomae.fr</strong>
+</td>
+</tr>
+<tr>
 <td style="background-color: #060c20 !important; padding: 20px; text-align: center;"><img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio"></td>
 </tr>
 <tr>
@@ -144,7 +149,7 @@ export async function renderDevisEmailHTML(data: QuoteEmailData): Promise<string
 <div style="text-align: center; margin: 32px 0; padding: 24px; background: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
 <h3 style="margin-bottom: 16px; color: #2d3748; font-weight: 600;">Validation de votre devis</h3>
 <a href="${validationUrl}" style="display: inline-block; background: #48bb78; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">📋 Voir les conditions et valider le devis</a>
-<p style="margin-top: 16px; color: #718096; font-size: 14px;">Validation sécurisée et immédiate</p>
+<p style="margin-top: 16px; color: #718096; font-size: 14px;">Signature électronique sécurisée - Aucune signature manuscrite requise</p>
 </div>
 
 <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; margin: 20px 0;">
@@ -182,8 +187,8 @@ export async function renderDevisEmailHTML(data: QuoteEmailData): Promise<string
 </div>
 
 <div style="background: #ebf8ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 0 8px 8px 0; margin: 24px 0;">
-<p style="margin: 0; color: #1e40af; font-weight: 500;"><strong>📋 Conditions et informations détaillées</strong><br>
-Retrouvez toutes les informations nécessaires à votre location (conditions, tarifs, modalités) directement dans le lien de validation du devis ci-dessus.</p>
+<p style="margin: 0; color: #1e40af; font-weight: 500;"><strong>📋 Validation 100% numérique</strong><br>
+La validation de votre devis se fait directement en ligne via notre plateforme sécurisée. Aucune signature manuscrite n'est nécessaire - tout se passe numériquement !</p>
 </div>
 
 <div style="background: #f0fff4; border-left: 4px solid #10b981; padding: 20px; border-radius: 0 8px 8px 0; margin: 32px 0;">
@@ -251,6 +256,12 @@ export function renderEquipmentRequestEmailHTML(data: EquipmentRequestEmailData)
         <tr>
             <td align="center" style="padding: 20px;">
                 <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <!-- Header automatique -->
+                    <tr>
+                        <td style="background-color: #f8f9fa; padding: 10px; text-align: center; font-size: 12px; color: #6c757d; border-bottom: 1px solid #e0e0e0;">
+                            📧 Mail automatique - Pour toute question, contactez <strong>contact@studiomae.fr</strong>
+                        </td>
+                    </tr>
                     <!-- Header -->
                     <tr>
                         <td style="background-color: #060c20; padding: 40px 30px; text-align: center;">
@@ -498,7 +509,7 @@ export async function sendEquipmentRequestEmail(equipmentRequestId: string) {
   const emailOptions: any = {
     from: `${settings.studioName} <devis@mail.studiomae.fr>`,
     to: 'david.poirout@prise2son.fr', // Email du loueur
-    replyTo: settings.studioEmail, // Rediriger les réponses vers l'email principal du studio
+    replyTo: 'contact@studiomae.fr', // Rediriger les réponses vers contact@studiomae.fr
     subject: `📦 Demande de location matériel - ${equipmentRequest.quoteRequest.reference}`,
     html: htmlContent,
   }
@@ -608,7 +619,7 @@ export async function sendQuoteEmail(quoteId: string, pdfPath?: string) {
   const emailOptions: any = {
     from: `${settings.studioName} <${settings.senderEmail}>`,
     to: quote.client.email,
-    replyTo: settings.studioEmail, // Rediriger les réponses vers l'email principal du studio
+    replyTo: 'contact@studiomae.fr', // Rediriger les réponses vers contact@studiomae.fr
     subject: `Devis ${quote.reference} - ${settings.studioName}`,
     html: htmlContent,
   }
@@ -757,7 +768,7 @@ export async function sendPaymentEmail(quoteId: string, invoiceRef: string, paym
   const emailOptions: any = {
     from: `${settings.studioName} <${settings.senderEmail}>`,
     to: quote.client.email,
-    replyTo: settings.studioEmail, // Rediriger les réponses vers l'email principal du studio
+    replyTo: 'contact@studiomae.fr', // Rediriger les réponses vers contact@studiomae.fr
     subject: `Instructions de paiement - Devis ${quote.reference} - ${settings.studioName}`,
     html: htmlContent,
   }
@@ -853,7 +864,7 @@ export async function sendOnsitePaymentEmail(quoteId: string) {
   const emailOptions: any = {
     from: `${settings.studioName} <${settings.senderEmail}>`,
     to: quote.client.email,
-    replyTo: settings.studioEmail,
+    replyTo: 'contact@studiomae.fr',
     subject: `Instructions de paiement sur place - Devis ${quote.reference} - ${settings.studioName}`,
     html: htmlContent,
   }
@@ -952,6 +963,11 @@ export function renderPaymentEmailHTML(data: QuoteEmailData & {
 <table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333 !important;">
 <tbody>
 <tr>
+<td style="background-color: #f8f9fa; padding: 10px; text-align: center; font-size: 12px; color: #6c757d; border-bottom: 1px solid #e0e0e0;">
+📧 Mail automatique - Pour toute question, contactez <strong>contact@studiomae.fr</strong>
+</td>
+</tr>
+<tr>
 <td style="background-color: #060c20 !important; padding: 20px; text-align: center;"><img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio"></td>
 </tr>
 <tr>
@@ -1024,6 +1040,11 @@ export function renderOnsitePaymentEmailHTML(data: QuoteEmailData): string {
 <table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333 !important;">
 <tbody>
 <tr>
+<td style="background-color: #f8f9fa; padding: 10px; text-align: center; font-size: 12px; color: #6c757d; border-bottom: 1px solid #e0e0e0;">
+📧 Mail automatique - Pour toute question, contactez <strong>contact@studiomae.fr</strong>
+</td>
+</tr>
+<tr>
 <td style="background-color: #060c20 !important; padding: 20px; text-align: center;"><img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio"></td>
 </tr>
 <tr>
@@ -1093,6 +1114,11 @@ export function renderDateChangeEmailHTML(data: QuoteEmailData & {
   return `
 <table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333 !important;">
 <tbody>
+<tr>
+<td style="background-color: #f8f9fa; padding: 10px; text-align: center; font-size: 12px; color: #6c757d; border-bottom: 1px solid #e0e0e0;">
+📧 Mail automatique - Pour toute question, contactez <strong>contact@studiomae.fr</strong>
+</td>
+</tr>
 <tr>
 <td style="background-color: #060c20 !important; padding: 20px; text-align: center;"><img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio"></td>
 </tr>
@@ -1177,7 +1203,7 @@ export async function sendPaymentReminderEmail(quoteId: string, invoiceRef: stri
   const emailOptions: any = {
     from: `${settings.studioName} <${settings.senderEmail}>`,
     to: quote.client.email,
-    replyTo: settings.studioEmail, // Rediriger les réponses vers l'email principal du studio
+    replyTo: 'contact@studiomae.fr', // Rediriger les réponses vers contact@studiomae.fr
     subject: `🔄 Rappel de paiement - Devis ${quote.reference} - ${settings.studioName}`,
     html: htmlContent,
   }
@@ -1289,7 +1315,7 @@ export async function sendDateChangeNotification(quoteId: string, oldStartDate: 
   const emailOptions = {
     from: settings.senderEmail,
     to: quote.client.email,
-    replyTo: settings.studioEmail, // Rediriger les réponses vers l'email principal du studio
+    replyTo: 'contact@studiomae.fr', // Rediriger les réponses vers contact@studiomae.fr
     subject: `📅 Modification confirmée - Réservation ${quote.reference}`,
     html: htmlContent,
   }
@@ -1383,6 +1409,11 @@ export function renderPaymentReminderEmailHTML(data: QuoteEmailData & {
 <table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333 !important;">
 <tbody>
 <tr>
+<td style="background-color: #f8f9fa; padding: 10px; text-align: center; font-size: 12px; color: #6c757d; border-bottom: 1px solid #e0e0e0;">
+📧 Mail automatique - Pour toute question, contactez <strong>contact@studiomae.fr</strong>
+</td>
+</tr>
+<tr>
 <td style="background-color: #060c20 !important; padding: 20px; text-align: center;"><img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio"></td>
 </tr>
 <tr>
@@ -1466,7 +1497,7 @@ export async function sendInvoiceEmail({
   const emailOptions: any = {
     from: `${settings.studioName} <${settings.senderEmail}>`,
     to: client.email,
-    replyTo: settings.studioEmail, // Rediriger les réponses vers l'email principal du studio
+    replyTo: 'contact@studiomae.fr', // Rediriger les réponses vers contact@studiomae.fr
     subject: `Facture${invoices.length > 1 ? 's' : ''} ${invoices.map(inv => inv.invoiceRef).join(' & ')} - ${settings.studioName}`,
     html: htmlContent,
   }
@@ -1547,6 +1578,12 @@ export function renderInvoiceEmailHTML(data: QuoteEmailData & {
         <tr>
             <td align="center" style="padding: 20px;">
                 <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <!-- Header automatique -->
+                    <tr>
+                        <td style="background-color: #f8f9fa; padding: 10px; text-align: center; font-size: 12px; color: #6c757d; border-bottom: 1px solid #e0e0e0;">
+                            📧 Mail automatique - Pour toute question, contactez <strong>contact@studiomae.fr</strong>
+                        </td>
+                    </tr>
                     <!-- Header -->
                     <tr>
                         <td style="background-color: #060c20; padding: 40px 30px; text-align: center;">
@@ -1804,6 +1841,11 @@ export async function renderLocationReminderEmailHTML(data: LocationReminderEmai
 <table style="width: 100%; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; font-family: Arial, sans-serif; color: #333 !important;">
 <tbody>
 <tr>
+<td style="background-color: #f8f9fa; padding: 10px; text-align: center; font-size: 12px; color: #6c757d; border-bottom: 1px solid #e0e0e0;">
+📧 Mail automatique - Pour toute question, contactez <strong>contact@studiomae.fr</strong>
+</td>
+</tr>
+<tr>
 <td style="background-color: #060c20 !important; padding: 20px; text-align: center;"><img style="max-width: 100px;" src="https://www.studiomae.fr/images/logo_mail.png" alt="Logo Studio"></td>
 </tr>
 <tr>
@@ -1909,7 +1951,7 @@ export async function sendLocationReminderEmail(bookingId: string) {
   const emailOptions: any = {
     from: `${settings.studioName} <${settings.senderEmail}>`,
     to: booking.quoteRequest.client.email,
-    reply_to: settings.studioEmail,
+    reply_to: 'contact@studiomae.fr',
     subject: `Rappel : Votre location au ${settings.studioName} dans 48h - ${booking.quoteRequest.reference}`,
     html: htmlContent,
   }
