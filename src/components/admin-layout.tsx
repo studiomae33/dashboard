@@ -12,7 +12,6 @@ const navigation = [
   { name: 'Factures', href: '/admin/invoices', icon: '🧾' },
   { name: 'Clients', href: '/admin/clients', icon: '👥' },
   { name: 'Calendrier', href: '/admin/calendar', icon: '📅' },
-  { name: 'Loc matériel', href: '/admin/equipment', icon: '📦' },
   { name: 'Paramètres', href: '/admin/settings', icon: '⚙️' },
 ]
 

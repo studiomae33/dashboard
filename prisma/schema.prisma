@@ -54,7 +54,6 @@ model QuoteRequest {
   invoiceAmountTTC Float?
   comments         String?            // Commentaires internes visibles uniquement par l'admin
   booking          Booking?
-  equipmentRequests EquipmentRequest[]
   client           Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@map("quote_requests")
@@ -98,22 +97,4 @@ model Settings {
   emailTemplate  String @default("")
 
   @@map("settings")
-}
-
-model EquipmentRequest {
-  id             String   @id @default(cuid())
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  quoteRequestId String
-  equipment      String   // Liste du matériel demandé (JSON ou texte)
-  status         String   @default("PENDING") // PENDING, CONFIRMED, REJECTED
-  confirmedAt    DateTime?
-  confirmedBy    String?  // Email ou nom de la personne qui a confirmé
-  rejectedAt     DateTime?
-  rejectedBy     String?
-  rejectionReason String?
-  validationToken String? @unique
-  quoteRequest   QuoteRequest @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
-
-  @@map("equipment_requests")
 }
