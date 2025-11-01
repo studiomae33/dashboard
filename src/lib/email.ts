@@ -1800,19 +1800,6 @@ export async function renderLocationReminderEmailHTML(data: LocationReminderEmai
   const { booking, quote, client, settings } = data
   const clientName = client.companyName || `${client.firstName} ${client.lastName}`
   
-  // Générer un token pour la page d'informations
-  const infoToken = await generateBookingInfoToken(booking.id)
-  
-  // S'assurer qu'on a une URL de base valide
-  let baseUrl = process.env.NEXTAUTH_URL
-  
-  if (!baseUrl) {
-    // Utiliser l'URL de production Vercel directement
-    baseUrl = 'https://dashboard-gamma-smoky-61.vercel.app'
-  }
-  
-  const infoUrl = `${baseUrl}/location-info/${infoToken}`
-  
   // Formatage des dates
   const startDate = new Intl.DateTimeFormat('fr-FR', {
     weekday: 'long',
@@ -1860,8 +1847,6 @@ export async function renderLocationReminderEmailHTML(data: LocationReminderEmai
 <h4 style="color: #1f2937; margin-bottom: 8px; font-size: 18px;">${startDate}</h4>
 <p style="color: #4b5563; margin: 0; font-size: 16px; font-weight: 600;">${startTime} - ${endTime}</p>
 </div>
-<a href="${infoUrl}" style="display: inline-block; background: #3b82f6; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin-top: 8px;">📋 Informations pratiques & FAQ</a>
-<p style="margin-top: 16px; color: #92400e; font-size: 14px;">Adresse, parking, matériel, conseils...</p>
 </div>
 
 <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; margin: 20px 0;">
@@ -1888,11 +1873,6 @@ export async function renderLocationReminderEmailHTML(data: LocationReminderEmai
 <p style="color: #4a5568; margin: 0; font-size: 15px;">${settings.studioAddress}</p>
 </div>
 </div>
-</div>
-
-<div style="background: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 20px; border-radius: 0 8px 8px 0; margin: 24px 0;">
-<p style="margin: 0; color: #0c4a6e; font-weight: 500;"><strong>💡 Tout est prêt pour vous accueillir !</strong><br>
-Consultez la page d'informations pratiques ci-dessus pour tous les détails : accès, parking, matériel inclus, et nos conseils pour réussir votre séance.</p>
 </div>
 
 <div style="background: #f0fff4; border-left: 4px solid #10b981; padding: 20px; border-radius: 0 8px 8px 0; margin: 32px 0;">
