@@ -47,7 +47,7 @@ export default function LoginPage() {
             Studio MAE
           </CardTitle>
           <CardDescription>
-            Connectez-vous à votre dashboard
+            Connectez-vous 
           </CardDescription>
         </CardHeader>
         <CardContent>
